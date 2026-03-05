@@ -796,7 +796,7 @@ DECLARE_NATIVE(COMBINATORIZE)
 
     Element* frame = Init_Frame(Array_At(pack, 0), paramlist, label, coupling);
     Copy_Vanishability(frame, combinator);
-    Tweak_Cell_Type_Byte(frame, TYPE_QUASIFORM);
+    Tweak_Cell_Lift_Byte(frame, TYPE_QUASIFORM);
 
     Copy_Lifted_Cell(Array_At(pack, 1), ARG(RULES));  // advanced by param hook
 

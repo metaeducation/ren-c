@@ -1,6 +1,6 @@
 //
 //  file: %struct-value.h
-//  summary: "Subclasses of Cell to quarantine TYPE_BYTE() states"
+//  summary: "Subclasses of Cell to quarantine LIFT_BYTE() states"
 //  project: "Ren-C Interpreter and Run-time"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
@@ -59,7 +59,7 @@
 // considerations for handling, because they may store bit patterns that
 // indicate a function should be run to fulfill the variable (a "GETTER") or
 // a function should be run to accept a value to store (a "SETTER").
-// These considerations apply when the Slot's TYPE_BYTE() >= MIN_TYPE_BEDROCK
+// These considerations apply when the Slot's LIFT_BYTE() >= MIN_TYPE_BEDROCK
 //
 // This means you can't casually use something like Init_Integer() or
 // Copy_Cell() to blindly write bit patterns into a Slot, because it might
@@ -81,7 +81,7 @@
 
 //=//// "Param" SUBCLASS OF "Slot" ////////////////////////////////////////=//
 //
-// The datatype ParamList holds a list of PARAMETER! values with TYPE_BYTE()
+// The datatype ParamList holds a list of PARAMETER! values with LIFT_BYTE()
 // of TYPE_BEDROCK_HOLE for unspecialized arguments.  Then any Value* (possibly
 // unstable) for specialized args and locals.
 //

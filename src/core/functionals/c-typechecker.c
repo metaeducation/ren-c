@@ -399,7 +399,7 @@ bool Predicate_Check_Spare_Uses_Scratch(
         }
 
         Copy_Plain_Cell(SCRATCH, predicate);  // intrinsic, panic() requires
-        possibly(Is_Antiform(SCRATCH));  // don't bother canonizing TYPE_BYTE()
+        possibly(Is_Antiform(SCRATCH));  // don't bother canonizing LIFT_BYTE()
         Remember_Cell_Is_Lifeguard(SCRATCH);
 
         Executor* saved_executor = L->executor;  // !!! review: bad idea!

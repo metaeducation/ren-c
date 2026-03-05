@@ -51,7 +51,7 @@ static Option(Error*) Trap_Adjust_Lifted_Antiform_For_Tweak(Value* spare)
 {
     assert(Is_Lifted_Antiform(spare));
     if (Heart_Of(spare) == HEART_FRAME) {  // e.g. (append.series)
-        Tweak_Cell_Type_Byte(spare, TYPE_QUOTED_1_TIME_NONQUASI);
+        Tweak_Cell_Lift_Byte(spare, TYPE_QUOTED_1_TIME_NONQUASI);
         return SUCCESS;
     }
 
@@ -220,13 +220,13 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 
     if (Is_Bedrock_Dual_A_Drain(dual_spare)) {  // SPACE
         Init_Error_Cell(dual_spare, Error_Cant_Get_Drain_Raw());
-        Tweak_Cell_Type_Byte(dual_spare, TYPE_QUASIFORM);  // lift FAILURE! [1]
+        Tweak_Cell_Lift_Byte(dual_spare, TYPE_QUASIFORM);  // lift FAILURE! [1]
         goto return_without_unbinding;
     }
 
     if (Is_Bedrock_Dual_A_Hole(dual_spare)) {  // unspecialized cell
         if (adjusted == HEART_FRAME) { // picking parameter from an ACTION!
-            Tweak_Cell_Type_Byte(dual_spare, TYPE_QUOTED_1_TIME_NONQUASI);
+            Tweak_Cell_Lift_Byte(dual_spare, TYPE_QUOTED_1_TIME_NONQUASI);
         } else {  // make it look like a NULL
             Init_Lifted_Null_Signifying_Unspecialized(dual_spare);
         }

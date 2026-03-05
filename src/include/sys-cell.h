@@ -105,7 +105,7 @@
 //
 // Note: due to the CastHook<> mechanism, some builds instrument cast() to
 // validate that the bits actually match the type (e.g. that you don't cast
-// a Cell with an antiform TYPE_BYTE() to an Element*).
+// a Cell with an antiform LIFT_BYTE() to an Element*).
 //
 
 #define As_Dual(v)      cast(Dual*, (v))
@@ -415,7 +415,7 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 #define CELL_MASK_UNREADABLE \
     (BASE_FLAG_BASE | BASE_FLAG_CELL | BASE_FLAG_UNREADABLE \
         | CELL_FLAG_DONT_MARK_PAYLOAD_1 | CELL_FLAG_DONT_MARK_PAYLOAD_2 \
-        | FLAG_HEARTSIGIL_BYTE(255) | FLAG_TYPE_BYTE(255))
+        | FLAG_HEARTSIGIL_BYTE(255) | FLAG_LIFT_BYTE(255))
 
 #if CORRUPT_CELL_HEADERS_ONLY
     #define Init_Unreadable_Untracked_Evil_Macro(out) do { \
@@ -786,9 +786,9 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
     u_cast(Context*, nullptr)  // using a stub did not improve performance [1]
 
 
-//=//// HOOKABLE TYPE_BYTE() ACCESSOR /////////////////////////////////////=//
+//=//// HOOKABLE LIFT_BYTE() ACCESSOR /////////////////////////////////////=//
 //
-// This mechanism captures manipulations of the TYPE_BYTE() to be sure the
+// This mechanism captures manipulations of the LIFT_BYTE() to be sure the
 // bad forms don't get made.  Arbitrary hooks can be put here that can be
 // helpful during impromptu debugging.
 //
@@ -797,12 +797,12 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
 //
 // 2. Not all datatypes have quasiforms/antiforms (e.g. ~/foo/~ is a PATH!
 //    with a Quasi-Space in the first and last slots, not a quasiform).  To
-//    help avoid casual assignments to TYPE_BYTE() of the 2 and 4 values
+//    help avoid casual assignments to LIFT_BYTE() of the 2 and 4 values
 //    we prohibit them in certain builds, requiring TYPE_BYTE_RAW() to be
 //    used if you are truly sure it's safe.
 //
 
-INLINE void Tweak_Cell_Type_Byte(Cell* cell, Option(TypeEnum) t) {
+INLINE void Tweak_Cell_Lift_Byte(Cell* cell, Option(TypeEnum) t) {
   #if DEBUG_HOOK_TYPE_BYTE
     if (ii_cast(TypeEnum, t) == TYPE_0_constexpr) {  // extension type with no Sigil
         assert(HEARTSIGIL_BYTE(cell) == 0);
@@ -833,12 +833,12 @@ INLINE void Tweak_Cell_Type_Byte(Cell* cell, Option(TypeEnum) t) {
         // no checks at present
     }
     else {
-        assert(!"Bad TYPE_BYTE() value");
+        assert(!"Bad LIFT_BYTE() value");
     }
   #endif  // DEBUG_HOOK_TYPE_BYTE
 
     Assert_Cell_Unshielded_If_Tracking(cell);
-    TYPE_BYTE(cell) = Byte_From_Type(t);
+    LIFT_BYTE(cell) = Byte_From_Type(t);
 }
 
 
@@ -862,11 +862,11 @@ INLINE void Tweak_Cell_Type_Byte(Cell* cell, Option(TypeEnum) t) {
         if (Type_Of_Raw(v) < MIN_TYPE_HEART) {  // raw [1]
             possibly(Type_Of_Raw(v) == TYPE_0_constexpr);  // no Sigil if so
             assert(
-                (HEARTSIGIL_BYTE(v) >> BYTE_SIGIL_SHIFT) == TYPE_BYTE(v)
+                (HEARTSIGIL_BYTE(v) >> BYTE_SIGIL_SHIFT) == LIFT_BYTE(v)
             );
         }
         else if (Type_Of_Raw(v) <= MAX_TYPE_NOQUOTE_NOQUASI) {
-            assert(HEARTSIGIL_BYTE(v) == TYPE_BYTE(v));
+            assert(HEARTSIGIL_BYTE(v) == LIFT_BYTE(v));
         }
         else if (Type_Of_Raw(v) == TYPE_QUASIFORM) {
             /* assert(Any_Sequencable_Heart(Unchecked_Heart_Of(v))); */  // ?
@@ -998,10 +998,10 @@ INLINE void Reset_Cell_Header(Cell* c, uintptr_t flags)
 {
     if (  // SECOND_BYTE is TYPE_BYTE, THIRD_BYTE is HEARTSIGIL_BYTE
         (
-            (flags & FLAG_TYPE_BYTE(0xFF))
+            (flags & FLAG_LIFT_BYTE(0xFF))
                 <= i_cast(uintptr_t, MAX_TYPE_NOQUOTE_NOQUASI)
         ) and (
-            (flags & FLAG_TYPE_BYTE(0xFF))
+            (flags & FLAG_LIFT_BYTE(0xFF))
                 > i_cast(uintptr_t, MIN_TYPE_HEART)
         )
     ){

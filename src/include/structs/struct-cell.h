@@ -206,7 +206,7 @@ typedef Byte HeartsigilByte;  // help document when Byte is Heart + Sigil [1]
 // The HEARTSIGIL_BYTE() is structured so that the top two bits of the byte are
 // used for the "Sigil".  This can be [$ @ ^] or nothing.
 //
-// The TYPE_BYTE() values are chosen so that the non-quoted/quasi Sigilized
+// The LIFT_BYTE() values are chosen so that the non-quoted/quasi Sigilized
 // value states are the 1, 2, and 3 values.
 //
 
@@ -225,11 +225,14 @@ typedef Byte HeartsigilByte;  // help document when Byte is Heart + Sigil [1]
 //=//// BITS 16-23: TYPE AND QUOTE/QUASI/ANTI/DUAL BYTE ("LIFT") //////////=//
 //
 // A Cell's underlying "HEART" can report it as something like TYPE_WORD, but
-// that is only reported as the result of Type_Of() when TYPE_BYTE() is also
-// TYPE_WORD.  Higher TYPE_BYTE() will give back various TYPE_XXX answers
+// that is only reported as the result of Type_Of() when LIFT_BYTE() is also
+// TYPE_WORD.  Higher LIFT_BYTE() will give back various TYPE_XXX answers
 // corresponding to the quoted, quasiform, or antiform states.
 //
-// Due to how it's designed, the TYPE_BYTE() gives back the answer to what
+// (Note: the name "LIFT_BYTE" is kept because "TYPE_BYTE" could be easily
+// seen as a type enumeration state, like "TYPE_INTEGER" or "TYPE_BLOCK".)
+//
+// Due to how it's designed, the LIFT_BYTE() gives back the answer to what
 // a Cell's Type_Of() is with a single byte read.  But different quoting and
 // quasiform combinations will give distinct answers, so there is no canon
 // value of TYPE_QUOTED.  This means comparing Type values directly doesn't
@@ -242,24 +245,24 @@ typedef Byte HeartsigilByte;  // help document when Byte is Heart + Sigil [1]
 //
 // 1. There's a complex runtime check to ensure coherence in the lift byte
 //    with the rest of the cell, which is triggered in some C++ builds when
-//    you use TYPE_BYTE() directly.  This raw accessor is used to implement
+//    you use LIFT_BYTE() directly.  This raw accessor is used to implement
 //    that layer, and can also be used for efficiency in some cases that
 //    want to subvert those checks.
 //
 // 2. The reason the third byte is used for the TYPE_BYTE is so that the
 //    second byte can be a zero to signal END while still being able to
 //    check a byte that is multiplexed as either TYPE_BLANK for a canon END
-//    that fits in a Cell or the type byte of the actual cell.  This speeds
+//    that fits in a Cell or the lift byte of the actual cell.  This speeds
 //    up a check for either an END or a BLANK in the Stepper_Executor().  It
 //    isn't fundamental but it's a nice optimization, all things being equal.
 
 typedef Byte TypeByte;   // any byte value (but represents a Type/Lift)
 
-#define TYPE_BYTE(cell) /* don't go through Tweak_Cell_Type_Byte() [1] */ \
+#define LIFT_BYTE(cell) /* don't go through Tweak_Cell_Lift_Byte() [1] */ \
     THIRD_BYTE(&(cell)->header.bits)  // third byte for g_cell_aligned_end [2]
 
 #define Type_Of_Raw(v) \
-    i_cast(Type, TYPE_BYTE(v))
+    i_cast(Type, LIFT_BYTE(v))
 
 
 
@@ -271,7 +274,7 @@ typedef Byte TypeByte;   // any byte value (but represents a Type/Lift)
 #define Type_From_Heart(h) \
     Type_From_Byte(Byte_From_Heart(h))
 
-#define FLAG_TYPE_BYTE(type) \
+#define FLAG_LIFT_BYTE(type) \
     FLAG_THIRD_BYTE(exactly(int, (type)))
 
 #define FLAG_TYPE(type) \
@@ -281,7 +284,7 @@ typedef Byte TypeByte;   // any byte value (but represents a Type/Lift)
     FLAG_THIRD_BYTE(192)  // 128 + 64, the 2 high bits set
 
 #define CELL_MASK_HEART_AND_SIGIL_AND_LIFT \
-    (CELL_MASK_HEART_AND_SIGIL | FLAG_TYPE_BYTE(255))
+    (CELL_MASK_HEART_AND_SIGIL | FLAG_LIFT_BYTE(255))
 
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//

@@ -76,11 +76,11 @@
 // Datatypes cache a byte of their datatype in the array of the FENCE!.
 // This is only available on antiforms, which are canonized from arbitrary
 // FENCE!s created by the user to the ones made in Startup_Datatypes() which
-// have the DATATYPE_BYTE() set.
+// have the DATALIFT_BYTE() set.
 //
 // Non-builtin types will give zero (Datatype_Type() returns an Option(Type))
 //
-#define DATATYPE_BYTE(source) \
+#define DATALIFT_BYTE(source) \
     SECOND_BYTE(&FLEX_INFO(source))
 
 
@@ -122,7 +122,7 @@ INLINE RebolValue* Register_Datatype(const char* name)  // return "holder" [1]
 
     Init(Slot) slot = Append_Context(g_datatypes_context, symbol);
     Stable* datatype = Init_Fence(slot, a);
-    Tweak_Cell_Type_Byte(datatype, TYPE_DATATYPE);
+    Tweak_Cell_Lift_Byte(datatype, TYPE_DATATYPE);
 
     Copy_Cell(result, datatype);
     return rebUnmanage(result);
@@ -175,11 +175,11 @@ INLINE Option(SymId) Datatype_Id(const Stable* v) {
 
 // 1. When a user writes (type: anti '{integer!}) then converting to an
 //    antiform is what canonizes the fence's array to one that has the
-//    DATATYPE_BYTE() set.  So you can only ask this of antiforms.
+//    DATALIFT_BYTE() set.  So you can only ask this of antiforms.
 //
 INLINE Option(Type) Datatype_Type(const Stable* v) {
     assert(Is_Datatype(v));  // only works on antiform [1]
-    return Type_From_Byte(DATATYPE_BYTE(Cell_Array(v)));
+    return Type_From_Byte(DATALIFT_BYTE(Cell_Array(v)));
 }
 
 #if RUNTIME_CHECKS

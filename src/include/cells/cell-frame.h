@@ -301,7 +301,7 @@ INLINE Element* Init_Frame_Untracked(
 INLINE Value* Activate_Frame_Core(Value* v) {
     assert(Is_Possibly_Unstable_Value_Frame(v));
     Force_Phase_Final(Frame_Phase(v));
-    Tweak_Cell_Type_Byte(v, TYPE_ACTION);
+    Tweak_Cell_Lift_Byte(v, TYPE_ACTION);
     return v;
 }
 
@@ -315,7 +315,7 @@ INLINE Value* Activate_Frame_Core(Value* v) {
 
 INLINE Element* Deactivate_Action(Exact(Value*) v) {
     assert(Is_Action(v));
-    Tweak_Cell_Type_Byte(v, TYPE_FRAME);
+    Tweak_Cell_Lift_Byte(v, TYPE_FRAME);
     return As_Element(v);
 }
 

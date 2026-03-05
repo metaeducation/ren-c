@@ -130,7 +130,7 @@ INLINE bool Is_Bedrock_Dual_A_Drain(const Dual* dual) {
 
 INLINE Slot* Init_Bedrock_Drain(Init(Slot) out) {
     Init_Space(out);
-    Tweak_Cell_Type_Byte(out, TYPE_BEDROCK_DRAIN);
+    Tweak_Cell_Lift_Byte(out, TYPE_BEDROCK_DRAIN);
     return out;
 }
 
@@ -424,11 +424,11 @@ INLINE void Coerce_To_Bedrock(Slot* slot) {
       case TYPE_RUNE:
         if (not Is_Space(As_Element(slot)))
             goto not_valid_bedrock;
-        Tweak_Cell_Type_Byte(slot, TYPE_BEDROCK_DRAIN);
+        Tweak_Cell_Lift_Byte(slot, TYPE_BEDROCK_DRAIN);
         break;
 
       case TYPE_PARAMETER:
-        Tweak_Cell_Type_Byte(slot, TYPE_BEDROCK_HOLE);
+        Tweak_Cell_Lift_Byte(slot, TYPE_BEDROCK_HOLE);
         break;
 
       case TYPE_METAFORM:
@@ -442,11 +442,11 @@ INLINE void Coerce_To_Bedrock(Slot* slot) {
         ){
             goto not_valid_bedrock;
         }
-        Tweak_Cell_Type_Byte(slot, TYPE_BEDROCK_ALIAS);
+        Tweak_Cell_Lift_Byte(slot, TYPE_BEDROCK_ALIAS);
         break;
 
       case TYPE_FRAME:
-        Tweak_Cell_Type_Byte(slot, TYPE_BEDROCK_ACCESSOR);
+        Tweak_Cell_Lift_Byte(slot, TYPE_BEDROCK_ACCESSOR);
         break;
 
       default:

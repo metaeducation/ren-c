@@ -458,7 +458,7 @@ for-each 'symbol cond try ext-header.extended-types [
             Datatype_Extra_Heart(As_Stable(DATATYPE_HOLDER(${Is_Xxx})))
 
         INLINE bool ${Is_Xxx}(const Cell* cell) {
-            if (TYPE_BYTE(cell))  /* non-zero for builtin types, quoted.. */
+            if (LIFT_BYTE(cell))  /* non-zero for builtin types, quoted.. */
                 return false;
 
             return Cell_Extra_Heart(cell) == EXTRA_HEART_$<STEM>;

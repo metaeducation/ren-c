@@ -1009,7 +1009,7 @@ Element* Init_Loop_Each_May_Alias_Data(
 
     if (Is_Lifted_Action(data)) {
         Copy_Cell(data_arg, data);
-        Tweak_Cell_Type_Byte(data_arg, TYPE_ACTION);
+        Tweak_Cell_Lift_Byte(data_arg, TYPE_ACTION);
 
         les->took_hold = false;
         les->more_data = true;  // !!! Needs to do first call

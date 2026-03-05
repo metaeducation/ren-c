@@ -1085,7 +1085,7 @@ static Result(REBIXO) To_Thru_Non_Block_Rule(
         else if (Is_Lifted_Datatype(rule)) {
             DECLARE_ELEMENT (rule_value);
             Copy_Cell(rule_value, rule);
-            Tweak_Cell_Type_Byte(rule_value, TYPE_QUASIFORM);
+            Tweak_Cell_Lift_Byte(rule_value, TYPE_QUASIFORM);
 
             require (
               Init_Typechecker(temp, rule_value)

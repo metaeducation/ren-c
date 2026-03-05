@@ -67,7 +67,7 @@ DECLARE_NATIVE(MAKE)
 //
 Bounce Copy_Quoter_Executor(Level* level_)
 {
-    Tweak_Cell_Type_Byte(OUT, Type_From_Byte(STATE));
+    Tweak_Cell_Lift_Byte(OUT, Type_From_Byte(STATE));
 
     return OUT;
 }
@@ -116,7 +116,7 @@ DECLARE_NATIVE(COPY)
 
         UNUSED(ARG(DEEP));  // historically we ignore it
 
-        Tweak_Cell_Type_Byte(elem, lift);  // restore
+        Tweak_Cell_Lift_Byte(elem, lift);  // restore
         return COPY_TO_OUT(elem);
     }
 

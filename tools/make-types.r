@@ -618,7 +618,7 @@ do-appends // [
 === "CREATE THE QUOTING PSEUDOTYPES (UP THRU 192)" ===
 
 ; Up to 64 levels of quoting are implemented by reserving 65-192 in the
-; type byte (half the states encode that the quoted thing is a quasiform too).
+; lift byte (half the states encode that the quoted thing is a quasiform too).
 
 num-quotes: 1
 is-quasi: null
@@ -760,7 +760,7 @@ index: save-index
 
 === "RANGE CHECKS" ===
 
-; These should ideally probably use the optimized type bytes that are for
+; These should ideally probably use the optimized lift bytes that are for
 ; the quoted ranges, perhaps saving all the upper 64 states for special
 ; states and modes.  But review.
 
@@ -881,8 +881,8 @@ e-hearts/emit [rebs --[
     /*
      * SIGILS
      *
-     * META (^) PIN (@) and TIE ($) are chosen in sync with the type bytes
-     * so that 1, 2, and 3 of the TYPE_BYTE can be unlifted Sigilized states.
+     * META (^) PIN (@) and TIE ($) are chosen in sync with the lift bytes
+     * so that 1, 2, and 3 of LIFT_BYTE() can be unlifted Sigilized states.
      *
      * Note: It has been shown that picking weird values of the Sigil at
      * the shifted position is *slightly* faster, since FLAG_SIGIL(...) does

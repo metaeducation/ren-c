@@ -250,13 +250,13 @@ INLINE Stable* Spread_Cell(Exact(Stable*) v) {
     assert(Any_List(v));
     Tweak_Cell_Heart(v, HEART_BLOCK_SIGNIFYING_SPLICE);  // forget former type
     Tweak_Cell_Binding(u_cast(Element*, v), UNBOUND);
-    Tweak_Cell_Type_Byte(v, TYPE_SPLICE);
+    Tweak_Cell_Lift_Byte(v, TYPE_SPLICE);
     return v;
 }
 
 INLINE Element* Unsplice_Cell(Stable* v) {
     assert(Is_Splice(v));
-    Tweak_Cell_Type_Byte(v, TYPE_BLOCK);
+    Tweak_Cell_Lift_Byte(v, TYPE_BLOCK);
     return As_Element(v);
 }
 

@@ -401,7 +401,7 @@ DECLARE_NATIVE(PACK)
 
     assert(Is_Possibly_Unstable_Value_Block(OUT));
     Tweak_Cell_Type_Matching_Heart(As_Element(OUT), HEART_GROUP);
-    Tweak_Cell_Type_Byte(OUT, TYPE_PACK);
+    Tweak_Cell_Lift_Byte(OUT, TYPE_PACK);
     return OUT;
 }
 

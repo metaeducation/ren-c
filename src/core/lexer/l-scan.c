@@ -3086,7 +3086,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         if (Byte_From_Type(Type_Of_Raw(head)) & NONQUASI_BIT)
             Clear_Cell_Quotes_And_Quasi(head);
         else
-            Tweak_Cell_Type_Byte(head, TYPE_QUASIFORM);
+            Tweak_Cell_Lift_Byte(head, TYPE_QUASIFORM);
     }
 
     if (Type_Of_Raw(head) != TYPE_QUASIFORM)
@@ -3129,7 +3129,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         Add_Cell_Sigil(TOP_ELEMENT, unwrap sigil_before);
 
     if (quotes_before != 0)
-        Tweak_Cell_Type_Byte(TOP_ELEMENT, Type_From_Byte(
+        Tweak_Cell_Lift_Byte(TOP_ELEMENT, Type_From_Byte(
             NOQUOTE_63 + Quote_Shift(quotes_before)
         ));
 

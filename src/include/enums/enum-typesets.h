@@ -64,7 +64,7 @@ INLINE bool Is_Stable_Antiform_Heart(Heart heart) {
 //
 // Note that the Heart_Of() is what is being tested--e.g. the type that the
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
-// indicators in the TYPE_BYTE() do not affect it.
+// indicators in the LIFT_BYTE() do not affect it.
 
 #define Heart_Implies_Extra_Needs_Mark(opt_heart) \
     ((opt opt_heart) >= HEART_VARARGS)
@@ -74,7 +74,7 @@ INLINE bool Is_Stable_Antiform_Heart(Heart heart) {
 //
 // Note that the HEARTSIGIL_BYTE() is what is being tested--e.g. the type that the
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
-// indicators in the TYPE_BYTE() do not affect it.
+// indicators in the LIFT_BYTE() do not affect it.
 //
 // 1. To make this macro fast, we assume the caller passes in Option(Heart)
 //    and use compile-time-ensure to avoid an inline function.

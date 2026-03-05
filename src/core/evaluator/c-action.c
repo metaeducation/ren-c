@@ -1150,7 +1150,7 @@ Result(None) Push_Action(
     );
 
     FORCE_TRACK_0(L->rootvar)->header.bits
-        = (frame->header.bits & (~ FLAG_TYPE_BYTE(255)))
+        = (frame->header.bits & (~ FLAG_LIFT_BYTE(255)))
             | FLAG_TYPE(TYPE_FRAME);  // canonize as FRAME!
     L->rootvar->extra = frame->extra;
     L->rootvar->payload = frame->payload;

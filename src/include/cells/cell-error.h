@@ -77,12 +77,12 @@ INLINE void Force_Location_Of_Error(Error* error, Level* L) {
 INLINE Value* Failify_Cell_And_Force_Location(Exact(Value*) v) {
     assert(Is_Possibly_Unstable_Value_Error(v));
     Force_Location_Of_Error(Cell_Error(v), TOP_LEVEL);  // ideally a noop
-    Tweak_Cell_Type_Byte(v, TYPE_FAILURE);
+    Tweak_Cell_Lift_Byte(v, TYPE_FAILURE);
     return v;  // ERROR! => FAILURE!
 }
 
 INLINE Element* Disarm_Failure(Exact(Value*) v) {  // FAILURE! => ERROR!
     assert(Is_Failure(v));
-    Tweak_Cell_Type_Byte(v, TYPE_ERROR);
+    Tweak_Cell_Lift_Byte(v, TYPE_ERROR);
     return As_Element(v);
 }

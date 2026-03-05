@@ -23,9 +23,9 @@
 // they are decorations that can be applied to any plain form.  Unlike
 // quoting, they can be applied only once...so there is no $$ or @$
 //
-// Sigils (or their absence) are represented via 2 bits in the HEARTSIGIL_BYTE().
+// Sigils (or their absence) are stored via 2 bits in the HEARTSIGIL_BYTE().
 // This limits the number of fundamental types to 60 (as TYPE_0 is reserved
-// for representing an extension type, and 3 type bytes are reserved for
+// for representing an extension type, and 3 LIFT_BYTE() are reserved for
 // the Sigil pseudotypes).  This limitation is not of much concern in the
 // modern system, as extension types allow making as many as are required.
 //
@@ -96,7 +96,7 @@ INLINE bool Any_Sigiled_Type(Option(Type) t)
 INLINE Option(Sigil) Sigil_Of(const Element* v) {
     assert(Type_Of_Raw(v) <= MAX_TYPE_NOQUOTE_NOQUASI);
     if (Type_Of_Raw(v) <= MAX_TYPE_SIGIL) {
-        assert((HEARTSIGIL_BYTE(v) >> BYTE_SIGIL_SHIFT) == TYPE_BYTE(v));
+        assert((HEARTSIGIL_BYTE(v) >> BYTE_SIGIL_SHIFT) == LIFT_BYTE(v));
         return Sigil_From_Type(Type_Of_Raw(v));  // cheap to reuse type :-/
     }
     assert(not (v->header.bits & CELL_MASK_SIGIL));
@@ -159,7 +159,7 @@ INLINE Element* Clear_Cell_Sigil(Element* v) {
     if (Type_Of_Raw(v) <= MAX_TYPE_SIGIL) {
         assert(v->header.bits & CELL_MASK_SIGIL or not Type_Of_Raw(v));
         HEARTSIGIL_BYTE(v) &= HEARTSIGIL_BYTEMASK_HEART;
-        Tweak_Cell_Type_Byte(
+        Tweak_Cell_Lift_Byte(
             v,
             Type_From_Byte(HEARTSIGIL_BYTE(v))  // *after* sigil removed
         );
@@ -179,7 +179,7 @@ INLINE Element* Add_Cell_Sigil(Element* v, Sigil sigil) {
     );
     assert(Any_Sigilable(v));
     v->header.bits |= FLAG_SIGIL(sigil);
-    Tweak_Cell_Type_Byte(v, Type_From_Sigil(sigil));
+    Tweak_Cell_Lift_Byte(v, Type_From_Sigil(sigil));
     return v;
 }
 
@@ -210,12 +210,12 @@ INLINE Option(char) Char_For_Sigil(Option(Sigil) sigil) {
 
 INLINE void Tweak_Cell_Type_Matching_Heart(Cell* v, Heart heart) {
     Tweak_Cell_Heart(v, heart);
-    Tweak_Cell_Type_Byte(v, Type_From_Heart(heart));
+    Tweak_Cell_Lift_Byte(v, Type_From_Heart(heart));
 }
 
 INLINE void Tweak_Cell_Quoted_Type(Cell* v, Heart heart) {
     Tweak_Cell_Heart(v, heart);
-    Tweak_Cell_Type_Byte(v, TYPE_QUOTED_1_TIME_NONQUASI);
+    Tweak_Cell_Lift_Byte(v, TYPE_QUOTED_1_TIME_NONQUASI);
 }
 
 INLINE void Tweak_Cell_Type_Matching_Heartsigil(
@@ -225,5 +225,5 @@ INLINE void Tweak_Cell_Type_Matching_Heartsigil(
 ){
     assert(sigil);
     Tweak_Cell_Heart_And_Sigil(cell, heart, sigil);
-    Tweak_Cell_Type_Byte(cell, Type_From_Sigil(sigil));
+    Tweak_Cell_Lift_Byte(cell, Type_From_Sigil(sigil));
 }

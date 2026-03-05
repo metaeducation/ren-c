@@ -151,7 +151,7 @@ static void Push_Composer_Level(
         );
 
         if (Type_Of_Raw(list_or_seq) > MAX_TYPE_NOQUOTE_NOQUASI)
-            Tweak_Cell_Type_Byte(adjusted, lift);  // restore
+            Tweak_Cell_Lift_Byte(adjusted, lift);  // restore
     }
     else if (Is_Splice(list_or_seq))
         Copy_Lifted_Cell(adjusted, list_or_seq);  // make it a quasiform
@@ -258,7 +258,7 @@ static Result(Stable*) Finalize_Composer_Level(
         Option(Sigil) sigil = Cell_Underlying_Sigil(composee);
         if (sigil)
             Add_Cell_Sigil(out_list, unwrap sigil);
-        Tweak_Cell_Type_Byte(out_list, Type_Of_Raw(composee));  // add lift [4]
+        Tweak_Cell_Lift_Byte(out_list, Type_Of_Raw(composee));  // add lift [4]
     }
 
     return out;
@@ -398,7 +398,7 @@ Bounce Composer_Executor(Level* const L)
         Init_Blank(PUSH());
         if (sigil)
             Add_Cell_Sigil(TOP_ELEMENT, unwrap sigil);  // ^ or @ or $
-        Tweak_Cell_Type_Byte(TOP_ELEMENT, list_lift);
+        Tweak_Cell_Lift_Byte(TOP_ELEMENT, list_lift);
 
         goto handle_next_item;
     }
@@ -424,7 +424,7 @@ Bounce Composer_Executor(Level* const L)
                 panic ("Can't COMPOSE antiforms into ~(...)~ slots");
 
             Copy_Lifted_Cell(PUSH(), OUT);
-            Tweak_Cell_Type_Byte(TOP, list_lift);
+            Tweak_Cell_Lift_Byte(TOP, list_lift);
             goto handle_next_item;
         }
 
@@ -473,7 +473,7 @@ Bounce Composer_Executor(Level* const L)
             panic (
                 "COMPOSE cannot quasify items not at quote level 0"
             );
-        Tweak_Cell_Type_Byte(TOP, list_lift);
+        Tweak_Cell_Lift_Byte(TOP, list_lift);
     }
 
     if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))  // newline from group [1]

@@ -19,7 +19,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Cells reserve a byte in their header called the TYPE_BYTE().  The most
+// Cells reserve a byte in their header called the LIFT_BYTE().  The most
 // basic usage is that any value can be "quote" escaped.  The depth is the
 // number of apostrophes, e.g. ''''X is a depth of 4.  The operator QUOTE can
 // be used to add a quoting level to a value, UNQUOTE to remove one, and
@@ -31,7 +31,7 @@
 //     >> noquote first ['''''a]
 //     == a
 //
-// But the TYPE_BYTE() is used to encode other states as well: some datatypes
+// But the LIFT_BYTE() is used to encode other states as well: some datatypes
 // (besides QUOTED! itself) have an "antiform" form as well as a "quasi" form.
 // The quasi form will evaluate to the antiform, and the antiform is expressly
 // prohibited from being put in lists.
@@ -113,11 +113,11 @@ INLINE Element* Quotify_Depth(Element* v, Count depth) {
         panic ("Quoting Depth of 64 Exceeded");
 
     if (Type_Of_Raw(v) <= MAX_TYPE_NOQUOTE_NOQUASI)
-        TYPE_BYTE(v) = NOQUOTE_63;
+        LIFT_BYTE(v) = NOQUOTE_63;
     else
         possibly(Type_Of_Raw(v) == TYPE_QUASIFORM);  // want to keep quasi bit
 
-    TYPE_BYTE(v) += Quote_Shift(depth);
+    LIFT_BYTE(v) += Quote_Shift(depth);
 
     return v;
 }
@@ -127,14 +127,14 @@ INLINE Element* Quotify_Depth(Element* v, Count depth) {
 INLINE Element* Unquote_Quoted_Cell(Element* v) {
     assert(Type_Of_Raw(v) > MAX_TYPE_NOQUOTE_QUASI_OK);
 
-    TYPE_BYTE(v) -= Quote_Shift(1);
+    LIFT_BYTE(v) -= Quote_Shift(1);
     possibly(Type_Of_Raw(v) == TYPE_QUASIFORM);
-    if (TYPE_BYTE(v) == NOQUOTE_63) {
+    if (LIFT_BYTE(v) == NOQUOTE_63) {
         Sigil sigil = Sigil_From_Crumb(HEARTSIGIL_BYTE(v) >> BYTE_SIGIL_SHIFT);
         if (sigil)
-            Tweak_Cell_Type_Byte(v, Type_From_Sigil(sigil));
+            Tweak_Cell_Lift_Byte(v, Type_From_Sigil(sigil));
         else
-            Tweak_Cell_Type_Byte(v, Type_From_Heart(Heart_Of(v)));
+            Tweak_Cell_Lift_Byte(v, Type_From_Heart(Heart_Of(v)));
     }
     return v;
 }
@@ -144,7 +144,7 @@ INLINE void Normalize_Cell(Cell* cell) {  // drop quoted/quasi/anti, keep sigil
     if (Type_Of_Raw(cell) < MIN_TYPE_HEART) {
         possibly(Type_Of_Raw(cell) == TYPE_0_constexpr);  // extended, no Sigil
         assert(
-            (HEARTSIGIL_BYTE(cell) >> BYTE_SIGIL_SHIFT) == TYPE_BYTE(cell)
+            (HEARTSIGIL_BYTE(cell) >> BYTE_SIGIL_SHIFT) == LIFT_BYTE(cell)
         );
     }
     else if (Type_Of_Raw(cell) <= MAX_TYPE_HEART) {  // no Sigil, equal
@@ -159,9 +159,9 @@ INLINE void Normalize_Cell(Cell* cell) {  // drop quoted/quasi/anti, keep sigil
             HEARTSIGIL_BYTE(cell) >> BYTE_SIGIL_SHIFT
         );
         if (sigiled_type)
-            Tweak_Cell_Type_Byte(cell, sigiled_type);
+            Tweak_Cell_Lift_Byte(cell, sigiled_type);
         else
-            Tweak_Cell_Type_Byte(cell, Type_From_Heart(Heart_Of(cell)));
+            Tweak_Cell_Lift_Byte(cell, Type_From_Heart(Heart_Of(cell)));
     }
 }
 
@@ -175,7 +175,7 @@ INLINE Count Noquotify_Cell(Element* elem) {
     if (Byte_From_Type(Type_Of_Raw(elem)) & NONQUASI_BIT)
         Clear_Cell_Quotes_And_Quasi(elem);  // no quasi to remove, so it's ok
     else
-        Tweak_Cell_Type_Byte(elem, TYPE_QUASIFORM);  // already quasi
+        Tweak_Cell_Lift_Byte(elem, TYPE_QUASIFORM);  // already quasi
     return quotes;
 }
 
@@ -371,7 +371,7 @@ INLINE Element* Unquasify(Element* elem) {
 
 INLINE Element* Quasify_Antiform(Exact(Stable*) v) {
     assert(Is_Antiform(v));
-    Tweak_Cell_Type_Byte(v, TYPE_QUASIFORM);  // all antiforms can be quasi
+    Tweak_Cell_Lift_Byte(v, TYPE_QUASIFORM);  // all antiforms can be quasi
     return u_cast(Element*, v);
 }
 
@@ -379,7 +379,7 @@ INLINE Element* Reify_If_Antiform(Value* v) {
     if (Type_Of_Raw(v) < MIN_TYPE_ANTIFORM)
         return As_Element(v);
     assert(Type_Of_Raw(v) < MIN_TYPE_BEDROCK);
-    Tweak_Cell_Type_Byte(v, TYPE_QUASIFORM);  // all antiforms can become quasi
+    Tweak_Cell_Lift_Byte(v, TYPE_QUASIFORM);  // all antiforms can become quasi
     return As_Element(v);
 }
 
@@ -415,7 +415,7 @@ INLINE Dual* Lift_Cell(Value* v) {
         return As_Dual(Quote_Cell(As_Element(v)));  // non-antiform -> quoted
 
     assert(Type_Of_Raw(v) < MIN_TYPE_BEDROCK);
-    Tweak_Cell_Type_Byte(v, TYPE_QUASIFORM);  // unstable+stable become quasi
+    Tweak_Cell_Lift_Byte(v, TYPE_QUASIFORM);  // unstable+stable become quasi
     return As_Dual(v);
 }
 

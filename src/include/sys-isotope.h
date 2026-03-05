@@ -57,7 +57,7 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
   // on purpose--to reserve the meanings for future use.
 
     if (
-        (elem->header.bits & (FLAG_TYPE_BYTE(255) | CELL_MASK_SIGIL))
+        (elem->header.bits & (FLAG_LIFT_BYTE(255) | CELL_MASK_SIGIL))
             != FLAG_TYPE(TYPE_QUASIFORM)
     ){
         if (Type_Of(elem) != TYPE_QUASIFORM)
@@ -88,17 +88,17 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
         if (Frame_Lens(elem))
             Tweak_Frame_Lens_Or_Label(elem, ANONYMOUS);  // show only inputs
         Force_Phase_Final(Frame_Phase(elem));
-        Tweak_Cell_Type_Byte(v, TYPE_ACTION);
+        Tweak_Cell_Lift_Byte(v, TYPE_ACTION);
         break; }
 
       case HEART_BLOCK_SIGNIFYING_SPLICE: {
         Tweak_Cell_Binding(elem, UNBOUND);  // [1]
-        Tweak_Cell_Type_Byte(v, TYPE_SPLICE);
+        Tweak_Cell_Lift_Byte(v, TYPE_SPLICE);
         break; }
 
       case HEART_GROUP_SIGNIFYING_PACK: {
         Tweak_Cell_Binding(elem, UNBOUND);  // [1]
-        Tweak_Cell_Type_Byte(v, TYPE_PACK);
+        Tweak_Cell_Lift_Byte(v, TYPE_PACK);
         break; }
 
       case HEART_FENCE_SIGNIFYING_DATATYPE: {
@@ -116,18 +116,18 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
         }
         v->payload = Stub_Cell(unwrap patch)->payload;
         v->extra = Stub_Cell(unwrap patch)->extra;
-        Tweak_Cell_Type_Byte(v, TYPE_DATATYPE);
+        Tweak_Cell_Lift_Byte(v, TYPE_DATATYPE);
         break; }
 
       case HEART_WORD_SIGNIFYING_LOGIC: {
         Unbind_Any_Word(elem);  // [1]
         switch (opt Word_Id(elem)) {
           case SYM_OKAY:
-            Tweak_Cell_Type_Byte(v, TYPE_LOGIC_OKAY);
+            Tweak_Cell_Lift_Byte(v, TYPE_LOGIC_OKAY);
             break;
 
           case SYM_NULL:
-            Tweak_Cell_Type_Byte(v, TYPE_LOGIC_NULL);
+            Tweak_Cell_Lift_Byte(v, TYPE_LOGIC_NULL);
             break;
 
           default:
@@ -137,15 +137,15 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
 
       case HEART_TAG_SIGNIFYING_TRASH:
         Freeze_Flex(Cell_Strand(v));  // !!! intern if WORD-like! ?
-        Tweak_Cell_Type_Byte(v, TYPE_TRASH);
+        Tweak_Cell_Lift_Byte(v, TYPE_TRASH);
         break;
 
       case HEART_BLANK_SIGNIFYING_VOID:
-        Tweak_Cell_Type_Byte(v, TYPE_VOID);
+        Tweak_Cell_Lift_Byte(v, TYPE_VOID);
         break;
 
       case HEART_ERROR_SIGNIFYING_FAILURE:
-        Tweak_Cell_Type_Byte(v, TYPE_FAILURE);
+        Tweak_Cell_Lift_Byte(v, TYPE_FAILURE);
         break;
 
       default:
@@ -168,7 +168,7 @@ INLINE Result(Element*) Coerce_To_Quasiform(Element* v) {
         return fail (Error_Non_Isotopic_Type_Raw(v));
     }
 
-    Tweak_Cell_Type_Byte(v, TYPE_QUASIFORM);
+    Tweak_Cell_Lift_Byte(v, TYPE_QUASIFORM);
     return v;
 }
 

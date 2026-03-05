@@ -81,7 +81,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
     assert(Is_Action(action) or Is_Possibly_Unstable_Value_Frame(action));
     Cell* rootvar = Flex_Head_Dynamic(Element, a);
     Copy_Cell(rootvar, action);
-    Tweak_Cell_Type_Byte(rootvar, TYPE_FRAME);  // make sure it's a plain FRAME
+    Tweak_Cell_Lift_Byte(rootvar, TYPE_FRAME);  // make sure it's a plain FRAME
     Shield_Rootvar_If_Tracking(rootvar);
 
     const Key* tail;

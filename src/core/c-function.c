@@ -911,7 +911,7 @@ Details* Make_Dispatch_Details(
 
     Cell* rootvar = Array_Head(a);
     Copy_Cell(rootvar, exemplar);
-    Tweak_Cell_Type_Byte(rootvar, TYPE_FRAME);  // canonize ACTION! to FRAME!
+    Tweak_Cell_Lift_Byte(rootvar, TYPE_FRAME);  // canonize ACTION! to FRAME!
     Shield_Rootvar_If_Tracking(rootvar);
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)

@@ -11,7 +11,7 @@ these casts can do powerful checking, at both compile-time and runtime...
 * For casts that are allowed to compile, you can add runtime instrumentation
   that validates that the bit patterns in the pointed-to data are legitimate
   for the conversion.  So if you cast from an Value* to an Element*, it can
-  check to make sure that the TYPE_BYTE() of that Cell is not an antiform.
+  check to make sure that the LIFT_BYTE() of that Cell is not an antiform.
 
 * The rules and checks you make can be done with patterns, vs. having to list
   everything out manually.  The compiler can ask questions of the datatypes

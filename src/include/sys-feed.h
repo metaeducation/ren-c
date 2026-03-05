@@ -847,7 +847,7 @@ INLINE Result(Feed*) Prep_At_Feed(
 #define Next_Not_Word_Or_Is_Newline_Or_End(L) ( \
     (u_cast(Cell*, L->feed->p)->header.bits & ( /* g_cell_aligned_end? [1] */ \
         FLAG_HEARTSIGIL_BYTE(255) \
-            | FLAG_TYPE_BYTE(255) \
+            | FLAG_LIFT_BYTE(255) \
             | CELL_FLAG_NEWLINE_BEFORE \
     )) != ( \
         FLAG_HEART(HEART_WORD) /* CHAIN! or PATH!...worth it? [2] */ \
@@ -857,12 +857,12 @@ INLINE Result(Feed*) Prep_At_Feed(
 
 
 // Due to Feeds canonizing rebEND to g_cell_aligned_end, we can take advantage
-// of the type byte matching that of a BLANK! to test for both end and blank
+// of the lift byte matching that of a BLANK! to test for both end and blank
 // in one masking operation.
 //
 #define Next_Is_End_Or_Blank(L) ( \
     (u_cast(Cell*, L->feed->p)->header.bits & ( \
-        FLAG_TYPE_BYTE(255) \
+        FLAG_LIFT_BYTE(255) \
     )) == ( \
         FLAG_TYPE(TYPE_BLANK) \
     ))
