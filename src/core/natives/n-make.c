@@ -150,157 +150,6 @@ DECLARE_NATIVE(COPY)
 }
 
 
-#if RUNTIME_CHECKS
-
-#define CELL_FLAG_SPARE_NOTE_REVERSE_CHECKING CELL_FLAG_NOTE
-
-#define LEVEL_FLAG_CHECKING_TO  LEVEL_FLAG_MISCELLANEOUS
-
-//
-//  To_Or_As_Checker_Executor: C
-//
-Bounce To_Or_As_Checker_Executor(Level* const L)
-{
-    Heart to_or_as = Heart_From_Byte_Or_0(LEVEL_STATE_BYTE(L));
-    assert(to_or_as != HEART_0);
-
-    Element* spare_input = cast(Element*, Level_Spare(L));
-    Heart from = Heart_Of_Builtin_Fundamental(spare_input);
-
-    Value* scratch_reverse_atom = Level_Scratch(L);
-
-    if (Get_Cell_Flag(Level_Spare(L), SPARE_NOTE_REVERSE_CHECKING))
-        goto ensure_results_equal;
-
-    Erase_Cell(scratch_reverse_atom);
-    goto check_type_and_run_reverse_to;
-
-  check_type_and_run_reverse_to: {  //////////////////////////////////////////
-
-    if (Is_Throwing(L)) {
-        assert(L == TOP_LEVEL);  // sublevel automatically dropped
-        return BOUNCE_THROWN;
-    }
-
-    Level* level_ = TOP_LEVEL;  // sublevel stole the varlist
-    assert(level_->prior == L);
-
-    if (Is_Failure(OUT)) {
-        Drop_Level(level_);
-        return OUT;
-    }
-
-    require (  // should packs be legal?
-      Stable* out = Decay_If_Unstable(OUT)
-    );
-
-    if (Heart_Of_Fundamental(out) != to_or_as)
-        panic ("Forward TO/AS transform produced wrong type");
-
-    if (
-        Get_Level_Flag(L, CHECKING_TO)
-        and (Any_List(out) or Any_String(out) or Is_Blob(out))
-    ){
-        if (Is_Flex_Read_Only(Cell_Flex(out)))
-            panic ("TO transform of LIST/STRING/BLOB made immutable series");
-    }
-
-    // Reset TO_P sublevel to do reverse transformation
-
-    level_->executor = &Action_Executor;  // Drop_Action() nulled it
-    SymId id = Get_Level_Flag(L, CHECKING_TO) ? SYM_TO : SYM_AS;
-    require (
-      Push_Action(level_, Lib_Value(id), PREFIX_0)
-    );
-
-    INCLUDE_PARAMS_OF_TO;
-
-    Copy_Cell(Erase_ARG(TYPE), Datatype_From_Heart(from));
-    Copy_Cell(Erase_ARG(VALUE), out);
-
-    assert(Get_Executor_Flag(ACTION, level_, IN_DISPATCH));
-
-    if (SPORADICALLY(32)) {
-        Clear_Executor_Flag(ACTION, level_, IN_DISPATCH);
-        LEVEL_STATE_BYTE(level_) = ST_ACTION_TYPECHECKING;
-    } else {
-        Mark_Typechecked(ARG(TYPE));
-        Mark_Typechecked(ARG(VALUE));
-        STATE = STATE_0;
-    }
-
-    assert(Get_Level_Flag(level_, TRAMPOLINE_KEEPALIVE));
-    Clear_Level_Flag(level_, TRAMPOLINE_KEEPALIVE);
-
-    Set_Cell_Flag(Level_Spare(L), SPARE_NOTE_REVERSE_CHECKING);
-    level_->out = scratch_reverse_atom;  // don't overwrite OUT
-    return BOUNCE_CONTINUE;  // wasn't action, no DOWNSHIFT
-
-} ensure_results_equal: {  ///////////////////////////////////////////////////
-
-    USE_LEVEL_SHORTHANDS (L);  // didn't need to keepalive reverse sublevel
-
-    if (THROWING)
-        return BOUNCE_THROWN;
-
-    if (Is_Failure(scratch_reverse_atom))
-        panic (scratch_reverse_atom);
-
-    require (
-      Stable* scratch_reverse = Decay_If_Unstable(scratch_reverse_atom)
-    );
-
-    if (to_or_as == HEART_MAP) {  // doesn't preserve order requirement :-/
-        if (not Have_Same_Type(scratch_reverse, spare_input))
-            panic ("Reverse TO/AS of MAP! didn't produce original type");
-        return OUT;
-    }
-
-    bool equal_reversal = rebUnboxLogic(
-        CANON(EQUAL_Q), rebQ(spare_input), rebQ(scratch_reverse)
-    );
-
-    if (not equal_reversal)
-        panic ("Reverse TO/AS transform didn't produce original result");
-
-    if (to_or_as == from and Get_Level_Flag(L, CHECKING_TO)) {
-        bool equal_copy = rebUnboxLogic(
-            CANON(EQUAL_Q), rebQ(spare_input), CANON(COPY), rebQ(spare_input)
-        );
-        if (not equal_copy)
-            panic ("Reverse TO/AS transform not same as COPY");
-    }
-
-    return OUT;
-}}
-
-static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
-    INCLUDE_PARAMS_OF_TO;  // frame compatible with AS
-
-    Option(const Symbol*) label = Level_Label(level_);
-
-    Stable* datatype = ARG(TYPE);
-    STATE = Byte_From_Heart(Datatype_Builtin_Heart(datatype));  // may alter
-    Copy_Cell(SPARE, ARG(VALUE));  // may alter ELEMENT too, save in SPARE
-
-    Level* sub = Push_Downshifted_Level(OUT, level_);
-
-    assert(Not_Level_Flag(sub, TRAMPOLINE_KEEPALIVE));
-    Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);
-
-    level_->executor = &To_Or_As_Checker_Executor;
-
-    SymId id = Get_Level_Flag(level_, CHECKING_TO) ? SYM_TO : SYM_AS;
-
-    sub->u.action.original = Frame_Phase(Lib_Value(id));
-    Set_Action_Level_Label(sub, label);
-
-    return BOUNCE_DOWNSHIFTED;  // avoids trampoline, action executor updates L
-}
-
-#endif
-
-
 //
 //  /to: native:generic [
 //
@@ -392,22 +241,7 @@ DECLARE_NATIVE(TO)
 
     Element* e = Element_ARG(VALUE);
 
-  #if NO_RUNTIME_CHECKS
-
-    Bounce bounce = Dispatch_Generic(TO, e, LEVEL);
-    /*if (bounce == UNHANDLED)  // distinct error for AS or TO ?
-        return Error_Bad_Cast_Raw(ARG(VALUE), ARG(TYPE)); */
-    return bounce;
-
-  #else  // add monitor to ensure result is right
-
-    if (LEVEL->prior->executor == &To_Or_As_Checker_Executor)
-        return Dispatch_Generic(TO, e, LEVEL);
-
-    assert(Not_Level_Flag(LEVEL, CHECKING_TO));
-    Set_Level_Flag(LEVEL, CHECKING_TO);
-    return Downshift_For_To_Or_As_Checker(LEVEL);
-  #endif
+    return Dispatch_Generic(TO, e, LEVEL);
 }}
 
 
@@ -432,16 +266,104 @@ DECLARE_NATIVE(AS)
     if ((unwrap as) > MAX_TYPE_HEART)
         panic ("AS can't alias to quoted/quasiform/antiform");
 
-  #if NO_RUNTIME_CHECKS
-
     return Dispatch_Generic(AS, e, LEVEL);
+}
 
-  #else  // add monitor to ensure result is right
 
-    if (LEVEL->prior->executor == &To_Or_As_Checker_Executor)
-        return Dispatch_Generic(AS, e, TOP_LEVEL);
+//
+//  /check-to-or-as: native [
+//
+//  "Checked build utility that makes sure TO and AS are reversible"
+//
+//      return: [element?]
+//      frame [frame!]
+//  ]
+//
+DECLARE_NATIVE(CHECK_TO_OR_AS)
+{
+    INCLUDE_PARAMS_OF_CHECK_TO_OR_AS;
 
-    assert(Not_Level_Flag(LEVEL, CHECKING_TO));
-    return Downshift_For_To_Or_As_Checker(LEVEL);
-  #endif
+  #if (! RUNTIME_CHECKS)
+    crash ("CHECK-TO-OR-AS is only for checked builds");
+  #else
+    Element* frame = ARG(FRAME);
+
+    Phase* phase = Frame_Phase(frame);
+    assert(Is_Stub_Varlist(phase));
+    ParamList* varlist = cast(ParamList*, phase);
+    const Element* archetype = Varlist_Archetype(varlist);
+
+    Stable* type = As_Stable(Varlist_Slot(varlist, 1));  // we alter
+    Stable* v = As_Stable(Varlist_Slot(varlist, 2));  // we alter
+
+    enum {
+        ST_CHECK_TO_OR_AS_INITIAL_ENTRY = STATE_0,
+        // reverse state saves original TO enum type as the STATE
+        ST_CHECK_TO_OR_AS_CHECKING_FORWARD = 255
+    };
+
+    switch (STATE) {
+      case ST_CHECK_TO_OR_AS_INITIAL_ENTRY: goto initial_entry;
+      case ST_CHECK_TO_OR_AS_CHECKING_FORWARD: goto forward_result_in_out;
+      default: goto backward_result_in_spare;
+    }
+
+ initial_entry: { ///////////////////////////////////////////////////////////
+
+    STATE = ST_CHECK_TO_OR_AS_CHECKING_FORWARD;
+    return CONTINUE(OUT, frame);  // operates on copy, leaves frame intact
+
+} forward_result_in_out: {  //////////////////////////////////////////////////
+
+    if (Is_Datatype(v))  // skip reverse for DATATYPE! (review)
+        return OUT;
+
+    if (Is_Failure(OUT))
+        return OUT;  // don't enforce failure both directions (?)
+
+    Copy_Cell(SCRATCH, v);  // save original value being TO or AS'd from
+
+    Type to_or_as = unwrap Datatype_Type(type);
+    STATE = Byte_From_Type(to_or_as);  // save original TO/AS
+
+    Copy_Cell(type, Datatype_From_Type(unwrap Type_Of(v)));  // reverse
+    Copy_Cell(v, As_Stable(OUT));
+
+    return CONTINUE(SPARE, frame);  // !!! could consume this frame (how?)
+
+} backward_result_in_spare: {  ///////////////////////////////////////////////
+
+    TypeEnum to_or_as = Type_From_Byte_Or_0(STATE);
+    Stable* forward = As_Stable(SCRATCH);
+    TypeEnum from = unwrap Type_Of(forward);
+    Stable* backward = As_Stable(SPARE);
+
+    if (to_or_as == TYPE_MAP) {  // doesn't preserve order requirement :-/
+        if (not Have_Same_Type(forward, backward))
+            panic ("Reverse TO/AS of MAP! didn't produce original type");
+        return OUT;
+    }
+
+    bool equal_reversal = rebUnboxLogic(
+        CANON(EQUAL_Q), rebQ(forward), rebQ(backward)
+    );
+
+    if (not equal_reversal)
+        panic ("Reverse TO/AS transform didn't produce original result");
+
+    if (Frame_Label(archetype) == CANON(AS))
+        return OUT;
+
+    assert(Frame_Label(archetype) == CANON(TO));
+
+    if (to_or_as == from) {  // TO conversion check for COPY (review);
+        bool equal_copy = rebUnboxLogic(
+            CANON(EQUAL_Q), rebQ(forward), CANON(COPY), rebQ(backward)
+        );
+        if (not equal_copy)
+            panic ("Reverse TO/AS transform not same as COPY");
+    }
+
+    return OUT; }
+#endif
 }

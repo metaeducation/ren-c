@@ -752,6 +752,18 @@ void Startup_Natives(const Element* boot_natives)
     Count num_find_args = Phase_Num_Params(Frame_Phase(LIB(FIND)));
     assert(num_find_args == Phase_Num_Params(Frame_Phase(LIB(SELECT))));
   #endif
+
+} hook_to_and_as_for_reversibility_checks: {
+
+  // There was once some rather complex optimized code for debugging TO and
+  // AS, which basically implemented a kind of ENCLOSE.  But since ENCLOSE
+  // exists it's better to just use it...as optimizing something that only
+  // applies in debug builds with crazy mechanics isn't a good investment.
+
+  #if RUNTIME_CHECKS
+    rebElide("unprotect $to, /to: enclose to/ check-to-or-as/");
+    rebElide("unprotect $as, /as: enclose as/ check-to-or-as/");
+  #endif
 }}
 
 

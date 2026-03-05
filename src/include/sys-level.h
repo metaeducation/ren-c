@@ -972,7 +972,6 @@ INLINE void Native_Copy_Result_Untracked(Level* L, const Value* v) {
             temp = temp->prior;
             assert(
                 temp->executor == &Evaluator_Executor  // stepper [1]
-                or temp->executor == &To_Or_As_Checker_Executor
                 or temp->executor == &Cascader_Executor
                 or temp->executor == &Copy_Quoter_Executor
             );
