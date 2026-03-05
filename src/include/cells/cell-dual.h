@@ -291,12 +291,12 @@ INLINE bool Is_Bedrock_Dual_An_Alias(const Dual* dual) {
 INLINE bool Is_Alias_Core(const Cell* cell, Option(Type) lift) {
     return Cell_Has_Lift_Sigil_Heart(
         cell,
-        lift ? i_cast(TypeEnum, unwrap lift) : TYPE_WORD,
+        lift,
         SIGIL_META,
         HEART_WORD
     ) or Cell_Has_Lift_Sigil_Heart(
         cell,
-        lift ? i_cast(TypeEnum, unwrap lift) : TYPE_TUPLE,
+        lift,
         SIGIL_META,
         HEART_TUPLE
     );
@@ -306,7 +306,7 @@ INLINE bool Is_Alias_Core(const Cell* cell, Option(Type) lift) {
     (Type_Of_Raw(Possibly_Bedrock(cell)) == TYPE_BEDROCK_ALIAS)
 
 #define Is_Dual_Alias(dual) \
-    Is_Alias_Core(Known_Dual(dual), none)  // word or tuple
+    Is_Alias_Core(Known_Dual(dual), TYPE_METAFORM)  // word or tuple
 
 INLINE bool Is_Undecayed_Alias(const Value* v) {  // ~(^meta)~ PACK!
     const Dual* dual = Opt_Extract_Dual_If_Undecayed_Bedrock(v);

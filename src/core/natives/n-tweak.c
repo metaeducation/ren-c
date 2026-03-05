@@ -385,11 +385,15 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Writeback_Dual_In_Scratch_To_Spare(
   // an indirect poke--but not both at once.)
 
     if (Is_Bedrock_Dual_An_Accessor(dual_spare)) {  // FRAME!
-        Element* quoted = Copy_Cell(Level_Spare(sub), TOP_ELEMENT);
+        Element* quoted = Copy_Cell(
+            Level_Spare(sub), dual_writeback_scratch
+        );
         rebElide(dual_spare, quoted);  // quote suppresses eval
     }
     else if (Is_Bedrock_Dual_An_Alias(dual_spare)) {  // ^WORD!, ^TUPLE!
-        Element* quoted = Copy_Lifted_Cell(Level_Spare(sub), TOP_ELEMENT);
+        Element* quoted = Copy_Lifted_Cell(
+            Level_Spare(sub), dual_writeback_scratch
+        );
         Quote_Cell(dual_spare);
         rebElide(CANON(TWEAK), dual_spare, quoted);  // quote suppresses eval
     }
