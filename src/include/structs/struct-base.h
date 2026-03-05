@@ -84,10 +84,6 @@
 // and avoid conflating with legal UTF-8 states.  See BASE_FLAG_CELL for
 // how this is done.
 //
-// Additional non-UTF-8 states that have BASE_FLAG_UNREADABLE set are
-// BASE_BYTE_END, which uses 11000000, and BASE_BYTE_FREE, which uses
-// 110000001... which are the illegal UTF-8 bytes 192 and 193.
-//
 #define BASE_FLAG_UNREADABLE \
     FLAG_LEFT_BIT(1)
 #define BASE_BYTEMASK_0x40_UNREADABLE  0x40
@@ -223,20 +219,22 @@
 //
 //    11110xxx: Flags: NODE | UNREADABLE | GC_ONE | GC_TWO
 //
-// 0xF7 is used for BASE_BYTE_END
+// 0xF7 is used for BASE_BYTE_WILD (if the next byte is 0x00, this is "END")
 // 0xF6 is used for BASE_BYTE_FREE
-// 0xF5 is BASE_BYTE_WILD that is used for Bounce, and other purposes
+// 0xF5 is BASE_BYTE_RESERVED that is available for a new purpose
 //
-// 1. At time of writing, the BASE_BYTE_END must always be followed by a
-//    zero byte.  It's easy to do with C strings (*see rebEND definition*).
-//    Not strictly necessary--one byte suffices--but it's a good sanity check.
+// 1. It's easy to follow 0xF7 with 0 in C strings (*see rebEND definition*).
+//    (once BASE_BYTE_END was its own state, but that was deemed wasteful
+//    and so it was merged with BASE_BYTE_WILD.)
 
-#define BASE_BYTE_END  0xF7  // followed by a zero byte [1]
-STATIC_ASSERT(not (BASE_BYTE_END & BASE_BYTEMASK_0x08_CELL));
+#define BASE_BYTE_WILD  0xF7  // END if followed by a zero byte [1]
+STATIC_ASSERT(not (BASE_BYTE_WILD & BASE_BYTEMASK_0x08_CELL));
 
 #define BASE_BYTE_FREE  0xF6
+STATIC_ASSERT(not (BASE_BYTE_FREE & BASE_BYTEMASK_0x08_CELL));
 
-#define BASE_BYTE_WILD  0xF5  // not BASE_FLAG_CELL, use for whatever purposes
+#define BASE_BYTE_RESERVED  0xF5
+STATIC_ASSERT(not (BASE_BYTE_RESERVED & BASE_BYTEMASK_0x08_CELL));
 
 
 //=//// Empty Base Class (or minimal C struct) ////////////////////////////=//

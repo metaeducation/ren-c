@@ -44,6 +44,7 @@
 //
 
 INLINE void Init_Bounce_Wild(WildTwo out, char ch) {
+    assert(ch != '\0');  // rebEND uses the 0 wild state
     assert(out[0] == 0);  // is there any good reason Erase_Bounce_Wild()
     assert(out[1] == 0);
     out[0] = BASE_BYTE_WILD;
@@ -64,7 +65,11 @@ INLINE bool Is_Bounce_A_Cell(Bounce b) {
 
 INLINE bool Is_Bounce_Wild(Bounce b) {
     const void* p = cast(const void*, b);
-    return FIRST_BYTE(p) == BASE_BYTE_WILD;
+    if (FIRST_BYTE(p) == BASE_BYTE_WILD) {
+        assert(SECOND_BYTE(p) != '\0');  // rebEND uses the 0 wild state
+        return true;
+    }
+    return false;
 }
 
 INLINE char Bounce_Type(Bounce b) {

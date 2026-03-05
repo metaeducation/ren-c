@@ -243,14 +243,14 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
             printf("Not using safe Cells?  Missing a Push_Lifeguard()?\n");
             break;
 
-          case BASE_BYTE_END:
-            printf("Queue stub w/BASE_BYTE_END, crazy corruption!\n");
-            printf("BASE_BYTE_END should never be found in the Stub Pool\n");
-            break;
-
           case BASE_BYTE_WILD:
             printf("Queue stub w/BASE_BYTE_WILD, crazy corruption!\n");
-            printf("BASE_BYTE_WILD should never be found in the Stub Pool\n");
+            printf("BASE_BYTE_WILD shouldn't be found in the Stub Pool\n");
+            break;
+
+          case BASE_BYTE_RESERVED:
+            printf("Queue stub w/BASE_BYTE_RESERVED, crazy corruption!\n");
+            printf("BASE_BYTE_RESERVED shouldn't be found in the Stub Pool\n");
             break;
 
           case BASE_BYTE_DIMINISHING:

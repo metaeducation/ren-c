@@ -1017,11 +1017,12 @@ $[Non-Variadic-Api-Macros]
  * Since a C nullptr (pointer cast of 0) is used to represent the ~null~
  * antiform in the API, something different must be used to indicate the end
  * of variadic input.  So a *pointer to data* is used where the first byte of
- * that data is 0xF7 (BASE_BYTE_END)--illegal in UTF-8 sequences.
+ * that data is 0xF7 (BASE_BYTE_WILD)--illegal in UTF-8 sequences, and the
+ * second byte of the data is 0x00.
  *
  * There were three seemingly-arbitrary choices that were out of band for
  * UTF-8 and not applied to other purposes internally to the system which
- * could be used for this signal:
+ * could be used for the "WILD" signal:
  *
  *     0xF5 (11110101), 0xF6 (11110110), 0xF7 (11110111)
  *
@@ -1033,15 +1034,14 @@ $[Non-Variadic-Api-Macros]
  * unmarked states of "diminished Stubs")
  *
  * It seems there's not any obvious reason to pick one of these over the
- * other to signify BASE_BYTE_END, so 0xF7 was chosen--and the other two are
+ * other to signify BASE_BYTE_WILD, so 0xF7 was chosen--and the other two are
  * used for internal purposes.
  *
  * rebEND's second byte is 0, coming from the '\0' terminator of the C string.
- * This isn't strictly necessary, as the 0xF7 is enough to know it's not a
- * Cell, Series Stub, or UTF-8.  But it can guard against interpreting garbage
- * input as rebEND, as the sequence {0xF7, 0} is less likely to occur at
- * random than {0xF7, ...}.  And leveraging a literal form means we don't
- * need to define a single byte somewhere to then point at it.
+ * This allows BASE_BYTE_WILD to mean other things, and guards against
+ * interpreting garbage input as rebEND, as the sequence {0xF7, 0} is less
+ * likely to occur at random than {0xF7, ...}.  And leveraging a literal form
+ * means we don't need to define a single byte somewhere to then point at it.
  *
  * Note: This is for internal use only unless LIBREBOL_USE_C89.  But even
  * without that, calling it `rebEND_internal` would affect readability of the

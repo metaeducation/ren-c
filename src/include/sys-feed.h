@@ -48,8 +48,12 @@
 // things like rebValue via a variadic macro.  (See rebEND for more info.)
 
 #if (! DEBUG_CHECK_ENDS)
-    #define Is_End(p) \
-        (((const Byte*)(p))[0] == BASE_BYTE_END)  // Note: needs (p) parens!
+    INLINE bool Is_End(const void* p) {
+        return (
+            x_cast(const Byte*, (p))[0] == BASE_BYTE_WILD
+            and x_cast(const Byte*, (p))[1] == '\0'
+        );
+    }
 #else
     template<typename T>  // should only test const void* for ends
     INLINE bool Is_End(T* p) {
@@ -58,17 +62,13 @@
             "Is_End() is not designed to operate on Cell, Flex, etc."
         );
         const Byte* bp = cast(Byte*, p);
-        if (*bp != BASE_BYTE_END) {
+        if (bp[0] != BASE_BYTE_WILD) {
             assert(*bp & BASE_BYTEMASK_0x08_CELL);
             return false;
         }
-        assert(
-            bp[1] == 0  // not strictly necessary, but rebEND is 2 bytes
-            or (
-                bp[1] == Byte_From_Type(TYPE_BLANK)
-                and bp[2] == Byte_From_Heart(HEART_BLANK)
-            )
-        );
+        if (bp[1] != '\0')
+            return false;  // v-- g_cell_aligned_end has 3rd byte TYPE_BLANK
+        possibly(bp[2] == Byte_From_Type(TYPE_BLANK));
         return true;
     }
 #endif
@@ -827,8 +827,8 @@ INLINE Result(Feed*) Prep_At_Feed(
 // 1. The system for sync'ing feeds makes sure that we never see null pointers
 //    in the feed->p.  API nulls are turned into nulled cells, and rebEND
 //    signals (which are smaller than a Cell and not Cell-aligned) are
-//    canonized into Cell-aligned memory with BASE_BYTE_END.  Hence this test
-//    is safe, and will reject both nulls and ends.
+//    canonized into Cell-aligned memory with BASE_BYTE_WILD and a LIFT_BYTE
+//    corresponding to TYPE_BLANK.
 //
 // 2. It has been considered whether CHAIN! or PATH! should be allowed to
 //    dispatch infix.  It's certainly more work and would cost more.  Whether
@@ -857,14 +857,12 @@ INLINE Result(Feed*) Prep_At_Feed(
 
 
 // Due to Feeds canonizing rebEND to g_cell_aligned_end, we can take advantage
-// of the kind byte and lift byte matching that of a BLANK! to test for both
-// end and blank in one masking operation.
+// of the type byte matching that of a BLANK! to test for both end and blank
+// in one masking operation.
 //
 #define Next_Is_End_Or_Blank(L) ( \
     (u_cast(Cell*, L->feed->p)->header.bits & ( \
-        FLAG_HEARTSIGIL_BYTE(255) \
-            | FLAG_TYPE_BYTE(255) \
+        FLAG_TYPE_BYTE(255) \
     )) == ( \
-        FLAG_HEART(HEART_BLANK) \
-            | FLAG_TYPE(TYPE_BLANK) \
-    ))  // !!! REVIEW: can just look for FLAG_TYPE(TYPE_BLANK)
+        FLAG_TYPE(TYPE_BLANK) \
+    ))

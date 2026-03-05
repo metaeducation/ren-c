@@ -147,8 +147,9 @@ typedef enum {
     DETECTED_AS_CELL,
     DETECTED_AS_STUB,
     DETECTED_AS_END,  // a rebEND signal (Note: has char* alignment!)
+    DETECTED_AS_WILD,  // arbitrary out-of-band purposes
     DETECTED_AS_FREE,
-    DETECTED_AS_WILD  // arbitrary out-of-band purposes
+    DETECTED_AS_RESERVED
 } PointerDetect;
 
 INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
@@ -180,22 +181,19 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
         if (not (b & BASE_BYTEMASK_0x04_MANAGED))
             return DETECTED_AS_UTF8;
 
-        if (b == BASE_BYTE_END) {  // 0xF7
-            assert(
-                SECOND_BYTE(p) == '\0'  // rebEND
-                or (
-                    SECOND_BYTE(p) == Byte_From_Type(TYPE_BLANK)
-                    and THIRD_BYTE(p) == Byte_From_Heart(HEART_BLANK)
-                )
-            );
-            return DETECTED_AS_END;
+        if (b == BASE_BYTE_WILD) {  // 0xF7
+            if (SECOND_BYTE(p) == '\0') {  // rebEND or g_cell_aligned_end
+                possibly(THIRD_BYTE(p) == Byte_From_Heart(HEART_BLANK));
+                return DETECTED_AS_END;  // ^-- true if g_cell_aligned_end
+            }
+            return DETECTED_AS_WILD;
         }
 
         if (b == BASE_BYTE_FREE)  // 0xF6
             return DETECTED_AS_FREE;
 
-        if (b == BASE_BYTE_WILD)  // 0xF5
-            return DETECTED_AS_WILD;
+        if (b == BASE_BYTE_RESERVED)  // 0xF5
+            return DETECTED_AS_RESERVED;
 
         return DETECTED_AS_STUB;
     }

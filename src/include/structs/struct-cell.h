@@ -184,13 +184,13 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 typedef Byte HeartsigilByte;  // help document when Byte is Heart + Sigil [1]
 
 #define HEARTSIGIL_BYTE(cell) /* don't go through KindHolder() [2] */ \
-    THIRD_BYTE(&(cell)->header.bits)
+    SECOND_BYTE(&(cell)->header.bits)
 
 #define FLAG_HEARTSIGIL_BYTE(byte) \
-    FLAG_THIRD_BYTE(exactly(int, (byte)))
+    FLAG_SECOND_BYTE(exactly(int, (byte)))
 
 #define FLAG_HEART(heart) \
-    FLAG_THIRD_BYTE(ii_cast(Byte, known(Option(Heart), (heart))))
+    FLAG_SECOND_BYTE(ii_cast(Byte, known(Option(Heart), (heart))))
 
 #define HEARTSIGIL_BYTEMASK_HEART  0x3F
 
@@ -246,11 +246,17 @@ typedef Byte HeartsigilByte;  // help document when Byte is Heart + Sigil [1]
 //    that layer, and can also be used for efficiency in some cases that
 //    want to subvert those checks.
 //
+// 2. The reason the third byte is used for the TYPE_BYTE is so that the
+//    second byte can be a zero to signal END while still being able to
+//    check a byte that is multiplexed as either TYPE_BLANK for a canon END
+//    that fits in a Cell or the type byte of the actual cell.  This speeds
+//    up a check for either an END or a BLANK in the Stepper_Executor().  It
+//    isn't fundamental but it's a nice optimization, all things being equal.
 
 typedef Byte TypeByte;   // any byte value (but represents a Type/Lift)
 
 #define TYPE_BYTE(cell) /* don't go through Tweak_Cell_Type_Byte() [1] */ \
-    SECOND_BYTE(&(cell)->header.bits)
+    THIRD_BYTE(&(cell)->header.bits)  // third byte for g_cell_aligned_end [2]
 
 #define Type_Of_Raw(v) \
     i_cast(Type, TYPE_BYTE(v))
@@ -266,13 +272,13 @@ typedef Byte TypeByte;   // any byte value (but represents a Type/Lift)
     Type_From_Byte(Byte_From_Heart(h))
 
 #define FLAG_TYPE_BYTE(type) \
-    FLAG_SECOND_BYTE(exactly(int, (type)))
+    FLAG_THIRD_BYTE(exactly(int, (type)))
 
 #define FLAG_TYPE(type) \
-    FLAG_SECOND_BYTE(ii_cast(Byte, known(Option(TypeEnum), (type))))
+    FLAG_THIRD_BYTE(ii_cast(Byte, known(Option(TypeEnum), (type))))
 
 #define CELL_MASK_LIFTED_OR_ANTIFORM_OR_DUAL \
-    FLAG_SECOND_BYTE(192)  // 128 + 64, the 2 high bits set
+    FLAG_THIRD_BYTE(192)  // 128 + 64, the 2 high bits set
 
 #define CELL_MASK_HEART_AND_SIGIL_AND_LIFT \
     (CELL_MASK_HEART_AND_SIGIL | FLAG_TYPE_BYTE(255))

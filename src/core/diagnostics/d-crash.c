@@ -364,6 +364,14 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
             PANIC_BUF_SIZE - strsize(buf)
         );
         break;
+
+      case DETECTED_AS_RESERVED:
+        strncat(
+            buf,
+            "Panic was passed a reserved pointer",
+            PANIC_BUF_SIZE - strsize(buf)
+        );
+        break;
     }
 
   #if DEBUG_FANCY_CRASH
