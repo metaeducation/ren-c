@@ -479,9 +479,6 @@ DECLARE_NATIVE(ALSO)
 }}
 
 
-#define LEVEL_FLAG_SAW_NON_VOID  LEVEL_FLAG_MISCELLANEOUS
-
-
 typedef enum {
     NATIVE_IS_ANY,
     NATIVE_IS_ALL,
@@ -526,7 +523,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
   //    so it has to take responsibility for its own heavy results vs.
   //    relying on LEVEL_FLAG_FORCE_HEAVY_BRANCH.
 
-    assert(Not_Level_Flag(LEVEL, SAW_NON_VOID));
+    assert(Is_Cell_Erased(OUT));  // becomes VOID! if never written
 
     Executor* executor;
     if (Is_Pinned_Form_Of(BLOCK, block))
@@ -602,8 +599,6 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
       Stable* condition = Decay_If_Unstable(scratch_or_spare_condition)
     );
 
-    Set_Level_Flag(LEVEL, SAW_NON_VOID);
-
     bool logic = Logical_Test(condition);
 
     switch (which) {
@@ -654,7 +649,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
     Drop_Level(SUBLEVEL);
 
-    if (Not_Level_Flag(LEVEL, SAW_NON_VOID))
+    if (Is_Cell_Erased(OUT))
         return VOID_OUT_UNBRANCHED;  // void if all evaluations vaporized [1]
 
     switch (which) {
