@@ -663,7 +663,7 @@ static void Mark_Root_Stubs(void)
                 Queue_Mark_Maybe_Erased_Cell_Deep(Stub_Cell(s));  // [2]
             }
             else {  // It's a rebAlloc()
-                assert(Stub_Flavor(s) == FLAVOR_BINARY);
+                assert(Stub_Flavor(s) == FLAVOR_API_ALLOC);
             }
         }
 

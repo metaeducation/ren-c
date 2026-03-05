@@ -577,7 +577,7 @@ void Rollback_Level(Level* L) {
     Base* b = L->alloc_value_list;
     while (b != L) {
         Stub* s = cast(Stub*, b);
-        b = LINK_API_STUB_NEXT(s);
+        b = LINK_VALUE_HOLDER_NEXT(s);
         Force_Poison_Cell(Stub_Cell(s));  // lose BASE_FLAG_ROOT
         s->header.bits = STUB_MASK_DIMINISHING;
         GC_Kill_Stub(s);

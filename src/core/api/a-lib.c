@@ -209,43 +209,55 @@ INLINE const Value* Nullptr_If_Nulled_Cell(const Value* value) {
 //    that is then safe to alias as TEXT!, it always has an extra 0 byte at
 //    the end of the data area.
 //
-// 2. !!! The data is uninitialized, and if it is turned into a BLOB! via
-//    rebRepossess() before all bytes are assigned initialized, it could be
-//    worse than just random data...MOLDing such a binary and reading those
-//    bytes could be bad (due to, for instance, "trap representations"):
-//
-//      https://stackoverflow.com/a/37184840
-//
-//    It may be that rebAlloc() and rebRealloc() should initialize with 0
-//    to defend against that, but that has a cost.  For now we make no such
-//    promise--and leave it uninitialized so that address sanitizer notices
-//    when bytes are used that haven't been assigned.
-//
 unsigned char* API_rebAllocBytes(size_t size)
 {
     ENTER_API;
 
     require (
-      Binary* b = u_downcast Make_Flex(
-        FLAG_FLAVOR(FLAVOR_BINARY)  // rebRepossess() only creates BLOB! ATM
+      Flex* f = u_downcast Make_Flex(
+        FLAG_FLAVOR(FLAVOR_API_ALLOC)  // rebRepossess() only creates BLOB! ATM
             | BASE_FLAG_ROOT  // indicate this originated from the API
             | STUB_FLAG_DYNAMIC  // rebRepossess() needs bias field
-            | FLEX_FLAG_DONT_RELOCATE,  // direct data pointer handed back
+            | FLEX_FLAG_DONT_RELOCATE  // direct data pointer handed back
+            | STUB_FLAG_CLEANUP_BEFORE_DIMINISHING,  // only needed for sanitize
         ALIGN_SIZE  // stores Binary* (must be at least big enough for void*)
             + size  // for the actual data capacity (may be 0, see notes)
             + 1  // for termination (AS TEXT! of rebRepossess()), see [1]
     ));
 
-    Byte* ptr = Binary_Head(b) + ALIGN_SIZE;
+    Byte* ptr = Flex_Data(f) + ALIGN_SIZE;
 
-    Binary** pb = (cast(Binary**, ptr) - 1);
-    *pb = b;  // save self in bytes that appear immediately before the data
-    Poison_Memory_If_Sanitize(pb, sizeof(Binary*));  // catch underruns
+    Flex** pf = (cast(Flex**, ptr) - 1);
+    *pf = f;  // save self in bytes that appear immediately before the data
+    Poison_Memory_If_Sanitize(pf, sizeof(Flex*));  // catch underruns
 
-    Term_Binary_Len(b, ALIGN_SIZE + size);  // !!! uninitialized, see [2]
+ set_length: {
+
+  // 1. !!! The data is uninitialized, and if it is turned into a BLOB! via
+  //    rebRepossess() before all bytes are assigned initialized, it could be
+  //    worse than just random data...MOLDing such a binary and reading those
+  //    bytes could be bad (due to, for instance, "trap representations"):
+  //
+  //      https://stackoverflow.com/a/37184840
+  //
+  //    It may be that rebAlloc() and rebRealloc() should initialize with 0
+  //    to defend against that, but that has a cost.  For now we make no such
+  //    promise--and leave it uninitialized so that address sanitizer notices
+  //    when bytes are used that haven't been assigned.
+  //
+  // 2. The system has a dependency on the last byte of decompressed data
+  //    being 0, because the scanner terminates on 0.  So when we uncompress
+  //    the boot code it ends in a line feed, but it actually ends when it
+  //    hits a zero byte.  That raises some questions about this implicit
+  //    expectation about a 0 at the end of all rebAlloc()'d buffers, and
+  //    since we expect to be able to rebRepossess() any buffer we might as
+  //    well offer the invariant to users, I guess?  :-/
+
+    Set_Flex_Used(f, ALIGN_SIZE + size);  // !!! uninitialized [1]
+    Flex_Data(f)[ALIGN_SIZE + size] = '\0';  // expected by scanner [2]
 
     return ptr;
-}
+}}
 
 
 //
@@ -295,13 +307,16 @@ unsigned char* API_rebReallocBytes(void *ptr, size_t new_size)
     if (not ptr)  // C realloc() accepts null
         return API_rebAllocBytes(new_size);
 
-    Binary** pb = cast(Binary**, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(pb, sizeof(Binary*));  // fetch `b` underruns
+    Flex** pf = cast(Flex**, ptr) - 1;
 
-    Binary* b = *pb;
-    assert(Is_Base_Root_Bit_Set(b));
+    Unpoison_Memory_If_Sanitize(pf, sizeof(Flex*));  // fetch `b` underruns
+    Flex* f = *pf;
+    Poison_Memory_If_Sanitize(pf, sizeof(Flex*));
 
-    Size old_size = Binary_Len(b) - ALIGN_SIZE;
+    assert(Stub_Flavor(f) == FLAVOR_API_ALLOC);
+    assert(Is_Base_Root_Bit_Set(f));
+
+    Size old_size = Flex_Used(f) - ALIGN_SIZE;
 
     // !!! It's less efficient to create a new Flex with another call to
     // rebAlloc(), but simpler for the time being.  Switch to do this with
@@ -332,12 +347,15 @@ void API_rebFreeOpt(void *ptr)
     if (not ptr)
         return;
 
-    Binary** pb = cast(Binary**, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(pb, sizeof(Binary*));  // fetch `b` underruns
+    Flex** pf = cast(Flex**, ptr) - 1;
 
-    Binary* b = *pb;
+    Unpoison_Memory_If_Sanitize(pf, sizeof(Flex*));  // fetch `b` underruns
+    Flex* f = *pf;
+    Poison_Memory_If_Sanitize(pf, sizeof(Flex*));  // restore invariant
 
-    if (Is_Base_A_Cell(b) or not (BASE_BYTE(b) & BASE_BYTEMASK_0x02_ROOT)) {
+    assert(Stub_Flavor(f) == FLAVOR_API_ALLOC);
+
+    if (Is_Base_A_Cell(f) or not (BASE_BYTE(f) & BASE_BYTEMASK_0x02_ROOT)) {
         rebJumps(
             "crash [",
                 "-[rebFree() mismatched with allocator!]-"
@@ -346,22 +364,20 @@ void API_rebFreeOpt(void *ptr)
         );
     }
 
-    assert(Stub_Holds_Bytes(b));
-
-    if (g_gc.recycling and Is_Base_Marked(b)) {
-        assert(Is_Base_Managed(b));
-        Clear_Base_Marked_Bit(b);
+    if (g_gc.recycling and Is_Base_Marked(f)) {
+        assert(Is_Base_Managed(f));
+        Clear_Base_Marked_Bit(f);
       #if RUNTIME_CHECKS
         g_gc.mark_count -= 1;
       #endif
     }
 
-    Clear_Base_Root_Bit(b);
+    Clear_Base_Root_Bit(f);
 
-    if (Is_Base_Managed(b))  // set by rebUnmanageMemory()
-        GC_Kill_Flex(b);
+    if (Is_Base_Managed(f))  // set by rebUnmanageMemory()
+        GC_Kill_Flex(f);
     else
-        Free_Unmanaged_Flex(b);
+        Free_Unmanaged_Flex(f);
 }
 
 
@@ -408,10 +424,17 @@ RebolValue* API_rebRepossess(void* ptr, size_t size)
 {
     ENTER_API;
 
-    Binary** pb = cast(Binary**, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(pb, sizeof(Binary*));  // fetch `b` underruns
+    Flex** pf = cast(Flex**, ptr) - 1;
+    Unpoison_Memory_If_Sanitize(pf, sizeof(Flex*));  // fetch `b` underruns
 
-    Binary* b = *pb;
+    Flex* f = *pf;
+    assert(Stub_Flavor(f) == FLAVOR_API_ALLOC);
+    assert(Get_Stub_Flag(f, CLEANUP_BEFORE_DIMINISHING));
+    TASTE_BYTE(f) = FLAVOR_BINARY;  // rebRepossess turns it into blob.
+    Clear_Stub_Flag(f, CLEANUP_BEFORE_DIMINISHING);
+    // assume misc/link were allocated compatibly for FLAVOR_BINARY
+
+    Binary* b = cast(Binary*, f);
     assert(Is_Base_Root_Bit_Set(b));  // may or may not be managed
     assert(Get_Flex_Flag(b, DONT_RELOCATE));
 
@@ -2723,7 +2746,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_STUB: {
         stub = m_cast(Stub*, cast(Stub*, p));
-        if (Not_Flavor_Flag(API, stub, RELEASE))
+        if (Not_Flavor_Flag(VALUE_HOLDER, stub, RELEASE))
             panic ("Can't quote instructions (besides rebR())");
         break; }
 
@@ -2737,7 +2760,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
         Value* v = Alloc_Value();
         Copy_Cell(v, at);
         stub = Compact_Stub_From_Cell(v);
-        Set_Flavor_Flag(API, stub, RELEASE);
+        Set_Flavor_Flag(VALUE_HOLDER, stub, RELEASE);
         break; }
 
       default:
@@ -2770,14 +2793,14 @@ RebolBaseInternal* API_rebUNQUOTING(const void* p)
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_STUB: {
         stub = m_cast(Stub*, cast(Stub*, p));
-        if (Not_Flavor_Flag(API, stub, RELEASE))
+        if (Not_Flavor_Flag(VALUE_HOLDER, stub, RELEASE))
             panic ("Can't unquote instructions (besides rebR())");
         break; }
 
       case DETECTED_AS_CELL: {
         Value* v = Copy_Cell(Alloc_Value(), cast(Value*, p));
         stub = Compact_Stub_From_Cell(v);
-        Set_Flavor_Flag(API, stub, RELEASE);
+        Set_Flavor_Flag(VALUE_HOLDER, stub, RELEASE);
         break; }
 
       default:
@@ -2814,10 +2837,10 @@ RebolBaseInternal* API_rebRELEASING(RebolValue* v)
         panic ("Cannot apply rebR() to non-API value");
 
     Stub* stub = Compact_Stub_From_Cell(v);
-    if (Get_Flavor_Flag(API, stub, RELEASE))
+    if (Get_Flavor_Flag(VALUE_HOLDER, stub, RELEASE))
         panic ("Cannot apply rebR() more than once to the same API value");
 
-    Set_Flavor_Flag(API, stub, RELEASE);
+    Set_Flavor_Flag(VALUE_HOLDER, stub, RELEASE);
     return cast(RebolBaseInternal*, stub);  // cast needed in C
 }
 
@@ -2869,14 +2892,14 @@ RebolBaseInternal* API_rebRUN(const void* p)
       case DETECTED_AS_STUB: {
         stub = m_cast(Stub*, cast(Stub*, p));
         v = cast(Value*, Stub_Cell(stub));
-        if (Not_Flavor_Flag(API, stub, RELEASE))
+        if (Not_Flavor_Flag(VALUE_HOLDER, stub, RELEASE))
             panic ("Can't quote instructions (besides rebR())");
         break; }
 
       case DETECTED_AS_CELL: {
         v = Copy_Cell(Alloc_Value(), cast(const Value*, p));
         stub = Compact_Stub_From_Cell(v);
-        Set_Flavor_Flag(API, stub, RELEASE);
+        Set_Flavor_Flag(VALUE_HOLDER, stub, RELEASE);
         break; }
 
       default:
@@ -3257,7 +3280,7 @@ DECLARE_NATIVE(API_TRANSIENT)
     Value* v = Copy_Cell(Alloc_Value(), ARG(VALUE));
     rebUnmanage(v);  // has to survive the API-TRANSIENT's frame
     Stub* stub = Compact_Stub_From_Cell(v);
-    Set_Flavor_Flag(API, stub, RELEASE);
+    Set_Flavor_Flag(VALUE_HOLDER, stub, RELEASE);
 
     return Init_Integer(level_->out, p_cast(intptr_t, stub));  // intptr_t [1]
 }

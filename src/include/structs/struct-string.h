@@ -109,17 +109,17 @@
         | FLAG_FLAVOR(FLAVOR_SYMBOL) \
         | FLEX_FLAG_FIXED_SIZE \
         | BASE_FLAG_MANAGED \
-        | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  /* kill interning in table */ \
+        | STUB_FLAG_CLEANUP_BEFORE_DIMINISHING  /* kill interning in table */ \
         | not STUB_FLAG_MISC_NEEDS_MARK  /* hitches not marked */ \
         | not STUB_FLAG_LINK_NEEDS_MARK  /* synonym not marked [1] */)
 
 #define STUB_MASK_STRAND \
     (FLAG_FLAVOR(FLAVOR_NONSYMBOL) \
-        | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  /* needs to kill bookmarks */)
+        | STUB_FLAG_CLEANUP_BEFORE_DIMINISHING  /* needs to kill bookmarks */)
 
 #define STUB_MASK_SYMBOL_STRING_COMMON \
     (BASE_FLAG_BASE \
-        | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY)
+        | STUB_FLAG_CLEANUP_BEFORE_DIMINISHING)
 
 
 #define MISC_HITCH(symbol_or_patch_or_stump) \

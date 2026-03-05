@@ -401,7 +401,7 @@ INLINE void Flip_Stub_To_White(const Stub* f) {
 
 //=//// STUB CLEANER //////////////////////////////////////////////////////=//
 //
-// See STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY for more information.
+// See STUB_FLAG_CLEANUP_BEFORE_DIMINISHING for more information.
 //
 
 typedef void (StubCleaner)(Stub*);
@@ -409,12 +409,12 @@ typedef void (StubCleaner)(Stub*);
 #define MISC_STUB_CLEANER(s)  (s)->misc.cfunc
 
 INLINE StubCleaner* Stub_Cleaner(const Stub* s) {
-    assert(Get_Stub_Flag(s, CLEANS_UP_BEFORE_GC_DECAY));
+    assert(Get_Stub_Flag(s, CLEANUP_BEFORE_DIMINISHING));
     assert(MISC_STUB_CLEANER(s) != nullptr);
     return f_cast(StubCleaner*, MISC_STUB_CLEANER(s));
 }
 
 INLINE void Tweak_Stub_Cleaner(Stub* s, StubCleaner* cleaner) {
-    assert(Get_Stub_Flag(s, CLEANS_UP_BEFORE_GC_DECAY));
+    assert(Get_Stub_Flag(s, CLEANUP_BEFORE_DIMINISHING));
     MISC_STUB_CLEANER(s) = f_cast(CFunction*, cleaner);
 }

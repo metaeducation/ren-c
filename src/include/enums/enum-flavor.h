@@ -69,7 +69,7 @@ typedef enum {
     FLAVOR_HANDLE,
 
     FLAVOR_FEED,
-    FLAVOR_API,
+    FLAVOR_VALUE_HOLDER,
 
     // This is used by rebINLINE() to place an array of content as raw
     // material to execute.  (It leverages similar code as MACRO.)
@@ -161,6 +161,14 @@ typedef enum {
     // use the Stub.misc and Stub.link fields should use FLAVOR_BYTES.
     //
     FLAVOR_BYTES,
+
+    // FLAVOR_API_ALLOC is different because the byte pointer it gives back
+    // has to be able to find the stub that owns it, so the first pointer-size
+    // slot of the allocation is used to point back to the stub.  This data
+    // area is guarded by the address sanitizer and debug builds have to know
+    // about that to unpoison it in generic Flex freeing.
+    //
+    FLAVOR_API_ALLOC,
 
     MIN_FLAVOR_STRAND,  //=////////////// BELOW THIS LINE IS UTF-8 (OR CORRUPT)
 

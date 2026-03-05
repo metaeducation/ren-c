@@ -55,7 +55,7 @@
 
 INLINE Option(HandleCleaner*) Handle_Cleaner(Stub* handle_stub) {
     assert(Stub_Flavor(handle_stub) == FLAVOR_HANDLE);
-    assert(Get_Stub_Flag(handle_stub, CLEANS_UP_BEFORE_GC_DECAY));
+    assert(Get_Stub_Flag(handle_stub, CLEANUP_BEFORE_DIMINISHING));
     return f_cast(HandleCleaner*, MISC_HANDLE_CLEANER(handle_stub));
 }
 
@@ -64,7 +64,7 @@ INLINE void Tweak_Handle_Cleaner(
     Option(HandleCleaner*) cleaner
 ){
     assert(Stub_Flavor(handle_stub) == FLAVOR_HANDLE);
-    assert(Get_Stub_Flag(handle_stub, CLEANS_UP_BEFORE_GC_DECAY));
+    assert(Get_Stub_Flag(handle_stub, CLEANUP_BEFORE_DIMINISHING));
     MISC_HANDLE_CLEANER(handle_stub) = f_cast(CFunction*, opt cleaner);
 }
 
@@ -197,7 +197,7 @@ INLINE void Init_Handle_Managed_Common(
     require (
       Stub* stub = Make_Untracked_Stub(
         FLAG_FLAVOR(FLAVOR_HANDLE)
-            | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  // calls the HandleCleaner
+            | STUB_FLAG_CLEANUP_BEFORE_DIMINISHING  // calls the HandleCleaner
             | BASE_FLAG_MANAGED
     ));
     Tweak_Handle_Cleaner(stub, cleaner);  // FLAVOR_HANDLE in Diminish_Stub()

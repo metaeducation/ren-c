@@ -311,8 +311,8 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Feed", file, line);
         break;
 
-      case FLAVOR_API:
-        Probe_Print_Helper(p, expr, "API Handle", file, line);
+      case FLAVOR_VALUE_HOLDER:
+        Probe_Print_Helper(p, expr, "API Value Handle", file, line);
         break;
 
       case FLAVOR_INSTRUCTION_SPLICE:
@@ -384,6 +384,10 @@ void* Probe_Core_Debug(
         require (
           Append_Ascii(mo->strand, "}")
         );
+        break; }
+
+      case FLAVOR_API_ALLOC: {
+        Probe_Print_Helper(p, expr, "API rebAlloc() Holder", file, line);
         break; }
 
     //=//// FLEXES WITH ELEMENTS WIDTH 1 INTERPRETED AS UTF-8 /////////////=//

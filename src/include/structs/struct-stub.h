@@ -220,7 +220,7 @@ typedef Byte TasteByte;
     FLAG_LEFT_BIT(18)
 
 
-//=//// STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY ////////////////////////////////=//
+//=//// STUB_FLAG_CLEANUP_BEFORE_DIMINISHING ////////////////////////////////=//
 //
 // When a stub gets GC'd, it may need to do something before it goes away.
 //
@@ -237,7 +237,7 @@ typedef Byte TasteByte;
 // somewhere else.  Hence FLAVOR_HANDLE has an instance in the switch() of
 // Diminish_Stub() that does this call, vs using MISC_STUB_CLEANER.)
 //
-#define STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY \
+#define STUB_FLAG_CLEANUP_BEFORE_DIMINISHING \
     FLAG_LEFT_BIT(19)
 
 

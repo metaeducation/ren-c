@@ -1116,7 +1116,7 @@ Stub* Diminish_Stub(Stub* s)
 {
     assert(Is_Base_Readable(s));
 
-    if (Not_Stub_Flag(s, CLEANS_UP_BEFORE_GC_DECAY))
+    if (Not_Stub_Flag(s, CLEANUP_BEFORE_DIMINISHING))
         goto do_decay;
 
     switch (Stub_Flavor(s)) {  // flavors that clean, but can't spare misc [1]
@@ -1146,6 +1146,15 @@ Stub* Diminish_Stub(Stub* s)
                 Cell_Handle_Void_Pointer(v),
                 Cell_Handle_Len(v)
             );
+        break; }
+
+      case FLAVOR_API_ALLOC: {  // unpoison flex backpointer in data if needed
+        Flex* f = cast(Flex*, s);
+        Byte* ptr = Flex_Data(f) + ALIGN_SIZE;
+        Flex** pf = cast(Flex**, ptr) - 1;
+        Unpoison_Memory_If_Sanitize(pf, sizeof(Flex*));
+        assert(*pf == f);
+        USED(pf);
         break; }
 
       default:  // flavors that clean, but CAN spare misc [1]

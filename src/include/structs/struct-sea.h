@@ -99,7 +99,7 @@
     FLAG_FLAVOR(FLAVOR_PATCH) \
         | BASE_FLAG_BASE \
         | BASE_FLAG_MANAGED \
-        | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  /* remove from hitches [1] */ \
+        | STUB_FLAG_CLEANUP_BEFORE_DIMINISHING  /* remove from hitches [1] */ \
         | STUB_FLAG_INFO_NEEDS_MARK  /* context, weird keepalive [2] */ \
         | not STUB_FLAG_LINK_NEEDS_MARK  /* reserved */ \
     )

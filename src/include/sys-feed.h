@@ -304,7 +304,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         GC_Kill_Flex(inst1);
         break; }
 
-      case FLAVOR_API: {
+      case FLAVOR_VALUE_HOLDER: {
         Array* inst1 = u_cast(Array*, f);
 
         // We usually get the API *cells* passed to us, not the singular
@@ -312,7 +312,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         // flip the "release" flag and then return the existing API handle
         // back, now behaving as an instruction.
         //
-        assert(Get_Flavor_Flag(API, inst1, RELEASE));
+        assert(Get_Flavor_Flag(VALUE_HOLDER, inst1, RELEASE));
 
         // !!! Originally this asserted it was a managed handle, but the
         // needs of API-TRANSIENT are such that a handle which outlives

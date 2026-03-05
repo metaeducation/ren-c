@@ -50,17 +50,17 @@ enum {
 };
 
 
-#define LINK_API_STUB_NEXT(stub) \
-    *m_cast(Base**, &ensure_flavor(FLAVOR_API, (stub))->link.base)
+#define LINK_VALUE_HOLDER_NEXT(stub) \
+    *m_cast(Base**, &ensure_flavor(FLAVOR_VALUE_HOLDER, (stub))->link.base)
 
-#define MISC_API_STUB_PREV(stub) \
-    *m_cast(Base**, &ensure_flavor(FLAVOR_API, (stub))->misc.base)
+#define MISC_VALUE_HOLDER_PREV(stub) \
+    *m_cast(Base**, &ensure_flavor(FLAVOR_VALUE_HOLDER, (stub))->misc.base)
 
 
 // The rebR() function can be used with an API handle to tell a variadic
 // function to release that handle after encountering it.
 //
-#define API_FLAG_RELEASE \
+#define VALUE_HOLDER_FLAG_RELEASE \
     STUB_SUBCLASS_FLAG_24_ALSO_CELL_FLAG_CONST
 
 
@@ -78,23 +78,23 @@ INLINE bool Is_Api_Value(const Value* v) {
 //
 INLINE void Connect_Api_Handle_To_Level(Stub* stub, Level* L)
 {
-    MISC_API_STUB_PREV(stub) = L;  // back pointer for doubly linked list [1]
+    MISC_VALUE_HOLDER_PREV(stub) = L;  // backpointer of doubly linked list [1]
 
     bool empty_list = (L->alloc_value_list == L);
 
     if (not empty_list) {  // head of list exists, take its spot at the head
         Stub* head = cast(Stub*, L->alloc_value_list);
-        MISC_API_STUB_PREV(head) = stub;  // link back
+        MISC_VALUE_HOLDER_PREV(head) = stub;  // link back
     }
 
-    LINK_API_STUB_NEXT(stub) = L->alloc_value_list;  // forward pointer
+    LINK_VALUE_HOLDER_NEXT(stub) = L->alloc_value_list;  // forward pointer
     L->alloc_value_list = stub;
 }
 
 INLINE void Disconnect_Api_Handle_From_Level(Stub* stub)
 {
-    Base* prev_base = MISC_API_STUB_PREV(stub);
-    Base* next_base = LINK_API_STUB_NEXT(stub);
+    Base* prev_base = MISC_VALUE_HOLDER_PREV(stub);
+    Base* next_base = LINK_VALUE_HOLDER_NEXT(stub);
     bool at_head = Is_Base_A_Cell(prev_base);
     bool at_tail = Is_Base_A_Cell(next_base);
 
@@ -104,16 +104,16 @@ INLINE void Disconnect_Api_Handle_From_Level(Stub* stub)
 
         if (not at_tail) {  // only set next item's backlink if it exists
             Stub* next = cast(Stub*, next_base);
-            MISC_API_STUB_PREV(next) = L;
+            MISC_VALUE_HOLDER_PREV(next) = L;
         }
     }
     else {
         Stub* prev = cast(Stub*, prev_base);  // not at head, api val before us
-        LINK_API_STUB_NEXT(prev) = next_base;  // forward prev next to our next
+        LINK_VALUE_HOLDER_NEXT(prev) = next_base;  // forward prev to our next
 
         if (not at_tail) {  // only set next item's backlink if it exists
             Stub* next = cast(Stub*, next_base);
-            MISC_API_STUB_PREV(next) = prev_base;
+            MISC_VALUE_HOLDER_PREV(next) = prev_base;
         }
     }
 
@@ -156,7 +156,7 @@ INLINE Value* Alloc_Value_Core(Flags flags)  // Value*, not Init(Value) [1]
 {
     require (
       Stub* stub = Make_Untracked_Stub(
-        FLAG_FLAVOR(FLAVOR_API) | BASE_FLAG_ROOT | BASE_FLAG_MANAGED
+        FLAG_FLAVOR(FLAVOR_VALUE_HOLDER) | BASE_FLAG_ROOT | BASE_FLAG_MANAGED
     ));
 
     Cell* cell = Stub_Cell(stub);
@@ -176,7 +176,7 @@ INLINE Value* Alloc_Value_Core(Flags flags)  // Value*, not Init(Value) [1]
 INLINE void Free_Value(Value* v)
 {
     Stub* stub = Compact_Stub_From_Cell(v);
-    assert(Stub_Flavor(stub) == FLAVOR_API);
+    assert(Stub_Flavor(stub) == FLAVOR_VALUE_HOLDER);
     assert(Is_Base_Root_Bit_Set(stub));
 
     if (Is_Base_Managed(stub))

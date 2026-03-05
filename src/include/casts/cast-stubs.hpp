@@ -139,7 +139,7 @@ struct CastHook<const F*, const Strand*> {  // both must be const [B]
     )) !=
         STUB_MASK_SYMBOL_STRING_COMMON
     ){
-        assert(stub->header.bits & STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY);
+        assert(stub->header.bits & STUB_FLAG_CLEANUP_BEFORE_DIMINISHING);
         crash (p);
     }
 
