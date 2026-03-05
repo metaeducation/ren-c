@@ -239,13 +239,6 @@ DECLARE_NATIVE(TWEAK_P_UNCHECKED)
 }
 
 
-// Use Level flag vs. a state byte, so that we can reuse the same frame
-// for the calls to the generic TWEAK* implementations, even if it wants to
-// use the state byte and do continuations/delegations.
-//
-#define LEVEL_FLAG_POKE_NOT_INITIAL_ENTRY  LEVEL_FLAG_MISCELLANEOUS
-
-
 //
 //  /poke: native [
 //
