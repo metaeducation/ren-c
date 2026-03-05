@@ -47,7 +47,7 @@ typedef Byte BaseByte;
 
 #else
     INLINE Byte& BASE_BYTE(const Base* base) {
-        assert(u_cast(Byte*, base)[0] & BASE_BYTEMASK_0x80_NODE);
+        assert(u_cast(Byte*, base)[0] & BASE_BYTEMASK_0x80_BASE);
         return m_cast(Byte*, base)[0];   // cast away constness [2]
     }
 #endif
@@ -55,77 +55,81 @@ typedef Byte BaseByte;
 #define FLAG_BASE_BYTE(byte)    FLAG_FIRST_BYTE(byte)
 
 #define Is_Base(p) \
-    (cast(Byte*, (p))[0] & BASE_BYTEMASK_0x80_NODE)
+    (cast(Byte*, (p))[0] & BASE_BYTEMASK_0x80_BASE)
 
 
-#define Is_Base_A_Cell(n) \
-    (logical (BASE_BYTE(n) & BASE_BYTEMASK_0x08_CELL))
+#define Is_Base_A_Cell(b) \
+    (logical (BASE_BYTE(b) & BASE_BYTEMASK_0x08_CELL))
 
-#define Is_Base_A_Stub(n) \
-    (not Is_Base_A_Cell(n))
-
-
-#define Is_Base_Marked(n) \
-    (logical (BASE_BYTE(n) & BASE_BYTEMASK_0x01_MARKED))
-
-#define Not_Base_Marked(n) \
-    (not Is_Base_Marked(n))
+#define Is_Base_A_Stub(b) \
+    (not Is_Base_A_Cell(b))
 
 
-#define Is_Base_Managed(n) \
-    (logical (BASE_BYTE(n) & BASE_BYTEMASK_0x04_MANAGED))
+#define Is_Base_Marked(b) \
+    (logical (BASE_BYTE(b) & BASE_BYTEMASK_0x01_MARKED))
 
-#define Not_Base_Managed(n) \
-    (not Is_Base_Managed(n))
+#define Not_Base_Marked(b) \
+    (not Is_Base_Marked(b))
 
 
-#define Is_Base_Readable(n) \
-    (not (BASE_BYTE(n) & BASE_BYTEMASK_0x40_UNREADABLE))  // negative logic!
+#define Is_Base_Managed(b) \
+    (logical (BASE_BYTE(b) & BASE_BYTEMASK_0x04_MANAGED))
 
-#define Not_Base_Readable(n) \
-    (not Is_Base_Readable(n))
+#define Not_Base_Managed(b) \
+    (not Is_Base_Managed(b))
+
+
+#define Is_Base_Readable(b) \
+    (not (BASE_BYTE(b) & BASE_BYTEMASK_0x40_UNREADABLE))  // negative logic!
+
+#define Not_Base_Readable(b) \
+    (not Is_Base_Readable(b))
 
 
 // Is_Base_Root() sounds like it might be the only node.
 // Is_Base_A_Root() sounds like a third category vs Is_Base_A_Cell()/Stub()
 
-#define Is_Base_Root_Bit_Set(n) \
-    (logical (BASE_BYTE(n) & BASE_BYTEMASK_0x02_ROOT))
+#define Is_Base_Root_Bit_Set(b) \
+    (logical (BASE_BYTE(b) & BASE_BYTEMASK_0x02_ROOT))
 
-#define Not_Base_Root_Bit_Set(n) \
-    (not (BASE_BYTE(n) & BASE_BYTEMASK_0x02_ROOT))
+#define Not_Base_Root_Bit_Set(b) \
+    (not (BASE_BYTE(b) & BASE_BYTEMASK_0x02_ROOT))
 
 
 // Add "_Bit" suffix to reinforce lack of higher level function.  (A macro
 // with the name Set_Base_Managed() might sound like it does more, like
 // removing from the manuals list the way Manage_Stub() etc. do)
 
-#define Set_Base_Root_Bit(n) \
-    BASE_BYTE(n) |= BASE_BYTEMASK_0x02_ROOT
+#define Set_Base_Root_Bit(b) \
+    BASE_BYTE(b) |= BASE_BYTEMASK_0x02_ROOT
 
-#define Clear_Base_Root_Bit(n) \
-    BASE_BYTE(n) &= (~ BASE_BYTEMASK_0x02_ROOT)
-
-
-#define Set_Base_Marked_Bit(n) \
-    BASE_BYTE(n) |= BASE_BYTEMASK_0x01_MARKED
-
-#define Clear_Base_Marked_Bit(n) \
-    BASE_BYTE(n) &= (~ BASE_BYTEMASK_0x01_MARKED)
+#define Clear_Base_Root_Bit(b) \
+    BASE_BYTE(b) &= (~ BASE_BYTEMASK_0x02_ROOT)
 
 
-#define Set_Base_Managed_Bit(n) \
-    BASE_BYTE(n) |= BASE_BYTEMASK_0x04_MANAGED
+#define Set_Base_Marked_Bit(b) \
+    BASE_BYTE(b) |= BASE_BYTEMASK_0x01_MARKED
 
-#define Clear_Base_Managed_Bit(n) \
-    BASE_BYTE(n) &= (~ BASE_BYTEMASK_0x04_MANAGED)
+#define Clear_Base_Marked_Bit(b) \
+    BASE_BYTE(b) &= (~ BASE_BYTEMASK_0x01_MARKED)
 
 
-#define Set_Base_Unreadable_Bit(n) \
-    BASE_BYTE(n) |= BASE_BYTEMASK_0x40_UNREADABLE
+#define Set_Base_Managed_Bit(b) \
+    BASE_BYTE(b) |= BASE_BYTEMASK_0x04_MANAGED
 
-#define Clear_Base_Unreadable_Bit(n) \
-    BASE_BYTE(n) &= (~ BASE_BYTEMASK_0x40_UNREADABLE)
+#define Clear_Base_Managed_Bit(b) \
+    BASE_BYTE(b) &= (~ BASE_BYTEMASK_0x04_MANAGED)
+
+
+#define Set_Base_Unreadable_Bit(b) \
+    BASE_BYTE(b) |= BASE_BYTEMASK_0x40_UNREADABLE
+
+#define Clear_Base_Unreadable_Bit(b) \
+    BASE_BYTE(b) &= (~ BASE_BYTEMASK_0x40_UNREADABLE)
+
+
+#define Is_Base_A_Level(b) \
+    (BASE_BYTE(b) == BASE_BYTE_LEVEL)
 
 
 //=//// POINTER DETECTION (UTF-8, STUB, CELL, END) ////////////////////////=//
@@ -149,14 +153,14 @@ typedef enum {
     DETECTED_AS_END,  // a rebEND signal (Note: has char* alignment!)
     DETECTED_AS_WILD,  // arbitrary out-of-band purposes
     DETECTED_AS_FREE,
-    DETECTED_AS_RESERVED
+    DETECTED_AS_LEVEL
 } PointerDetect;
 
 INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
 {
     Byte b = FIRST_BYTE(p);
 
-    if (not (b & BASE_BYTEMASK_0x80_NODE))  // test for 1xxxxxxx
+    if (not (b & BASE_BYTEMASK_0x80_BASE))  // test for 1xxxxxxx
         return DETECTED_AS_UTF8;  // < 0x80 is string w/1st char in ASCII range
 
     if (not (b & BASE_BYTEMASK_0x40_UNREADABLE)) {  // test for 10xxxxxx
@@ -192,8 +196,8 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
         if (b == BASE_BYTE_FREE)  // 0xF6
             return DETECTED_AS_FREE;
 
-        if (b == BASE_BYTE_RESERVED)  // 0xF5
-            return DETECTED_AS_RESERVED;
+        if (b == BASE_BYTE_LEVEL)  // 0xF5
+            return DETECTED_AS_LEVEL;
 
         return DETECTED_AS_STUB;
     }

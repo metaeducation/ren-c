@@ -70,7 +70,7 @@
 //
 #define BASE_FLAG_BASE \
     FLAG_LEFT_BIT(0)
-#define BASE_BYTEMASK_0x80_NODE  0x80
+#define BASE_BYTEMASK_0x80_BASE  0x80
 
 
 //=//// BASE_FLAG_UNREADABLE (second-leftmost bit) ////////////////////////=//
@@ -221,7 +221,7 @@
 //
 // 0xF7 is used for BASE_BYTE_WILD (if the next byte is 0x00, this is "END")
 // 0xF6 is used for BASE_BYTE_FREE
-// 0xF5 is BASE_BYTE_RESERVED that is available for a new purpose
+// 0xF5 is BASE_BYTE_LEVEL (`Level` might change to hold Stub in first slot)
 //
 // 1. It's easy to follow 0xF7 with 0 in C strings (*see rebEND definition*).
 //    (once BASE_BYTE_END was its own state, but that was deemed wasteful
@@ -233,8 +233,8 @@ STATIC_ASSERT(not (BASE_BYTE_WILD & BASE_BYTEMASK_0x08_CELL));
 #define BASE_BYTE_FREE  0xF6
 STATIC_ASSERT(not (BASE_BYTE_FREE & BASE_BYTEMASK_0x08_CELL));
 
-#define BASE_BYTE_RESERVED  0xF5
-STATIC_ASSERT(not (BASE_BYTE_RESERVED & BASE_BYTEMASK_0x08_CELL));
+#define BASE_BYTE_LEVEL  0xF5
+STATIC_ASSERT(not (BASE_BYTE_LEVEL & BASE_BYTEMASK_0x08_CELL));
 
 
 //=//// Empty Base Class (or minimal C struct) ////////////////////////////=//

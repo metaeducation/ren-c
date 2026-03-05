@@ -12,13 +12,7 @@ struct CastHook<const F*, const Level*> {
     if (not p)
         return;
 
-    if ((*u_cast(const Byte*, p) & (
-        BASE_BYTEMASK_0x80_NODE | BASE_BYTEMASK_0x40_UNREADABLE
-            | BASE_BYTEMASK_0x08_CELL
-    )) != (
-        BASE_BYTEMASK_0x80_NODE | BASE_BYTEMASK_0x08_CELL
-    )){
+    if (not Is_Base_A_Level(u_cast(const Base*, p)))
         crash (p);
-    }
   }
 };

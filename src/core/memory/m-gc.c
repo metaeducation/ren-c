@@ -248,9 +248,9 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
             printf("BASE_BYTE_WILD shouldn't be found in the Stub Pool\n");
             break;
 
-          case BASE_BYTE_RESERVED:
-            printf("Queue stub w/BASE_BYTE_RESERVED, crazy corruption!\n");
-            printf("BASE_BYTE_RESERVED shouldn't be found in the Stub Pool\n");
+          case BASE_BYTE_LEVEL:
+            printf("Queue stub w/BASE_BYTE_LEVEL, crazy corruption!\n");
+            printf("BASE_BYTE_LEVEL shouldn't be found in the Stub Pool\n");
             break;
 
           case BASE_BYTE_DIMINISHING:
@@ -632,7 +632,7 @@ static void Mark_Root_Stubs(void)
             if (unit[0] == BASE_BYTE_FREE)
                 continue;
 
-            assert(unit[0] & BASE_BYTEMASK_0x80_NODE);
+            assert(unit[0] & BASE_BYTEMASK_0x80_BASE);
 
             if (not (unit[0] & BASE_BYTEMASK_0x02_ROOT))
                 continue;
@@ -976,7 +976,7 @@ Count Sweep_Stubs(void)
             if (unit[0] == BASE_BYTE_FREE)
                 continue;  // only unit without BASE_FLAG_BASE (in ASCII range)
 
-            assert(unit[0] & BASE_BYTEMASK_0x80_NODE);
+            assert(unit[0] & BASE_BYTEMASK_0x80_BASE);
 
             if (not (unit[0] & BASE_BYTEMASK_0x04_MANAGED)) {
                 assert(not (unit[0] & BASE_BYTEMASK_0x01_MARKED));

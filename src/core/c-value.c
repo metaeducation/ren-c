@@ -206,9 +206,9 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Freed PoolUnit (0xF6)", file, line);
         goto cleanup; }
 
-      case DETECTED_AS_RESERVED: {
-        STATIC_ASSERT(BASE_BYTE_RESERVED == 0xF5);
-        Probe_Print_Helper(p, expr, "Reserved Pointer (0xF5)", file, line);
+      case DETECTED_AS_LEVEL: {
+        STATIC_ASSERT(BASE_BYTE_LEVEL == 0xF5);
+        Probe_Print_Helper(p, expr, "Level Pointer (0xF5)", file, line);
         goto cleanup; }
     }
 

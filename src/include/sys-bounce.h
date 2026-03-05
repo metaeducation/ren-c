@@ -59,8 +59,8 @@ INLINE void Erase_Bounce_Wild(WildTwo out) {
 INLINE bool Is_Bounce_A_Cell(Bounce b) {
     const void* p = cast(const void*, b);
     return (
-        FIRST_BYTE(p) & (BASE_BYTEMASK_0x80_NODE | BASE_BYTEMASK_0x08_CELL)
-    ) == (BASE_BYTEMASK_0x80_NODE | BASE_BYTEMASK_0x08_CELL);
+        FIRST_BYTE(p) & (BASE_BYTEMASK_0x80_BASE | BASE_BYTEMASK_0x08_CELL)
+    ) == (BASE_BYTEMASK_0x80_BASE | BASE_BYTEMASK_0x08_CELL);
 }
 
 INLINE bool Is_Bounce_Wild(Bounce b) {

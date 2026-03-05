@@ -607,7 +607,7 @@ INLINE Result(Level*) Prep_Level_Core(
     L->prior = nullptr;
   #endif
 
-    L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE;
+    L->flags.bits = flags | FLAG_BASE_BYTE(BASE_BYTE_LEVEL);
 
     L->feed = feed except (Error* e) {
         Raw_Pooled_Free(LEVEL_POOL, L);

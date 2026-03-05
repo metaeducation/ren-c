@@ -32,57 +32,46 @@
 //
 
 
-// !!! A Level* answers that it is a node, and a cell.  This is questionable
-// and should be reviewed now that many features no longer depend on it.
+//=//// FLAGS 0-7 ARE USED FOR BASE_BYTE_LEVEL ////////////////////////////=//
+//
+// Sacrificing 8 bits of the Level to be able to identify it as a Level* is
+// a bit of a steep price.  However, the BASE_BYTE is very overloaded in the
+// design for UTF-8, Cell*, and Stub*... which doesn't leave a lot of wiggle
+// room for other bit patterns.
+//
+// So it's either this, or a full Stub* in the first struct position of the
+// Level...which would offer more space but without the rapid intialization
+// that can span both the state byte and the flags.  That could be necessary
+// if Levels needed to be able to be marked in the pools.
+//
+// In the interest of being able to identify Levels we go with this for now.
+//
+// BASE_BYTE_LEVEL is 0xF5 (11110101)
+//
 
-#define LEVEL_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0)  // IS a node
+#define LEVEL_FLAG_0_IS_TRUE  FLAG_LEFT_BIT(0)
 STATIC_ASSERT(LEVEL_FLAG_0_IS_TRUE == BASE_FLAG_BASE);
 
-#define LEVEL_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1)  // is NOT free
-STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == BASE_FLAG_UNREADABLE);
+#define LEVEL_FLAG_1_IS_TRUE  FLAG_LEFT_BIT(1)
+STATIC_ASSERT(LEVEL_FLAG_1_IS_TRUE == BASE_FLAG_UNREADABLE);
 
+#define LEVEL_FLAG_2_IS_TRUE  FLAG_LEFT_BIT(2)
+STATIC_ASSERT(LEVEL_FLAG_2_IS_TRUE == BASE_FLAG_GC_ONE);
 
-//=//// LEVEL_FLAG_2 //////////////////////////////////////////////////////=//
-//
-#define LEVEL_FLAG_2 \
-    FLAG_LEFT_BIT(2)
+#define LEVEL_FLAG_3_IS_TRUE  FLAG_LEFT_BIT(3)
+STATIC_ASSERT(LEVEL_FLAG_3_IS_TRUE == BASE_FLAG_GC_TWO);
 
+#define LEVEL_FLAG_4_IS_FALSE  FLAG_LEFT_BIT(4)
+STATIC_ASSERT(LEVEL_FLAG_4_IS_FALSE == BASE_FLAG_CELL);
 
-//=//// LEVEL_FLAG_3 //////////////////////////////////////////////////////=//
+#define LEVEL_FLAG_5_IS_TRUE  FLAG_LEFT_BIT(5)
+STATIC_ASSERT(LEVEL_FLAG_5_IS_TRUE == BASE_FLAG_MANAGED);
 
-#define LEVEL_FLAG_3 \
-    FLAG_LEFT_BIT(3)
+#define LEVEL_FLAG_6_IS_FALSE  FLAG_LEFT_BIT(6)
+STATIC_ASSERT(LEVEL_FLAG_6_IS_FALSE == BASE_FLAG_ROOT);
 
-
-//=//// LEVEL_FLAG_4_IS_TRUE //////////////////////////////////////////////=//
-//
-// !!! Historically levels have identified as being "cells" even though they
-// are not, in order to use that flag as a distinction when in bindings
-// from the non-cell choices like contexts and paramlists.  This may not be
-// the best way to flag levels; alternatives are in consideration.
-//
-#define LEVEL_FLAG_4_IS_TRUE \
-    FLAG_LEFT_BIT(4)
-
-STATIC_ASSERT(LEVEL_FLAG_4_IS_TRUE == BASE_FLAG_CELL);
-
-
-//=//// LEVEL_FLAG_5 //////////////////////////////////////////////////////=//
-//
-#define LEVEL_FLAG_5 \
-    FLAG_LEFT_BIT(5)
-
-
-//=//// LEVEL_FLAG_6 //////////////////////////////////////////////////////=//
-//
-#define LEVEL_FLAG_6 \
-    FLAG_LEFT_BIT(6)
-
-
-//=//// LEVEL_FLAG_7 //////////////////////////////////////////////////////=//
-//
-#define LEVEL_FLAG_7 \
-    FLAG_LEFT_BIT(7)
+#define LEVEL_FLAG_7_IS_TRUE  FLAG_LEFT_BIT(7)
+STATIC_ASSERT(LEVEL_FLAG_7_IS_TRUE == BASE_FLAG_MARKED);
 
 
 //=//// FLAGS 8-15 ARE USED FOR THE "STATE" byte ///////////////////////////=//

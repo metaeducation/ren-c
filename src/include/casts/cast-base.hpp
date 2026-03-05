@@ -59,7 +59,7 @@ struct CastHook<const F*, const Base*> {  // both must be const [B]
     if (not p)
         return;
 
-    if (not (*u_cast(const Byte*, p) & BASE_BYTEMASK_0x80_NODE))
+    if (not (*u_cast(const Byte*, p) & BASE_BYTEMASK_0x80_BASE))
         crash (p);
   }
 };

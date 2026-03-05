@@ -330,10 +330,9 @@ void Stepper_Exiting_Checks(Level* L)
 
         Flags filtered = (L->flags.bits & ~FLAG_STATE_BYTE(255));
         filtered &= ~ (
-            LEVEL_FLAG_0_IS_TRUE  // always true
-            | LEVEL_FLAG_4_IS_TRUE  // always true
-            | LEVEL_FLAG_ROOT_LEVEL
-            | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+            FLAG_BASE_BYTE(BASE_BYTE_LEVEL)
+                | LEVEL_FLAG_ROOT_LEVEL
+                | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
         );
 
         // These options to Stepper_Executor() should not change over the

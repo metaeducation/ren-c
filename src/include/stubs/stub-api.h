@@ -95,8 +95,8 @@ INLINE void Disconnect_Api_Handle_From_Level(Stub* stub)
 {
     Base* prev_base = MISC_VALUE_HOLDER_PREV(stub);
     Base* next_base = LINK_VALUE_HOLDER_NEXT(stub);
-    bool at_head = Is_Base_A_Cell(prev_base);
-    bool at_tail = Is_Base_A_Cell(next_base);
+    bool at_head = Is_Base_A_Level(prev_base);
+    bool at_tail = Is_Base_A_Level(next_base);
 
     if (at_head) {
         Level* L = cast(Level*, prev_base);

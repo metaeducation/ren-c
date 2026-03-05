@@ -160,7 +160,7 @@ static Result(None) Reuse_Sublevel_For_Action_Core(
 
     sub->executor = &Action_Executor;
     sub->flags.bits = (
-        LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE
+        FLAG_BASE_BYTE(BASE_BYTE_LEVEL)
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
             | (L->flags.bits & LEVEL_FLAG_PURE)
             | LEVEL_FLAG_DEBUG_STATE_0_OUT_NOT_ERASED_OK  // [1]
@@ -198,7 +198,7 @@ static Result(None) Reuse_Sublevel_For_Eval_Core(
     assert(sub->out == OUT);
 
     sub->flags.bits = (
-        LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE
+        FLAG_BASE_BYTE(BASE_BYTE_LEVEL)
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
             | (L->flags.bits & LEVEL_FLAG_PURE)
             | (not LEVEL_FLAG_VANISHABLE_VOIDS_ONLY)  // group semantics
@@ -246,7 +246,7 @@ static Result(None) Reuse_Sublevel_Target_Spare_For_Intrinsic_Arg_Core(
     sub->executor = &Stepper_Executor;
 
     sub->flags.bits = (
-        LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE
+        FLAG_BASE_BYTE(BASE_BYTE_LEVEL)
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
             | (L->flags.bits & LEVEL_FLAG_PURE)
             | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
@@ -296,7 +296,7 @@ INLINE Result(None) Reuse_Sublevel_Same_Feed_For_Step_Core(Level* L)
     sub->executor = &Stepper_Executor;
 
     sub->flags.bits = (
-        LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE
+        FLAG_BASE_BYTE(BASE_BYTE_LEVEL)
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
             | (L->flags.bits & LEVEL_FLAG_PURE)  // v-- if L fulfilling, we are
             | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)

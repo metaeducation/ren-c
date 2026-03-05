@@ -365,10 +365,10 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
         );
         break;
 
-      case DETECTED_AS_RESERVED:
+      case DETECTED_AS_LEVEL:
         strncat(
             buf,
-            "Panic was passed a reserved pointer",
+            "Panic was passed a level pointer",
             PANIC_BUF_SIZE - strsize(buf)
         );
         break;
