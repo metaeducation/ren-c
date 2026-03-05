@@ -401,7 +401,7 @@ export emit-include-params-macro: func [
         ]
     ]
 
-  ; 1. We need `Set_Flex_Info(level_varlist, HOLD)` here because native code
+  ; 1. We need `Set_Flex_Info(level_->varlist, HOLD)` here because native code
   ;    trusts that type checking has ensured it won't get bits in its argument
   ;    slots that the C won't recognize.  Usermode code that gets its hands on
   ;    a native's FRAME! (e.g. for debug viewing) can't be allowed to change
@@ -415,8 +415,8 @@ export emit-include-params-macro: func [
 
     let varlist-hold: if is-intrinsic [
         [
-            -[if (Not_Level_Flag(level_, DISPATCHING_INTRINSIC))]-
-            -[    Set_Flex_Info(Varlist_Array(level_->varlist), HOLD);]-  ; [4]
+            -[if (level_->executor != &Intrinsic_Executor)]-
+            -[    Set_Flex_Info(Varlist_Array(level_->varlist), HOLD);]-  ; [1]
         ]
     ] else [
         [-[Set_Flex_Info(Varlist_Array(level_->varlist), HOLD);]-]

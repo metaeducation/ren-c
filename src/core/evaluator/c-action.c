@@ -1276,3 +1276,20 @@ void Drop_Action(Level* L) {
     L->label_utf8 = nullptr;  // do last (for debug watchlist)
   #endif
 }
+
+
+//
+//  Intrinsic_Executor: C
+//
+// Dummy executor, see DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC for explanation.
+//
+// NOTE: Because decay can call the evaluator (e.g. for GETTER or ALIAS that is
+// decaying) the machinery has to do that before the intrinsic, as we do not
+// want frameless natives on the stack above an evaluation (which might want
+// to introspect the stack and isn't prepared to see an intrinsic there).
+//
+Bounce Intrinsic_Executor(Level* L)
+{
+    UNUSED(L);
+    crash ("Intrinsic executor is never supposed to be called");
+}

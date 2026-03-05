@@ -367,7 +367,7 @@ void Set_Location_Of_Error(
 
     Level* L = where;
     for (; L != BOTTOM_LEVEL; L = L->prior) {
-        if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {  // [1]
+        if (L->executor == &Intrinsic_Executor) {  // [1]
             Value* frame = Level_Scratch(L);
             possibly(Is_Action(frame));
             Option(const Symbol*) label = Frame_Label_Deep(frame);

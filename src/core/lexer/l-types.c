@@ -153,7 +153,7 @@ DECLARE_NATIVE(ANY_SIGILED_Q)  // !!! should %make-types.r produce this?
 
     Stable* v = ARG(VALUE);
 
-    if (Not_Level_Flag(LEVEL, DISPATCHING_INTRINSIC)) {
+    if (LEVEL->executor != &Intrinsic_Executor) {
         if (ARG(TYPE)) {
             if (not Is_Datatype(v))
                 return LOGIC_OUT(false);

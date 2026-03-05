@@ -360,7 +360,7 @@ DECLARE_NATIVE(ANTIFORM_Q)
 
     Value* v = ARG(VALUE);
 
-    if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))  // intrinsic shortcut
+    if (LEVEL->executor == &Intrinsic_Executor)  // intrinsic shortcut
         return LOGIC_OUT(Is_Antiform(v));
 
     if (not ARG(TYPE))

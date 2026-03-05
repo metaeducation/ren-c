@@ -657,11 +657,12 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
         if (Any_Plain(v))
             continue;
 
-        if (Not_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))
+        if (LEVEL->executor != &Intrinsic_Executor) {
             if (ARG(FORCE)) {
                 Clear_Cell_Sigil(v);
                 continue;
             }
+        }
 
         return fail (
             "Trying to add Sigil to already metaform/tied/pinned value"

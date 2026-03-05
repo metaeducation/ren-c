@@ -284,7 +284,7 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 
 
 INLINE Details* Ensure_Level_Details(Level* L) {
-    assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
+    assert(L->executor != &Intrinsic_Executor);
     Phase* phase = Level_Phase(L);
     assert(Is_Stub_Details(phase));
     return cast(Details*, phase);
@@ -348,7 +348,7 @@ INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)
         SECOND_BYTE(known(Level*, L))
 #else
     INLINE StateByte& LEVEL_STATE_BYTE(Level* L) {
-        assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
+        assert(L->executor != &Intrinsic_Executor);  // !!! rethink, is ok?
         return SECOND_BYTE(L);
     }
 #endif
@@ -384,16 +384,12 @@ INLINE ParamList* Varlist_Of_Level_Force_Managed(Level* L) {
 // make sure you're only asking about Action levels, or levels that are
 // dispatching intrinsics.
 //
-// 1. If LEVEL_FLAG_DISPATCHING_INTRINSIC is true, then we could get label
-//    information here.  But it's probably better to have the very few callers
-//    that can deal with intrinsics do so, to avoid giving the impression that
-//    the label we give back is for the level itself (it may be that Action
-//    levels can call intrinsics using their level, and we don't want to wind
-//    up skipping the Action level in a stack trace by thinking its label has
-//    been accounted for by the intrinsic).
+// 1. We *could* give back label information for an intrinsic here.  But it is
+//    probably better to limit how much of the system works with intrinsics;
+//    they're supposed to be a hidden detail.
 
 INLINE Option(const Symbol*) Try_Get_Action_Level_Label(Level* L) {
-    assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));  // be cautious [1]
+    assert(L->executor != &Intrinsic_Executor);  // no intrinsics [1]
     assert(Is_Action_Level(L));
   #if DEBUG_LEVEL_LABELS
     assert(L->label_utf8);
@@ -495,7 +491,10 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
     Exact(Value*) out,  // prohibit passing Element/Stable/Slot as output [1]
     Level* L
 ){
-    assert(not TOP_LEVEL or Not_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC));
+    assert(
+        ((not TOP_LEVEL) or (TOP_LEVEL->executor != &Intrinsic_Executor))
+        or g_gc.disabled  // allow PROBE() from intrinsics
+    );
 
   #if RUNTIME_CHECKS
     assert(L->prior == nullptr);  // Prep_Level_Core() should null it

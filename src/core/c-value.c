@@ -154,9 +154,6 @@ void* Probe_Core_Debug(
     #endif
   #endif
 
-    bool top_was_intrinsic = Get_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);
-    Clear_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);
-
     DECLARE_MOLDER (mo);
     if (limit != 0) {
         SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
@@ -425,9 +422,6 @@ void* Probe_Core_Debug(
 
     assert(g_gc.disabled);
     g_gc.disabled = was_disabled;
-
-    if (top_was_intrinsic)
-        Set_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);
 
   #if TRAMPOLINE_COUNTS_TICKS
     Reconcile_Ticks();

@@ -67,7 +67,7 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
         return fail (Error_Type_Test_Null_Raw());  // !!! Review: dumb idea?
     }
 
-    if (Not_Level_Flag(LEVEL, DISPATCHING_INTRINSIC)) {
+    if (LEVEL->executor != &Intrinsic_Executor) {
         bool check_datatype = ARG(TYPE);
         if (check_datatype) {
             if (not Is_Datatype(v))
@@ -399,12 +399,14 @@ bool Predicate_Check_Spare_Uses_Scratch(
         possibly(Is_Antiform(SCRATCH));  // don't bother canonizing TYPE_BYTE()
         Remember_Cell_Is_Lifeguard(SCRATCH);
 
-        assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
-        Set_Level_Flag(L, DISPATCHING_INTRINSIC);
+        Executor* saved_executor = L->executor;  // !!! review: bad idea!
+        L->executor = &Intrinsic_Executor;
         Set_Level_Flag(L, RUNNING_TYPECHECK);
+
         Bounce bounce = Apply_Cfunc(dispatcher, L);
+
         Clear_Level_Flag(L, RUNNING_TYPECHECK);
-        Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
+        L->executor = saved_executor;
 
         Corrupt_Cell_If_Needful(SPARE);  // predicate is allowed to trash it
         Forget_Cell_Was_Lifeguard(SCRATCH);

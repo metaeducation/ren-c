@@ -341,19 +341,11 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     // Cooperative panics offer themselves back to the executor that was
     // running when they were raised.  This means they get a chance to do
     // cleanup (just as they have for the longjmp() and C++ exception cases).
-    //
-    // 1. STATE_BYTE() won't allow reads if you are DISPATCHING_INTRINSIC,
-    //    since the intrinsic does not own the state byte.  But the flag has
-    //    to be set for (panic (...)) in order to blame the right call
-    //    (e.g. Native_Panic_Result() is DISPATCHING_INTRINSIC-aware).  It
-    //    would be a burden for the Executor to have to clear the flag between
-    //    generating the error blame and returning, so just clear flag here.
 
     bounce = opt Irreducible_Bounce(TOP_LEVEL, bounce);
 
     if (bounce == BOUNCE_THROWN) {
         assert(Is_Throwing_Panic(TOP_LEVEL));
-        Clear_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);  // convenience [1]
         L = TOP_LEVEL;
         goto bounce_on_trampoline;
     }
@@ -381,6 +373,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   // 2. If a native protected the output Cell as a sanity check in the
   //    debug build, it won't run the code path to clean that up here.
 
+    if (TOP_LEVEL->executor == &Intrinsic_Executor)  // panic in intrinsic
+        Drop_Level(TOP_LEVEL);  // don't let intrinsic see panic
+
     Level* L = TOP_LEVEL;  // may not be same as L whose executor() called [1]
 
     Assert_Varlist(e);
@@ -388,9 +383,6 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     Clear_Lingering_Out_Cell_Shield_If_Debug(L);  // abrupt skips cleanup [2]
     Init_Thrown_Panic(L, e);
-
-    possibly(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // panic in intrinsic
-    Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
 
     goto bounce_on_trampoline_with_recover;  // abrupt panic "used up" rescue
 

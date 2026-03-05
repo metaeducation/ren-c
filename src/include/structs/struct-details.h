@@ -151,25 +151,23 @@ typedef enum {
 //
 // * NON-INTRINSIC: In ordinary function invocation, the Level has a VarList*
 //   in it which represents the parameters, refinements, and locals of the
-//   function invocation.
+//   function invocation, and uses the Action_Executor().
 //
-// * INTRINSIC: The Level is that of the parent of the invocation, with the
-//   LEVEL_FLAG_DISPATCHING_INTRINSIC set on it.  It has no VarList* of its
-//   own, and cannot do anything that would invoke more evaluator Levels.
+// * INTRINSIC: A lightweight Level with a dummy Intrinsic_Executor() is used.
+//   It has no VarList* of its own, and cannot do anything that would invoke
+//   more evaluator Levels.
 //
-// The trick with intrinsics is that the argument and action are multiplexed
-// onto the parent Level, by making it give up its SPARE and SCRATCH cells.
-// The SPARE holds the single argument, and the SCRATCH holds the action--so
-// that any instance data can be accessed (e.g. a Typechecker can find the
-// TypesetByte that applies to that Action instance, even though they all use
-// a common C function Dispatcher).
+// The light trick with intrinsics that the SPARE holds the single argument,
+// and the SCRATCH holds the action--so that any instance data can be accessed
+// (e.g. a Typechecker can find the TypesetByte that applies to that Action
+// instance, even though they all use a common C function Dispatcher).
 //
 // Intrinsics can also be run with their own Level and FRAME!--either when
 // being called with refinements (thus needing more than one argument), for
 // purposes that need frames (like specialization), or in the future it may
 // be for debugging modes that want to see reified levels for all steps.
 // Detecting whether or not the dispatch is intrinsic is done by checking
-// LEVEL_FLAG_DISPATCHING_INTRINSIC.
+// for the Intrinsic_Executor() in the level's ->executor field.
 //
 // To indicate that a function can be dispatched intrinsically, declare it
 // as `native:intrinsic`, so it gets DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC.

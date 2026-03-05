@@ -165,19 +165,19 @@ INLINE Cell* Arg_Of_Level_Inline(
     switch (argmode) {  // hope switch gets constant-folded by optimizer!
       case ARGMODE_REQUIRED:
         assert(n != 0 and n <= Level_Num_Slots(L));
-        assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
+        assert(L->executor != &Intrinsic_Executor);
         break;
 
       case ARGMODE_OPTIONAL:
         assert(n != 0 and n <= Level_Num_Slots(L));
-        assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
+        assert(L->executor != &Intrinsic_Executor);
         if (Is_Light_Null(u_cast(Value*, L->rootvar) + n))
             return nullptr;  // should get wrapped by an Option(T)
         break;
 
       case ARGMODE_INTRINSIC:
         assert(n == 1);
-        if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {
+        if (L->executor == &Intrinsic_Executor) {
             assert(Not_Cell_Flag(Level_Spare(L), SLOT_AURA_PROTECTED));  // see [1]
             return Level_Spare(L);
         }
@@ -327,7 +327,7 @@ INLINE Cell* Arg_Of_Level_Inline(
 //
 
 INLINE Details* Level_Intrinsic_Details(Level* L) {
-    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
+    if (L->executor != &Intrinsic_Executor)
         return Ensure_Level_Details(L);
 
     Stable* frame = As_Stable(Level_Scratch(L));
@@ -336,7 +336,7 @@ INLINE Details* Level_Intrinsic_Details(Level* L) {
 }
 
 INLINE Option(const Symbol*) Level_Intrinsic_Label(Level* L) {
-    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
+    if (L->executor != &Intrinsic_Executor)
         return Try_Get_Action_Level_Label(L);
 
     Stable* frame = As_Stable(Level_Scratch(L));

@@ -221,7 +221,7 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
     bool want_value  // ELIDE is more permissive, doesn't want the value
 ){
     if (want_value)  // eval required in general case (getters, alias) [2]
-        assert(Not_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC));
+        assert(TOP_LEVEL->executor != &Intrinsic_Executor);
 
     if (Is_Cell_Stable(v))
         goto finished;

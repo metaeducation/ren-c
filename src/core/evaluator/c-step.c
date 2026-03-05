@@ -1295,12 +1295,13 @@ Bounce Stepper_Executor(Level* L)
 
 } intrinsic_arg_in_spare: { /////////////////////////////////////////////////
 
-    SUBLEVEL->executor = &Just_Use_Out_Executor;  // temporary (?) invariant
+    assert(
+        SUBLEVEL->executor == &Stepper_Executor  // if we evaluated arg
+        or SUBLEVEL->executor == &Just_Use_Out_Executor  // if we didn't
+    );
     assert(SUBLEVEL->feed == L->feed);  // we didn't change it
     assert(SUBLEVEL->out == SPARE);  // we redirected it
     SUBLEVEL->out = OUT;  // put it back
-
-  #if (! DEBUG_DISABLE_INTRINSICS)
 
     Details* details = Ensure_Frame_Details(CURRENT);
 
@@ -1311,7 +1312,7 @@ Bounce Stepper_Executor(Level* L)
     ){
         Init_Null_Signifying_Vetoed(OUT);
         Set_Eval_Executor_Flag(L, OUT_IS_DISCARDABLE);
-        goto lookahead;
+        goto finished_intrinsic;
     }
     if (Get_Parameter_Flag(param, UNDO_OPT) and Any_Void(SPARE)) {
         Init_Null(SPARE);
@@ -1324,12 +1325,12 @@ Bounce Stepper_Executor(Level* L)
 
     Dispatcher* dispatcher = Details_Dispatcher(details);
 
-    assert(Not_Level_Flag(SUBLEVEL, DISPATCHING_INTRINSIC));
-    Set_Level_Flag(SUBLEVEL, DISPATCHING_INTRINSIC);  // level_ is not its Level
-    dont(Set_Level_Flag(SUBLEVEL, RUNNING_TYPECHECK));  // want panic if bad args
+    dont(Set_Level_Flag(SUBLEVEL, RUNNING_TYPECHECK));  // panic if bad args
 
     Copy_Cell(Level_Spare(SUBLEVEL), SPARE);
     Copy_Cell(Level_Scratch(SUBLEVEL), CURRENT);
+
+    SUBLEVEL->executor = &Intrinsic_Executor;  // how we signal intrinsics
 
     Bounce b = Apply_Cfunc(dispatcher, SUBLEVEL);
 
@@ -1355,12 +1356,13 @@ Bounce Stepper_Executor(Level* L)
         Note_Level_Out_As_Void_To_Make_Heavy(L);
     }
 
-    Clear_Level_Flag(SUBLEVEL, DISPATCHING_INTRINSIC);
     if (Not_Details_Flag(details, PURE))
         Set_Eval_Executor_Flag(L, OUT_IS_DISCARDABLE);
-    goto lookahead;
 
-  #endif  // DEBUG_DISABLE_INTRINSICS
+  } finished_intrinsic: { ////////////////////////////////////////////////////
+
+    SUBLEVEL->executor = &Just_Use_Out_Executor;  // temp (?) invariant
+    goto lookahead;
 
 
 } case TYPE_CHAIN: //// CHAIN! [ a:  ^a:  b:c:d  ^:e ] ///////////////////////

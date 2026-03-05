@@ -181,36 +181,20 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
     FLAG_LEFT_BIT(17)
 
 
-//=//// LEVEL_FLAG_DISPATCHING_INTRINSIC //////////////////////////////////=//
+//=//// LEVEL_FLAG_18 /////////////////////////////////////////////////////=//
 //
-// Intrinsics can be run without creating levels for them, if they do not
-// use refinements, and if you're not using a debug mode which mandates that
-// levels always be created.  In this case there is no Level* to pass to the
-// native, so a parent level is passed (which may be a Stepper_Executor(),
-// for instance, instead of an Action_Executor())
-//
-// The parent's OUT can be used, but the macro for getting the argument will
-// look for that argument in the SPARE cell.  If the level is being dispatched
-// normally, the argument will be in the frame as usual.  A value for the
-// action that is currently running will be in SCRATCH.
-//
-// NOTE: Because decay can call the evaluator (e.g. for GETTER or ALIAS that is
-// decaying) the machinery has to do that before the intrinsic, as we do not
-// want frameless natives on the stack above an evaluation (which might want
-// to introspect the stack and isn't prepared to see an intrinsic there).
-//
-#define LEVEL_FLAG_DISPATCHING_INTRINSIC \
+#define LEVEL_FLAG_18 \
     FLAG_LEFT_BIT(18)
 
 
 //=//// LEVEL_FLAG_RUNNING_TYPECHECK //////////////////////////////////////=//
 //
-// This flag was introduced to use with LEVEL_FLAG_DISPATCHING_INTRINSIC, in
-// order to deal with the fact that intrinsics are responsible for their own
-// argument typechecking...but if they themselves are being run as a typecheck
-// then they should not panic() when the types don't pass.  This means they
-// should return LOGIC_OUT(false) instead of panicing...but if called in a non
-// typecheck context they should do the panic.
+// This flag was introduced to use with intrinsics, to deal with the fact that
+// intrinsics are responsible for their own argument typechecking...but if
+// they themselves are being run as a typecheck then they should not panic()
+// when the types don't pass.  This means they should return LOGIC_OUT(false)
+// instead of panicing...but if called in a non typecheck context they should
+// do the panic.
 //
 #define LEVEL_FLAG_RUNNING_TYPECHECK \
     FLAG_LEFT_BIT(19)
@@ -388,8 +372,8 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     // output cell involves a level of indirection to address.)
     //
     // Other executors can use this for what they want -but- if you use
-    // LEVEL_FLAG_DISPATCHING_INTRINSIC then scratch must hold the cell of
-    // the intrinsic being run.
+    // Intrinsic_Executor() then scratch must hold the cell of the intrinsic
+    // being run.
     //
     Value scratch;  // raw vs. derived class due to union/destructor combo
 
