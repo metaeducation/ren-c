@@ -168,9 +168,12 @@ DECLARE_NATIVE(UNSTABLE_TYPECHECKER_ARCHETYPE)
     if (typeset_byte == Byte_From_Type(TYPE_FAILURE))
         return LOGIC_OUT(Is_Failure(v));
 
-    require (
-      Ensure_No_Failures_Including_In_Packs(v)
-    );
+    if (typeset_byte == Byte_From_Type(TYPE_PACK))
+        return LOGIC_OUT(Is_Pack(v));
+
+    Ensure_No_Failures_Including_In_Packs(v) except (Error* e) {
+        panic (e);  // better than returning LOGIC_OUT?  (think of ACTION?)
+    }
 
     if (typeset_byte == Byte_From_Type(TYPE_VOID)) {
         if (Is_Heavy_Void(v))
