@@ -457,7 +457,7 @@ INLINE void Free_Level_Internal(Level* L) {
     Raw_Pooled_Free(LEVEL_POOL, L);
 }
 
-// 1. Push_Level() takes an Value* for the output.  It is a Exact() and not a
+// 1. Push_Level() takes an Value* for the output.  It is a Contra() and not a
 //    Sink() because we may not want to corrupt the cell we are given (e.g.
 //    if we're pushing a level to do infix processing on an already calculated
 //    result).
@@ -516,12 +516,9 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
 
     Assert_Cell_Eval_Targetable_If_Tracking(out);
 
-    if (
-        LEVEL_STATE_BYTE(L) == STATE_0
-        and Not_Level_Flag(L, DEBUG_STATE_0_OUT_NOT_ERASED_OK)
-    ){
-        assert(Is_Cell_Erased(out));  // STATE_0 requires erased cell [1]
-    }
+    dont(  // flags too scarce for DEBUG_STATE_0_OUT_NOT_ERASED_OK right now
+        assert(LEVEL_STATE_BYTE(L) != STATE_0 or Is_Cell_Erased(out))
+    );
 
     L->out = out;  // must be a valid cell for GC [3]
 

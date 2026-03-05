@@ -42,14 +42,88 @@ STATIC_ASSERT(LEVEL_FLAG_0_IS_TRUE == BASE_FLAG_BASE);
 STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == BASE_FLAG_UNREADABLE);
 
 
-//=//// LEVEL_FLAG_MISCELLANEOUS //////////////////////////////////////////=//
+//=//// LEVEL_FLAG_2 //////////////////////////////////////////////////////=//
 //
-// This flag is used by natives and non-ACTION-executors for whatever purposes
-// they want; e.g. UNTIL can signal to WHILE that it should invert its
-// logic based on this flag.
-//
-#define LEVEL_FLAG_MISCELLANEOUS \
+#define LEVEL_FLAG_2 \
     FLAG_LEFT_BIT(2)
+
+
+//=//// LEVEL_FLAG_3 //////////////////////////////////////////////////////=//
+
+#define LEVEL_FLAG_3 \
+    FLAG_LEFT_BIT(3)
+
+
+//=//// LEVEL_FLAG_4_IS_TRUE //////////////////////////////////////////////=//
+//
+// !!! Historically levels have identified as being "cells" even though they
+// are not, in order to use that flag as a distinction when in bindings
+// from the non-cell choices like contexts and paramlists.  This may not be
+// the best way to flag levels; alternatives are in consideration.
+//
+#define LEVEL_FLAG_4_IS_TRUE \
+    FLAG_LEFT_BIT(4)
+
+STATIC_ASSERT(LEVEL_FLAG_4_IS_TRUE == BASE_FLAG_CELL);
+
+
+//=//// LEVEL_FLAG_5 //////////////////////////////////////////////////////=//
+//
+#define LEVEL_FLAG_5 \
+    FLAG_LEFT_BIT(5)
+
+
+//=//// LEVEL_FLAG_6 //////////////////////////////////////////////////////=//
+//
+#define LEVEL_FLAG_6 \
+    FLAG_LEFT_BIT(6)
+
+
+//=//// LEVEL_FLAG_7 //////////////////////////////////////////////////////=//
+//
+#define LEVEL_FLAG_7 \
+    FLAG_LEFT_BIT(7)
+
+
+//=//// FLAGS 8-15 ARE USED FOR THE "STATE" byte ///////////////////////////=//
+//
+// One byte's worth is used to encode a "level state" that can be used by
+// natives or dispatchers, e.g. to encode which step they are on.
+//
+// By default, when a level is initialized its state byte will be 0.  This
+// lets the executing code know that it's getting control for the first time.
+
+#define FLAG_STATE_BYTE(state) \
+    FLAG_SECOND_BYTE(state)
+
+INLINE Byte State_Byte_From_Flags(Flags flags)
+  { return SECOND_BYTE(&flags); }
+
+
+#undef LEVEL_FLAG_8
+#undef LEVEL_FLAG_9
+#undef LEVEL_FLAG_10
+#undef LEVEL_FLAG_11
+#undef LEVEL_FLAG_12
+#undef LEVEL_FLAG_13
+#undef LEVEL_FLAG_14
+#undef LEVEL_FLAG_15
+
+
+//=//// LEVEL_FLAG_TRAMPOLINE_KEEPALIVE ///////////////////////////////////=//
+//
+// This flag asks the trampoline function to not call Drop_Level() when it
+// sees that the level's `executor` has reached the `nullptr` state.  Instead
+// it stays on the level stack, and control is passed to the previous level's
+// executor (which will then be receiving its level pointer parameter that
+// will not be the current top of stack).
+//
+// It's a feature used by routines which want to make several successive
+// requests on a level (REDUCE, ANY, CASE, etc.) without tearing down the
+// level and putting it back together again.
+//
+#define LEVEL_FLAG_TRAMPOLINE_KEEPALIVE \
+    FLAG_LEFT_BIT(16)
 
 
 //=//// LEVEL_FLAG_FORCE_HEAVY_BRANCH /////////////////////////////////////=//
@@ -67,20 +141,7 @@ STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == BASE_FLAG_UNREADABLE);
 // generic LEVEL_FLAG_XXX free to use.)
 //
 #define LEVEL_FLAG_FORCE_HEAVY_BRANCH \
-    FLAG_LEFT_BIT(3)
-
-
-//=//// LEVEL_FLAG_4_IS_TRUE //////////////////////////////////////////////=//
-//
-// !!! Historically levels have identified as being "cells" even though they
-// are not, in order to use that flag as a distinction when in bindings
-// from the non-cell choices like contexts and paramlists.  This may not be
-// the best way to flag levels; alternatives are in consideration.
-//
-#define LEVEL_FLAG_4_IS_TRUE \
-    FLAG_LEFT_BIT(4)
-
-STATIC_ASSERT(LEVEL_FLAG_4_IS_TRUE == BASE_FLAG_CELL);
+    FLAG_LEFT_BIT(17)
 
 
 //=//// LEVEL_FLAG_VANISHABLE_VOIDS_ONLY //////////////////////////////////=//
@@ -115,75 +176,6 @@ STATIC_ASSERT(LEVEL_FLAG_4_IS_TRUE == BASE_FLAG_CELL);
 // The flag is inherited by pushed levels.
 //
 #define LEVEL_FLAG_VANISHABLE_VOIDS_ONLY \
-    FLAG_LEFT_BIT(5)
-
-
-//=//// LEVEL_FLAG_TRAMPOLINE_KEEPALIVE ////////////////////////////////////=//
-//
-// This flag asks the trampoline function to not call Drop_Level() when it
-// sees that the level's `executor` has reached the `nullptr` state.  Instead
-// it stays on the level stack, and control is passed to the previous level's
-// executor (which will then be receiving its level pointer parameter that
-// will not be the current top of stack).
-//
-// It's a feature used by routines which want to make several successive
-// requests on a level (REDUCE, ANY, CASE, etc.) without tearing down the
-// level and putting it back together again.
-//
-#define LEVEL_FLAG_TRAMPOLINE_KEEPALIVE \
-    FLAG_LEFT_BIT(6)
-
-
-//=//// LEVEL_FLAG_UNINTERRUPTIBLE ////////////////////////////////////////=//
-//
-// Levels inherit the uninteruptibility flag of their parent when they are
-// pushed.  You can clear it after the push if you want an interruptible
-// level underneath an uninterruptible one.
-//
-#define LEVEL_FLAG_UNINTERRUPTIBLE \
-    FLAG_LEFT_BIT(7)
-
-
-//=//// FLAGS 8-15 ARE USED FOR THE "STATE" byte ///////////////////////////=//
-//
-// One byte's worth is used to encode a "level state" that can be used by
-// natives or dispatchers, e.g. to encode which step they are on.
-//
-// By default, when a level is initialized its state byte will be 0.  This
-// lets the executing code know that it's getting control for the first time.
-
-#define FLAG_STATE_BYTE(state) \
-    FLAG_SECOND_BYTE(state)
-
-INLINE Byte State_Byte_From_Flags(Flags flags)
-  { return SECOND_BYTE(&flags); }
-
-
-#undef LEVEL_FLAG_8
-#undef LEVEL_FLAG_9
-#undef LEVEL_FLAG_10
-#undef LEVEL_FLAG_11
-#undef LEVEL_FLAG_12
-#undef LEVEL_FLAG_13
-#undef LEVEL_FLAG_14
-#undef LEVEL_FLAG_15
-
-
-//=//// LEVEL_FLAG_16 /////////////////////////////////////////////////////=//
-//
-#define LEVEL_FLAG_16 \
-    FLAG_LEFT_BIT(16)
-
-
-//=//// LEVEL_FLAG_17 //////////////////////////////////////////////////////=//
-//
-#define LEVEL_FLAG_17 \
-    FLAG_LEFT_BIT(17)
-
-
-//=//// LEVEL_FLAG_18 /////////////////////////////////////////////////////=//
-//
-#define LEVEL_FLAG_18 \
     FLAG_LEFT_BIT(18)
 
 
@@ -200,24 +192,13 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
     FLAG_LEFT_BIT(19)
 
 
-//=//// LEVEL_FLAG_DEBUG_STATE_0_OUT_NOT_ERASED_OK ////////////////////////=//
+//=//// LEVEL_FLAG_UNINTERRUPTIBLE ////////////////////////////////////////=//
 //
-// The trampoline will catch cases where you are in STATE_0 and the OUT Cell
-// is not erased.  However, that comes a bit late and is annoying to find
-// the specific Level that had the problem.
+// Levels inherit the uninteruptibility flag of their parent when they are
+// pushed.  You can clear it after the push if you want an interruptible
+// level underneath an uninterruptible one.
 //
-// But we don't want pushing levels to erase the cell in STATE_0.  For one
-// thing, the cell may already be erased and it would be redundant.  But also
-// sometimes you want to push a level that points at a destination cell, and
-// use the destination cell's value to fill some other parts of the level
-// before evaluating it...and erase it when you're ready (which needs to be
-// before the trampoline runs).
-//
-// Rather than come up with separate entry points to level creation for this
-// we do it with a debug flag--since there are many free flags at this time.
-// If flags are more scarce this could be a 64-bit-build only flag.
-//
-#define LEVEL_FLAG_DEBUG_STATE_0_OUT_NOT_ERASED_OK \
+#define LEVEL_FLAG_UNINTERRUPTIBLE \
     FLAG_LEFT_BIT(20)
 
 
@@ -259,6 +240,12 @@ STATIC_ASSERT(LEVEL_FLAG_PURE == CELL_FLAG_CONST);
 //
 
 #define LEVEL_EXECUTOR_FLAG_22  FLAG_LEFT_BIT(22)
+//
+// This flag is used by natives and non-ACTION-executors for whatever purposes
+// they want; e.g. UNTIL can signal to WHILE that it should invert its
+// logic based on this flag.
+//
+#define LEVEL_FLAG_MISCELLANEOUS  FLAG_LEFT_BIT(22)  // just Action_Executor()?
 
 #define LEVEL_EXECUTOR_FLAG_23  FLAG_LEFT_BIT(23)
 
@@ -280,6 +267,28 @@ STATIC_ASSERT(LEVEL_EXECUTOR_FLAG_28_ALSO_CELL_FLAG_NOTE == CELL_FLAG_NOTE);
 #define LEVEL_EXECUTOR_FLAG_31  FLAG_LEFT_BIT(31)
 
 STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
+
+
+// REVIEW: This flag removed to free up a bit; can it be done another way?
+//
+//=//// LEVEL_FLAG_DEBUG_STATE_0_OUT_NOT_ERASED_OK ////////////////////////=//
+//
+// The trampoline will catch cases where you are in STATE_0 and the OUT Cell
+// is not erased.  However, that comes a bit late and is annoying to find
+// the specific Level that had the problem.
+//
+// But we don't want pushing levels to erase the cell in STATE_0.  For one
+// thing, the cell may already be erased and it would be redundant.  But also
+// sometimes you want to push a level that points at a destination cell, and
+// use the destination cell's value to fill some other parts of the level
+// before evaluating it...and erase it when you're ready (which needs to be
+// before the trampoline runs).
+//
+// Rather than come up with separate entry points to level creation for this
+// we do it with a debug flag--since there are many free flags at this time.
+// If flags are more scarce this could be a 64-bit-build only flag.
+//
+#define LEVEL_FLAG_DEBUG_STATE_0_OUT_NOT_ERASED_OK  0  // !!! removed for now
 
 
 // Note: It was considered to force clients to include a LEVEL_MASK_DEFAULT
