@@ -25,8 +25,8 @@
 //
 // Other special instructions need to be encoded somehow:
 //
-// * We don't want to use UTF-8 signals like `return "C"` for BOUNCE_CONTINUE.
-//   That would miss out on the opportunity to make these equivalent:
+// * We don't want to use UTF-8 signals like `return "X"`, as that would miss
+//   out on the opportunity to make these equivalent:
 //
 //       return "panic -[Error]-"
 //       return rebDelegate("panic -[Error]-")
@@ -72,6 +72,14 @@ INLINE bool Is_Bounce_Wild(Bounce b) {
     return false;
 }
 
+#define Is_Bounce_A_Level(b) \
+    (FIRST_BYTE(x_cast(const void*, known(Bounce, (b)))) == BASE_BYTE_LEVEL)
+
+INLINE Level* Level_From_Bounce(Bounce b) {
+    assert(Is_Bounce_A_Level(b));
+    return cast(Level*, m_cast(void*, b));
+}
+
 INLINE char Bounce_Type(Bounce b) {
     assert(Is_Bounce_Wild(b));
 
@@ -112,13 +120,17 @@ INLINE Value* Value_From_Bounce(Bounce b) {
 //
 // https://en.wikipedia.org/wiki/Stackless_Python
 //
-// What happens is that when a BOUNCE_CONTINUE comes back via the C `return`
+// What happens is that when a Bounce_Continue() comes back via the C `return`
 // for a native, that native's C stack variables are all gone.  But the heap
 // allocated Level stays intact and in the Rebol stack trace.  The native's C
 // function will be called back again when the continuation finishes.
 //
-#define C_CONTINUATION  'C'
-#define BOUNCE_CONTINUE  x_cast(Bounce, &g_bounce_continuation)
+// Calls to Bounce_Continue() represent something else important--granularity
+// of debug stepping.  Because debuggers communicate with the Trampoline, they
+// see the stack at points that are "cooperatively" yielded via continuation.
+//
+#define Bounce_Continue(L) \
+    x_cast(Bounce, known(Level*, (L)))
 
 
 // For starters, a simple signal for suspending stacks in order to be able to

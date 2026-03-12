@@ -3367,7 +3367,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
     if (not b)  // not irreducible, so final value in OUT cell
         goto typecheck_out;
 
-    if (b == BOUNCE_CONTINUE) {
+    if (Is_Bounce_A_Level(b)) {
         if (Get_Executor_Flag(ACTION, L, DELEGATE_CONTROL)) {
             LEVEL_STATE_BYTE(L) = ST_API_FUNC_DELEGATING;
             Clear_Executor_Flag(ACTION, L, DELEGATE_CONTROL);  // for typecheck
@@ -3375,7 +3375,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
         else {
             LEVEL_STATE_BYTE(L) = ST_API_FUNC_CONTINUING;
         }
-        return BOUNCE_CONTINUE;
+        return b;
     }
 
     panic ("Bad RebolBounce return in rebFunction() C implementation");
@@ -3620,6 +3620,8 @@ RebolBounce API_rebDelegate(
 //             "local-result: eval", block
 //         );
 //
+// 2. This file doesn't use REBOL_LEVEL_SHORTHAND_MACROS.
+//
 RebolBounce API_rebContinue(
     RebolContext* binding,
     const void* p, void* vaptr
@@ -3634,14 +3636,18 @@ RebolBounce API_rebContinue(
         LEVEL_FLAG_UNINTERRUPTIBLE,  // default, see rebContinueInterruptbile()
         p, vaptr
     );
-    return BOUNCE_CONTINUE;
+    return Bounce_Continue(TOP_LEVEL);  // CONTINUE_SUBLEVEL needs macros [2]
 }
 
 
 //
 //  rebContinueInterruptible: API
 //
-// If you want an interruptible continuation,
+// If you want an interruptible continuation.
+//
+// 1. see rebContinue()
+//
+// 2. see rebContinue()
 //
 RebolBounce API_rebContinueInterruptible(
     RebolContext* binding,
@@ -3658,7 +3664,7 @@ RebolBounce API_rebContinueInterruptible(
         p, vaptr
     );
     Clear_Level_Flag(TOP_LEVEL, UNINTERRUPTIBLE);
-    return BOUNCE_CONTINUE;
+    return Bounce_Continue(TOP_LEVEL);  // CONTINUE_SUBLEVEL needs macros [2]
 }
 
 

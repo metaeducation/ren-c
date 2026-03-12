@@ -184,7 +184,7 @@ Bounce Cascader_Executor(Level* const L)
 
     STATE = ST_CASCADER_RUNNING_SUBFUNCTION;
     Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);
-    return BOUNCE_DOWNSHIFTED;
+    return CONTINUE_SUBLEVEL;
 
 } run_next_in_pipeline: {  ///////////////////////////////////////////////////
 

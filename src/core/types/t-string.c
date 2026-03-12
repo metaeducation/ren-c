@@ -945,7 +945,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             assert(STATE == STATE_0);
             Mark_Typechecked(u_cast(Param*, ARG_N(1)));
 
-            return BOUNCE_CONTINUE;
+            return CONTINUE_SAMELEVEL;
         }
     }
 

@@ -109,7 +109,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
     Init_Null_Signifying_Unspecialized(LOCAL(FORM));  // form = false
     Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Blob)(LEVEL);
     assert(Is_Trash(Value_From_Bounce(bounce)));
-    // !!! generically it could BOUNCE_CONTINUE...
+    possibly(Is_Bounce_A_Level(bounce));  // !!! generic truth, review
     UNUSED(bounce);
 
     if (BITS_NOT(bset))

@@ -615,18 +615,19 @@ EXTERN_C void API_rebResolveNative_internal(
 
     TRACE("reb.ResolveNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
 
-    Bounce bounce = opt Irreducible_Bounce(  // proxies API handles, etc
+    Bounce b = opt Irreducible_Bounce(  // proxies API handles, etc
         L,
         Bounce_From_Bounce_Id(bounce_id)
     );
-    if (bounce) {  // nullptr means OUT holds the cell--others "irreducible"
-        if (bounce == BOUNCE_CONTINUE)
-            panic ("reb.Continue() not yet supported in JavaScript Natives");
+    if (b) {
+        Assert_Cell_Stable(OUT);  // nullptr b means OUT holds the cell
+    }
+    else { // others "irreducible"
+        if (Is_Bounce_A_Level(b))
+            panic ("reb.Continue()/Delegate() not yet in JavaScript Natives");
 
         panic ("non-Value Bounce returned from JavaScript Native");
     }
-
-    Assert_Cell_Stable(OUT);
 
     if (STATE == ST_JS_NATIVE_RUNNING) {
         //

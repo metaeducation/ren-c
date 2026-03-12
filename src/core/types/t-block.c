@@ -730,7 +730,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         rebRelease(made);
         assert(STATE == STATE_0);  // !!! weirdness
         Mark_Typechecked(u_cast(Param*, ARG_N(1)));
-        return BOUNCE_CONTINUE; }  // should dispatch to the PORT!
+        return CONTINUE_SAMELEVEL; }  // should dispatch to the PORT!
 
       default:
         break; // fallthrough to error

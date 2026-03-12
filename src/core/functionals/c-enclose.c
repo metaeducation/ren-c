@@ -175,7 +175,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 
     STATE = ST_ACTION_TYPECHECKING;
 
-    return BOUNCE_CONTINUE;
+    return CONTINUE_SAMELEVEL;
 }
 
 

@@ -204,7 +204,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
       handle_thrown:
         UNUSED(bounce);  // ignore, as whatever jumped here wants to throw
 
-        L = Adjust_Level_For_Downshift(L);
+        L = TOP_LEVEL;  // !!! review; should Level* be used in throw?
 
         possibly(Is_Cell_Erased(L->out));  // not completely enforced ATM
 
@@ -274,19 +274,16 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
   //=//// HANDLE FINISHED RESULTS ////////////////////////////////////////=//
 
-    if (bounce == L->out) {
+    if (bounce == TOP_LEVEL->out) {
       result_in_out:
         UNUSED(bounce);
 
-        Assert_Cell_Readable(L->out);
+        Assert_Cell_Readable(TOP_LEVEL->out);
 
-        if (Get_Level_Flag(L, ROOT_LEVEL)) {
-            assert(L == TOP_LEVEL);
+        if (Get_Level_Flag(TOP_LEVEL, ROOT_LEVEL)) {
             CLEANUP_BEFORE_EXITING_RECOVER_SCOPE;
-            return L->out;
+            return TOP_LEVEL->out;
         }
-
-        assert(TOP_LEVEL == Adjust_Level_For_Downshift(L));
 
         L = TOP_LEVEL->prior;
 
@@ -302,7 +299,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
   // 1. It's legal for a level to implement itself in terms of another level
   //    that is compatible.  This could have a separate signal, but for now
-  //    it's done as BOUNCE_CONTINUE.  Since that delegation may be to an
+  //    it's done as Bounce_Continue().  Since that delegation may be to an
   //    INITIAL_ENTRY state, the zero STATE_0 needs to be allowed.
   //
   // 2. If a level besides the one that we ran is above on the stack, then
@@ -314,13 +311,16 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //    also helps with bookkeeping and GC features, allowing the zero value
   //    to be reserved to mean something else.)
 
-    if (bounce == BOUNCE_CONTINUE) {
+    if (
+        bounce  // !!! temp: long term don't test for null twice
+        and Is_Bounce_A_Level(bounce)
+    ){
         if (L != TOP_LEVEL) {  // continuing self ok [1]
             assert(LEVEL_STATE_BYTE(L) != 0);  // else state nonzero [2]
             assert(Not_Level_Flag(TOP_LEVEL, ROOT_LEVEL));
         }
 
-        L = TOP_LEVEL;
+        L = Level_From_Bounce(bounce);
         goto bounce_on_trampoline_skip_just_use_out;
     }
 
@@ -353,7 +353,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     if (not bounce)  // was API value, FAILURE!, etc.
         goto result_in_out;
 
-    assert(!"executor(L) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
+    assert(!"executor(L) not OUT, BOUNCE_THROWN, or Bounce_Continue()");
     crash (bounce);
 
 } ON_ABRUPT_PANIC (Error* e) {  //////////////////////////////////////////////
@@ -411,7 +411,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
     const char* name = "<<UNKNOWN>>";
     if (
         (r != BOUNCE_THROWN) and (r != root->out) and (
-            (r == BOUNCE_CONTINUE and (name = "CONTINUE"))
+            (Is_Bounce_A_Level(r) and (name = "CONTINUE"))
             or (r == BOUNCE_REDO_CHECKED and (name = "REDO_CHECKED"))
             or (r == BOUNCE_REDO_UNCHECKED and (name = "REDO_UNCHECKED"))
             or (r == BOUNCE_SUSPEND and (name = "SUSPEND"))

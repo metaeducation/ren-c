@@ -944,40 +944,6 @@ INLINE void Native_Copy_Result_Untracked(Level* L, const Value* v) {
 #endif
 
 
-// There's an optimization trick which lets an executor stay on the stack
-// and run another executor for a level it replaced.  While that could just
-// return BOUNCE_CONTINUE and go back to the trampoline, it was noticed that
-// if the trampoline cooperated and reset the top level in these cases then
-// time could be saved.
-//
-// This may not be a great optimization for the complexity it introduces, but
-// it's being tried out.  It does mean you incur one C stack level for each
-// downshift, and some pathological case (like Cascaders calling Cascaders
-// in some big regress) may be bad, but it seems rare.  May be removed.
-//
-// 1. If the Evaluator_Executor() runs the Stepper_Executor() and that stepper
-//    has pushed a LEVEL_FLAG_TRAMPOLINE_KEEPALIVE Level, you wind up with
-//    a deeper stack of Levels that triggers this assert.  This needs a review
-//    because the mechanism here is confusing.
-//
-#if NO_RUNTIME_CHECKS
-    #define Adjust_Level_For_Downshift(L)  TOP_LEVEL
-#else
-    INLINE Level* Adjust_Level_For_Downshift(Level* L) {
-        Level* temp = TOP_LEVEL;
-        while (temp != L) {  // Cascaders can downshift Cascaders, etc.
-            temp = temp->prior;
-            assert(
-                temp->executor == &Evaluator_Executor  // stepper [1]
-                or temp->executor == &Cascader_Executor
-                or temp->executor == &Copy_Quoter_Executor
-            );
-        }
-        return TOP_LEVEL;
-    }
-#endif
-
-
 INLINE void Enable_Dispatcher_Catching_Of_Throws(Level* L)
 {
     assert(LEVEL_STATE_BYTE(L) != STATE_0);

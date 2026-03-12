@@ -134,7 +134,10 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
         return none;
     }
 
-} give_up_on_simplifying_if_bounce_wild: {
+} give_up_on_simplifying_if_bounce_wild_or_continuation: {
+
+    if (Is_Bounce_A_Level(b))  // continuation
+        return b;
 
     if (Is_Bounce_Wild(b))
         return b;  // can't simplify, may be a panic, continuation, etc.
@@ -206,13 +209,15 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
     if (Link_Inherit_Bind(L->varlist) == nullptr) {  // raw native hack [1]
         assert(Get_Details_Flag(Ensure_Level_Details(L), RAW_NATIVE));
         possibly(Not_Base_Managed(L->varlist));
-        rebDelegateCore(cast(RebolContext*, g_lib_context), cp);
-        return BOUNCE_CONTINUE;  // ^-- RebolBounce is void*, not Bounce
+        return u_cast(Bounce,  // v-- RebolBounce is void*, not Bounce
+            rebDelegateCore(cast(RebolContext*, g_lib_context), cp)
+        );
     }
 
     assert(Is_Base_Managed(L->varlist));
-    rebDelegateCore(cast(RebolContext*, L->varlist), cp);
-    return BOUNCE_CONTINUE;  // ^-- RebolBounce is void*, not Bounce
+    return u_cast(Bounce,  // v-- RebolBounce is void*, not Bounce
+        rebDelegateCore(cast(RebolContext*, L->varlist), cp)
+    );
 }}
 
 
@@ -317,6 +322,8 @@ Bounce Action_Executor(Level* L)
         goto handle_thrown;
     }
 
+  enter_action_executor: {
+
     if (Not_Action_Executor_Flag(L, IN_DISPATCH)) {
         assert(Not_Action_Executor_Flag(L, DISPATCHER_CATCHES));
 
@@ -348,7 +355,7 @@ Bounce Action_Executor(Level* L)
 
     goto dispatch_phase;  // STATE byte belongs to dispatcher after fulfill
 
-  fulfill: {  ////////////////////////////////////////////////////////////////
+} fulfill: {  ////////////////////////////////////////////////////////////////
 
   #if NEEDFUL_DOES_CORRUPTIONS
     assert(Stub_Flavor(ORIGINAL));  // set by Begin_Action(), shouldn't crash
@@ -1012,10 +1019,19 @@ Bounce Action_Executor(Level* L)
 
 } handle_bounce: {
 
-    switch (Bounce_Type(b)) {  // need some actual Bounce behavior...
-      case C_CONTINUATION:
-        return BOUNCE_CONTINUE;  // Note: may not have pushed a new level...
+    if (Is_Bounce_A_Level(b)) {
+        possibly(L == Level_From_Bounce(b));
+        L = Level_From_Bounce(b);
+        if (
+            L->executor == &Action_Executor
+            and not In_Debug_Mode(64)  // need trampoline if setting breakpoint
+        ){
+            goto enter_action_executor;
+        }
+        return b;
+    }
 
+    switch (Bounce_Type(b)) {  // BASE_BYTE_WILD cases
       case C_SUSPEND:
         return BOUNCE_SUSPEND;
 
@@ -1029,13 +1045,6 @@ Bounce Action_Executor(Level* L)
       case C_REDO_CHECKED:
         Clear_Action_Executor_Flag(L, IN_DISPATCH);
         STATE = ST_ACTION_TYPECHECKING;
-        goto typecheck_then_dispatch;
-
-      case C_DOWNSHIFTED:
-        L = Adjust_Level_For_Downshift(L);
-        if (Get_Action_Executor_Flag(L, IN_DISPATCH))
-            goto dispatch_phase;
-        assert(STATE == ST_ACTION_TYPECHECKING);
         goto typecheck_then_dispatch;
 
       default:

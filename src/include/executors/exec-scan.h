@@ -158,7 +158,7 @@ typedef ScannerExecutorState ScanState;
 // flags when the level is created (already a sunk cost).  And it keeps from
 // needing to find another place to put the byte.
 //
-// 1. Because you can't run BOUNCE_CONTINUE while the state is zero, we have
+// 1. Because you can't run Bounce_Continue() while the state is zero, we have
 //    a non-zero state used as the generic state for the outermost scan.
 //    And since the state byte is used to encode the current scanning mode,
 //    it can't be overwritten during a continuation to be a signal to jump
@@ -172,7 +172,7 @@ typedef ScannerExecutorState ScanState;
 //    error messages)
 //
 typedef enum {
-    ST_SCANNER_UNUSED_STATE = STATE_0,  // won't work with BOUNCE_CONTINUE [1]
+    ST_SCANNER_UNUSED_STATE = STATE_0,  // won't work w/Bounce_Continue() [1]
 
     ST_SCANNER_OUTERMOST_SCAN,  // used instead of STATE_0 [1]
 

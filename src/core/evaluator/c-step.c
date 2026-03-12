@@ -46,7 +46,7 @@
 //
 // * By design the evaluator isn't recursive at the C level--it's "stackless".
 //   At points where a sub-expression must be evaluated in a new level, it will
-//   heap-allocate that level and then do a C `return` of BOUNCE_CONTINUE.
+//   heap-allocate that level and then do a C `return` of Bounce_Continue().
 //   Processing then goes through the "Trampoline" (see %c-trampoline.c), which
 //   later re-enters the suspended level's executor with the result.  Setting
 //   the level's STATE byte prior to suspension is a common way of letting a
@@ -1345,7 +1345,7 @@ Bounce Stepper_Executor(Level* L)
   #endif
 
     b = opt Irreducible_Bounce(L, b);
-    if (b)  // can't BOUNCE_CONTINUE etc. from an intrinsic dispatch
+    if (b)  // can't Bounce_Continue() etc. from an intrinsic dispatch
         panic ("Intrinsic dispatcher returned Irreducible Bounce");
 
     if (

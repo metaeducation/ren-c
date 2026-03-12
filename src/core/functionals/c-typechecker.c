@@ -423,7 +423,7 @@ bool Predicate_Check_Spare_Uses_Scratch(
         if (bounce == BOUNCE_OKAY)
             goto test_succeeded;
 
-        assert(bounce == L->out);  // no BOUNCE_CONTINUE, API vals, etc
+        assert(bounce == L->out);  // no Bounce_Continue(), API vals, etc
         if (Is_Failure(L->out))
             panic (L->out);
         panic (Error_No_Logic_Typecheck(label));

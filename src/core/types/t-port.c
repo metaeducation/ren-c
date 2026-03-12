@@ -294,7 +294,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Url)
     assert(STATE == STATE_0);  // retriggered frame must act like initial entry
     Mark_Typechecked(u_cast(Param*, ARG_N(1)));
 
-    return BOUNCE_CONTINUE;
+    return CONTINUE_SAMELEVEL;
 }
 
 

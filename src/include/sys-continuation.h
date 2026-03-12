@@ -34,12 +34,12 @@
 //
 
 #define CONTINUE_CORE_5(...) ( \
-    Pushed_Continuation(__VA_ARGS__), \
-        BOUNCE_CONTINUE)  /* ^-- don't heed result: always want callback */
+    Pushed_Continuation(__VA_ARGS__), /* <-- don't heed result... */ \
+        Bounce_Continue(TOP_LEVEL))  /* ...always want callback! */
 
 #define CONTINUE_CORE_4(...) ( \
-    Pushed_Continuation(__VA_ARGS__, nullptr), \
-        BOUNCE_CONTINUE)  /* ^-- don't heed result: always want callback */
+    Pushed_Continuation(__VA_ARGS__, nullptr), /* <-- don't heed result... */ \
+        Bounce_Continue(TOP_LEVEL))  /* ...always want callback! */
 
 #define CONTINUE_CORE(...) \
     PP_CONCAT(CONTINUE_CORE_, PP_NARGS(__VA_ARGS__))(__VA_ARGS__)
@@ -59,7 +59,11 @@
 
 
 #define CONTINUE_SUBLEVEL \
-    (assert(STATE != 0), assert(SUBLEVEL->prior == level_), BOUNCE_CONTINUE)
+    (assert(STATE != STATE_0), \
+        /* <- */ Bounce_Continue(SUBLEVEL))
+
+#define CONTINUE_SAMELEVEL \
+    /* <- */ Bounce_Continue(LEVEL)  // STATE may be STATE_0
 
 
 //=//// DELEGATION HELPER MACROS ///////////////////////////////////////////=//
@@ -83,7 +87,7 @@
         level_->out, \
         (sub_flags), \
         __VA_ARGS__  /* binding, branch, and "with" argument */ \
-    ) ? BOUNCE_CONTINUE \
+    ) ? Bounce_Continue(TOP_LEVEL) \
         : level_->out)  // no need to give callback to delegator
 
 #define DELEGATE_CORE_2(out,sub_flags,...) \
@@ -106,4 +110,4 @@
         assert(TOP_LEVEL->prior == level_), \
         Set_Executor_Flag(ACTION, level_, DELEGATE_CONTROL), \
         LEVEL_STATE_BYTE(level_) = 127, \
-        /* <- */ BOUNCE_CONTINUE)
+        /* <- */ Bounce_Continue(TOP_LEVEL))

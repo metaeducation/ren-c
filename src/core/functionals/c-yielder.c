@@ -97,7 +97,7 @@ enum {
 // Yielder_Dispatcher() to return the yield_level->out, to signal that the
 // YIELD has finished so it doesn't need a Trampoline bounce.  But the
 // Action_Executor() is not expecting the Level to change out from under
-// it (at time of writing), unless it returns BOUNCE_CONTINUE.  So there has
+// it (at time of writing), unless it returns Bounce_Continue().  So there has
 // to be another state of ST_YIELD_SUSPENDED for the Yield's Dispatcher to get
 // called with and return OUT.
 //
@@ -310,7 +310,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     STATE = ST_YIELDER_RUNNING_BODY;  // resume where the last YIELD left off
 
     Enable_Dispatcher_Catching_Of_Throws(L);  // need to finalize on throws
-    return BOUNCE_CONTINUE;  // see notes in begin_body about CONTINUE + catch
+    return Bounce_Continue(TOP_LEVEL);  // see begin_body about CONTINUE+catch
 
 } body_finished_or_threw: {  /////////////////////////////////////////////////
 
@@ -630,6 +630,6 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
 
     Copy_Lifted_Cell(yielded_lifted, v);
 
-    STATE = ST_YIELD_SUSPENDED;  // can't BOUNCE_CONTINUE with STATE_0 [2]
-    return BOUNCE_CONTINUE;  // now continues yielder_level, not yield_level
+    STATE = ST_YIELD_SUSPENDED;  // can't Bounce_Continue() with STATE_0 [2]
+    return Bounce_Continue(yielder_level);  // not longer at yield_level
 }

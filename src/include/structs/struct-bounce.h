@@ -30,7 +30,7 @@
 // The logic of Detect_Rebol_Pointer() is used to figure out what a bounce
 // represents.  The DETECTED_AS_WILD pattern uses an illegal UTF-8 byte to
 // let you build something that's not a Cell and not a Stub, and this is
-// done for making two-byte patterns for things like BOUNCE_CONTINUE.
+// done for making two-byte patterns for BOUNCE_XXX values.
 //
 typedef Byte WildTwo[2];
 
@@ -70,6 +70,8 @@ typedef Byte WildTwo[2];
         Bounce() = default;
 
         explicit Bounce(const void* p) : b {p} {}
+
+        explicit Bounce(Level* L) : b {L} {}  // Level* is a continuation
 
         Bounce(std::nullptr_t) : b {nullptr} {}
 

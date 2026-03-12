@@ -146,7 +146,7 @@ DECLARE_NATIVE(COPY)
 
     STATE = Byte_From_Type(lift);
 
-    return BOUNCE_DOWNSHIFTED;
+    return CONTINUE_SUBLEVEL;
 }
 
 

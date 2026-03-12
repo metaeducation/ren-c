@@ -226,7 +226,7 @@ Bounce Func_Dispatcher(Level* const L)
     Clear_Executor_Flag(ACTION, L, DISPATCHER_CATCHES);
 
     STATE = ST_ACTION_INITIAL_ENTRY;
-    return BOUNCE_CONTINUE;  // define a BOUNCE for this?
+    return CONTINUE_SAMELEVEL;
 
 } body_finished_without_returning: {  ////////////////////////////////////////
 

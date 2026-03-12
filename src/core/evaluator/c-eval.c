@@ -255,7 +255,7 @@ Bounce Evaluator_Executor(Level* const L)
     Reset_Stepper_Erase_Out(stepper);
 
     if (STATE == ST_EVALUATOR_STEPPING_IN_SUBLEVEL)
-        return BOUNCE_CONTINUE;
+        return Bounce_Continue(stepper);
 
     definitely(STATE == STATE_0);  // `initial_entry` won't see zero again [1]
     goto call_stepper_executor_directly;  // ...Stepper_Executor() changes it

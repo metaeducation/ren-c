@@ -884,7 +884,7 @@ DECLARE_NATIVE(COMPOSE2)
 
     assert(STATE = ST_COMPOSE2_STRING_SCAN);
     possibly(TOP_LEVEL->prior != level_);  // deeper if {{nested}} delimiters
-    return BOUNCE_CONTINUE;
+    return Bounce_Continue(TOP_LEVEL);
 
 }}} string_scan_results_on_stack: { //////////////////////////////////////////
 

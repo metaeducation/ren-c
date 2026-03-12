@@ -82,7 +82,6 @@ PVAR WildTwo g_bounce_redo_unchecked;
 PVAR WildTwo g_bounce_redo_checked;
 PVAR WildTwo g_bounce_downshifted;
 PVAR WildTwo g_bounce_thrown;
-PVAR WildTwo g_bounce_continuation;
 PVAR WildTwo g_bounce_suspend;
 
 PVAR Flex* g_dispatcher_table;

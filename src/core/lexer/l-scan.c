@@ -3242,7 +3242,7 @@ Bounce Scanner_Executor(Level* level_)
                 assert(Is_Tripwire(level_->out));
         }
         else
-            assert(b == BOUNCE_CONTINUE);
+            assert(Is_Bounce_A_Level(b));
         return b;
     }
 

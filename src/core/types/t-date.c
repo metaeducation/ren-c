@@ -187,7 +187,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
         Append_Codepoint(mo->strand, '/');
         Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Time)(LEVEL);  // ARG(FORM)?
         assert(Is_Trash(Value_From_Bounce(bounce)));
-        // !!! generically might BOUNCE_CONTINUE
+        possibly(Is_Bounce_A_Level(bounce));  // !!! generic truth, review
         UNUSED(bounce);
 
         if (zone != NO_DATE_ZONE) {
