@@ -776,11 +776,11 @@ DECLARE_NATIVE(GET)
 
     STATE = ARG(DUAL) ? ST_TWEAK_TWEAKING : ST_TWEAK_GETTING;
 
-    Option(Bounce) b = Irreducible_Bounce(
+    Bounce b = Irreducible_Bounce(
         Apply_Cfunc(NATIVE_CFUNC(TWEAK), LEVEL)
     );
-    if (b)
-        return unwrap b;  // keep bouncing while we couldn't get OUT as answer
+    if (b != BOUNCE_TOPLEVEL_OUT)
+        return b;  // keep bouncing while we couldn't get OUT as answer
 
     if (Is_Failure(OUT))
         return BOUNCE_OUT;  // weird can't pick case, see [A]

@@ -394,11 +394,11 @@ DECLARE_NATIVE(PACK)
         Set_Level_Flag(LEVEL, REDUCE_IS_ACTUALLY_PACK);
     }
 
-    Bounce bounce = opt Irreducible_Bounce(
+    Bounce b = Irreducible_Bounce(
         Apply_Cfunc(NATIVE_CFUNC(REDUCE), LEVEL)
     );
-    if (bounce)  // REDUCE wants more EVALs...final value not in OUT yet
-        return bounce;
+    if (b != BOUNCE_TOPLEVEL_OUT)  // REDUCE wants more EVALs...
+        return b;  // ...final value not in OUT yet
 
     if (Is_Light_Null(OUT))  // VETO encountered
         return NULL_OUT_VETOING;

@@ -724,11 +724,11 @@ DECLARE_NATIVE(SET)
         Lift_Cell(dual);
     }
 
-    Option(Bounce) b = Irreducible_Bounce(
+    Bounce b = Irreducible_Bounce(
         Apply_Cfunc(NATIVE_CFUNC(TWEAK), LEVEL)
     );
-    if (b)
-        return unwrap b;  // keep bouncing while we couldn't get OUT as answer
+    if (b != BOUNCE_TOPLEVEL_OUT)
+        return b;  // keep bouncing while we couldn't get OUT as answer
 
     if (Is_Failure(OUT))
         return BOUNCE_OUT;  // out-of-band failures (e.g. field unavailable)

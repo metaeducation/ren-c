@@ -474,15 +474,15 @@ DECLARE_NATIVE(YIELDER)
 {
     INCLUDE_PARAMS_OF_YIELDER;
 
-    Bounce bounce = opt Irreducible_Bounce(Make_Interpreted_Action(
+    Bounce b = Irreducible_Bounce(Make_Interpreted_Action(
         LEVEL,
         SYM_YIELD,  // give it a YIELD, but no RETURN (see YIELD:FINAL)
         &Yielder_Dispatcher,
         MAX_IDX_YIELDER  // details array capacity
     ));
 
-    if (bounce)
-        return bounce;
+    if (b != BOUNCE_TOPLEVEL_OUT)
+        return b;
 
     Details* details = Ensure_Frame_Details(OUT);
 

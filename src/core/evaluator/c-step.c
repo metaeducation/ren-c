@@ -1349,8 +1349,8 @@ Bounce Stepper_Executor(Level* L)
     }
   #endif
 
-    b = opt Irreducible_Bounce(b);
-    if (b)  // can't Bounce_Continue() etc. from an intrinsic dispatch
+    b = Irreducible_Bounce(b);
+    if (b != BOUNCE_TOPLEVEL_OUT)  // can't continue etc. from an intrinsic
         panic ("Intrinsic dispatcher returned Irreducible Bounce");
 
     inapplicable(L->target);  // we didn't call the trampoline

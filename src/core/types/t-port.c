@@ -151,10 +151,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
 
         Details* details = Ensure_Frame_Details(SPARE);
         Dispatcher* dispatcher = Details_Dispatcher(details);
-        Bounce b = opt Irreducible_Bounce(
+        Bounce b = Irreducible_Bounce(
             Apply_Cfunc(dispatcher, LEVEL)
         );
-        if (b)  // couldn't reduce to being something in OUT
+        if (b != BOUNCE_TOPLEVEL_OUT)  // didn't make final value yet
             return b;
 
         if (Is_Failure(OUT))

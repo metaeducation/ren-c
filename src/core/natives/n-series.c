@@ -251,8 +251,8 @@ DECLARE_NATIVE(APPEND)
     STATE = ST_MODIFY_INSERT;  // CHANGE is "MODIFY" [A]
 
     Bounce b = Dispatch_Generic(CHANGE, series, LEVEL);
-    b = opt Irreducible_Bounce(b);
-    if (b)
+    b = Irreducible_Bounce(b);
+    if (b != BOUNCE_TOPLEVEL_OUT)
         panic ("APPEND is built on INSERT, should not return Bounce");
 
     goto return_original_position;

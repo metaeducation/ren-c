@@ -331,11 +331,11 @@ static bool Subparse_Throws(
         return true;
     }
 
-    b = opt Irreducible_Bounce(b);
+    b = Irreducible_Bounce(b);
 
     Drop_Level(L);
 
-    if (b) {
+    if (b != BOUNCE_TOPLEVEL_OUT) {
         assert(b == BOUNCE_THROWN);
         assert(Is_Throwing_Panic(TOP_LEVEL));
         return true;

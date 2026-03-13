@@ -3423,10 +3423,10 @@ Bounce Api_Function_Dispatcher(Level* const L)
         Cell_Handle_Cfunc(cfunc_handle)
     );
 
-    Bounce b = opt Irreducible_Bounce(
+    Bounce b = Irreducible_Bounce(
         x_cast(Bounce, Apply_Cfunc(*cfunc, context))
     );
-    if (not b)  // not irreducible, so final value in OUT cell
+    if (b == BOUNCE_TOPLEVEL_OUT)  // final value in OUT cell
         goto typecheck_out;
 
     if (Is_Bounce_A_Level(b)) {

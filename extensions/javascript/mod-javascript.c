@@ -615,10 +615,10 @@ EXTERN_C void API_rebResolveNative_internal(
 
     TRACE("reb.ResolveNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
 
-    Bounce b = opt Irreducible_Bounce(  // proxies API handles, etc
+    Bounce b = Irreducible_Bounce(  // proxies API handles, etc
         Bounce_From_Bounce_Id(bounce_id)
     );
-    if (not b) {
+    if (b == BOUNCE_TOPLEVEL_OUT) {
         Assert_Cell_Stable(OUT);  // nullptr b means OUT holds the cell
     }
     else { // others "irreducible"

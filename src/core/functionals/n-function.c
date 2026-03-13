@@ -505,15 +505,15 @@ DECLARE_NATIVE(FUNCTION)
 
     possibly(STATE != STATE_0);
 
-    Bounce bounce = opt Irreducible_Bounce(Make_Interpreted_Action(
+    Bounce b = Irreducible_Bounce(Make_Interpreted_Action(
         LEVEL,
         SYM_RETURN,  // has a RETURN: in the paramlist
         &Func_Dispatcher,
         MAX_IDX_FUNC  // archetype and one array slot (will be filled)
     ));
 
-    if (bounce)
-        return bounce;
+    if (b != BOUNCE_TOPLEVEL_OUT)
+        return b;
 
     return BOUNCE_OUT;
 }
@@ -535,15 +535,15 @@ DECLARE_NATIVE(PROCEDURE)
 
     possibly(STATE != STATE_0);
 
-    Bounce bounce = opt Irreducible_Bounce(Make_Interpreted_Action(
+    Bounce b = Irreducible_Bounce(Make_Interpreted_Action(
         LEVEL,
         SYM_RETURN,
         &Func_Dispatcher,
         MAX_IDX_FUNC  // archetype and one array slot (will be filled)
     ));
 
-    if (bounce)
-        return bounce;
+    if (b != BOUNCE_TOPLEVEL_OUT)
+        return b;
 
   tweak_unconstrained_parameter_to_auto_trash: {
 

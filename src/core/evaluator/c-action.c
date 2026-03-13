@@ -80,19 +80,13 @@
 //  Irreducible_Bounce: C
 //
 // This tries to simplify a bounce to get it to be just an Value content in
-// the OUT cell, if possible.  Not all bounces can be simplified, but when
-// they can be this can save when delegating code, on needing to call a cycle
-// of trampoline.
+// the OUT cell, if possible...and if it's a UTF-8 const char*, then it will
+// be turned into a code delegation.
 //
-// NOTE: A nullptr coming from this means *the bounce was reducible*.  e.g.
-// if it was just a nulled cell, then that would be put in OUT and it will
-// return `none` (which is a zero-ish state like nullptr is, but here we
-// are interpreting it differently than a typical nullptr Bounce).
-//
-Option(Bounce) Irreducible_Bounce(Bounce b) {
+Bounce Irreducible_Bounce(Bounce b) {
     if (b == BOUNCE_TOPLEVEL_OUT) {  // common case, made fastest
         assert(Is_Cell_Readable(Level_Out(TOP_LEVEL)));  // must write out
-        return none;
+        return b;
     }
 
   handle_null_or_failure: {
@@ -122,7 +116,7 @@ Option(Bounce) Irreducible_Bounce(Bounce b) {
     if (b == nullptr) {  // could be from a NEEDFUL_RESULT_0 [1]
         if (not g_failure) {
             Init_Null(Level_Out(TOP_LEVEL));
-            return none;
+            return BOUNCE_TOPLEVEL_OUT;
         }
 
         assert(not Is_Throwing(TOP_LEVEL));
@@ -131,7 +125,7 @@ Option(Bounce) Irreducible_Bounce(Bounce b) {
         g_failure = nullptr;  // have to do before Force_Location_Of_Error()
         Failify_Cell_And_Force_Location(Level_Out(TOP_LEVEL));
 
-        return none;
+        return BOUNCE_TOPLEVEL_OUT;
     }
 
 } handle_continuation: {
@@ -151,7 +145,7 @@ Option(Bounce) Irreducible_Bounce(Bounce b) {
     if (Is_Bounce_Wild(b)) {
         if (b == BOUNCE_OKAY) {
             Init_Okay(Level_Out(TOP_LEVEL));
-            return none;
+            return BOUNCE_TOPLEVEL_OUT;
         }
         return b;  // can't simplify, may be a panic, continuation, etc.
     }
@@ -163,7 +157,7 @@ Option(Bounce) Irreducible_Bounce(Bounce b) {
         assert(Is_Api_Value(v));
         Copy_Cell(Level_Out(TOP_LEVEL), v);
         Release_Api_Value_If_Unmanaged(v);
-        return none;
+        return BOUNCE_TOPLEVEL_OUT;
     }
 
 } turn_utf8_into_delegated_code: {
@@ -195,14 +189,14 @@ Option(Bounce) Irreducible_Bounce(Bounce b) {
     if (cp[0] == '~') {
         if (cp[1] == '\0') {
             Init_Void(Level_Out(TOP_LEVEL));
-            return none;  // make return "~" fast!
+            return BOUNCE_TOPLEVEL_OUT;  // make return "~" fast!
         }
         if (
             cp[1] == '<' and cp[2] == '?' and cp[3] == '>'
             and cp[4] == '~' and cp[5] == '\0'
         ) {
             Init_Tripwire(Level_Out(TOP_LEVEL));
-            return none;  // make return "~<?>~" fast!
+            return BOUNCE_TOPLEVEL_OUT;  // make return "~<?>~" fast!
         }
     }
 
@@ -979,8 +973,8 @@ Bounce Action_Executor(Level* L)
     Corrupt_If_Needful(L->u.action.param);
   #endif
 
-    Bounce b = opt Irreducible_Bounce(Apply_Cfunc(dispatcher, L));
-    if (not b)
+    Bounce b = Irreducible_Bounce(Apply_Cfunc(dispatcher, L));
+    if (b == BOUNCE_TOPLEVEL_OUT)
         goto check_output;  // consolidated return result into OUT cell
 
   ensure_typecheckers_dont_overwrite_output: {

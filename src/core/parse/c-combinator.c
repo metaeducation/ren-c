@@ -95,8 +95,8 @@ Bounce Combinator_Dispatcher(Level* L)
         b = Func_Dispatcher(L);
     }
 
-    b = opt Irreducible_Bounce(b);
-    if (not b)
+    b = Irreducible_Bounce(b);
+    if (b == BOUNCE_TOPLEVEL_OUT)
         return b;
 
     if (Is_Failure(Level_Out(L)))
@@ -223,15 +223,15 @@ DECLARE_NATIVE(COMBINATOR)
 
 } make_interpreted_action_frame: {
 
-    Bounce bounce = opt Irreducible_Bounce(Make_Interpreted_Action(
+    Bounce b = Irreducible_Bounce(Make_Interpreted_Action(
         LEVEL,
         SYM_RETURN,  // want RETURN:
         &Combinator_Dispatcher,
         MAX_IDX_COMBINATOR  // details array capacity
     ));
 
-    if (bounce)
-        return bounce;
+    if (b != BOUNCE_TOPLEVEL_OUT)  // wants more evals...
+        return b;
 
     assert(Is_Action(OUT));
     Deactivate_Action(OUT);  // now it's known to not be antiform

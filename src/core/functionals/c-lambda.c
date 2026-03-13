@@ -253,15 +253,15 @@ DECLARE_NATIVE(LAMBDA)
 
     possibly(STATE != STATE_0);
 
-    Bounce bounce = opt Irreducible_Bounce(Make_Interpreted_Action(
+    Bounce b = Irreducible_Bounce(Make_Interpreted_Action(
         LEVEL,
         SYM_DUMMY1,  // cue look for []: in the paramlist for return spec [1]
         &Lambda_Dispatcher,
         MAX_IDX_LAMBDA  // archetype and one array slot (will be filled)
     ));
 
-    if (bounce)
-        return bounce;
+    if (b != BOUNCE_TOPLEVEL_OUT)
+        return b;
 
   make_interpreted_action_finished: {  // stopped making eval bounce requests
 
@@ -290,15 +290,15 @@ DECLARE_NATIVE(DIVERGER)
 {
     INCLUDE_PARAMS_OF_DIVERGER;
 
-    Bounce bounce = opt Irreducible_Bounce(Make_Interpreted_Action(
+    Bounce b = Irreducible_Bounce(Make_Interpreted_Action(
         LEVEL,
         none,  // returner... don't allow []: or RETURN:
         &Lambda_Dispatcher,
         MAX_IDX_LAMBDA  // archetype and one array slot (will be filled)
     ));
 
-    if (bounce)
-        return bounce;
+    if (b != BOUNCE_TOPLEVEL_OUT)
+        return b;
 
   make_interpreted_action_finished: {  // stopped making eval bounce requests
 

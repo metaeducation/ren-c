@@ -225,15 +225,15 @@ DECLARE_NATIVE(INLINER)
 {
     INCLUDE_PARAMS_OF_INLINER;
 
-    Bounce bounce = opt Irreducible_Bounce(Make_Interpreted_Action(
+    Bounce b = Irreducible_Bounce(Make_Interpreted_Action(
         LEVEL,
         none,  // no returner; inliners return code, not eval products
         &Inliner_Dispatcher,
         MAX_IDX_INLINER  // details capacity, just body slot (and archetype)
     ));
 
-    if (bounce)
-        return bounce;
+    if (b != BOUNCE_TOPLEVEL_OUT)
+        return b;
 
   make_interpreted_action_finished: {  // stopped making eval bounce requests
 

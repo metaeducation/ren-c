@@ -366,7 +366,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     // running when they were raised.  This means they get a chance to do
     // cleanup (just as they have for the longjmp() and C++ exception cases).
 
-    bounce = opt Irreducible_Bounce(bounce);
+    bounce = Irreducible_Bounce(bounce);
 
     if (bounce == BOUNCE_THROWN) {
         assert(Is_Throwing_Panic(TOP_LEVEL));
@@ -374,7 +374,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         goto bounce_on_trampoline;
     }
 
-    if (not bounce)  // was API value, FAILURE!, etc.
+    if (bounce == BOUNCE_TOPLEVEL_OUT)  // was API value, FAILURE!, etc.
         goto result_in_out;
 
     assert(!"executor(L) not OUT, BOUNCE_THROWN, or Bounce_Continue()");
