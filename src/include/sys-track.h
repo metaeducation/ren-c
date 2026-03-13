@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2026 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -24,30 +24,15 @@
 // The information should be viewable in the C/C++ debug inspector when
 // looking at the cell in a watchlist.  It is also reported by crash().
 //
+// Since tracking doubles the size it actually has 4 platform pointers to
+// work with, and the fourth is used for extra flags that add extra checks
+// without stealing from the runtime bits of release code.
+//
 
 
-//=//// TRACK_FLAG_VALID_EVAL_TARGET //////////////////////////////////////=//
+//=//// TRACK_FLAG_0 //////////////////////////////////////////////////////=//
 //
-// We don't want every Cell to be considered a target for evaluation:
-//
-// * Evaluation can move memory, so anything that an arbitrary evaluation
-//   could relocate is suspect (source array cells, object variables when
-//   the object might expand, etc.)
-//
-// * Arbitrary evaulation can produce antiforms, so we wouldn't want Source
-//   arrays to be targets, as their cells have to be Element*
-//
-// * Evaluation target cells can go through moments of arbitrary states like
-//   being erased or unreadable.  These states should not become visible to
-//   code or to debuggers.
-//
-// If this flag is set, then the Cell is a valid target for evaluations.
-// It's set on the SPARE and SCRATCH cells, as well as those made by
-// DECLARE_VALUE().  During frame fulfillment and before a FRAME!'s slots are
-// exposed to users, the argument slots are temporarily made valid targets
-// as well.
-//
-#define TRACK_FLAG_VALID_EVAL_TARGET \
+#define TRACK_FLAG_0 \
     FLAG_LEFT_BIT(0)
 
 
@@ -176,9 +161,6 @@
 #define FORCE_TRACK_0(cell) \
     FORCE_TRACK((cell), TRACK_MASK_NONE)
 
-#define FORCE_TRACK_VALID_EVAL_TARGET(cell) \
-    FORCE_TRACK((cell), TRACK_FLAG_VALID_EVAL_TARGET)
-
 
 #if DEBUG_TRACK_COPY_PRESERVES
     #define MAYBE_TRACK(cell)  PASSTHRU(cell)
@@ -264,27 +246,4 @@
     #define Track_Clear_Cell_Shield(cell)  USED(cell)
     #define Assert_Cell_Shielded_If_Tracking(cell)  NOOP  // no effects allowed
     #define Assert_Cell_Unshielded_If_Tracking(cell)  NOOP  // no effects
-#endif
-
-
-//=//// CELL "VALID EVAL TARGET" TRACK FLAG HELPERS ///////////////////////=//
-//
-// Not all cells should be considered valid targets for evaluation; evaluation
-// permits cell state that should not be seen by users or debuggers.  Special
-// exemption is given to FRAME! argument slots during fulfillment.
-//
-
-#if DEBUG_TRACK_EXTEND_CELLS
-    #define Track_Enable_Eval_Target_Cell(cell) \
-        Set_Track_Flag((cell), VALID_EVAL_TARGET)
-
-    #define Track_Disable_Eval_Target_Cell(cell) \
-        Clear_Track_Flag((cell), VALID_EVAL_TARGET)
-
-    #define Assert_Cell_Eval_Targetable_If_Tracking(cell) \
-        assert(Get_Track_Flag((cell), VALID_EVAL_TARGET))
-#else
-    #define Track_Enable_Eval_Target_Cell(cell)  USED(cell)  // may have effect
-    #define Track_Disable_Eval_Target_Cell(cell)  USED(cell)
-    #define Assert_Cell_Eval_Targetable_If_Tracking(cell)  NOOP
 #endif

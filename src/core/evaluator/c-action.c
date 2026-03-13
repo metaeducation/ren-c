@@ -373,8 +373,6 @@ Bounce Action_Executor(Level* L)
 
       continue_fulfilling:
 
-        Track_Disable_Eval_Target_Cell(ARG);  // before user sees
-
         if (Get_Action_Executor_Flag(L, DOING_PICKUPS)) {
             if (TOP_INDEX != L->baseline.stack_base)
                 goto next_pickup;
@@ -549,17 +547,11 @@ Bounce Action_Executor(Level* L)
       case PARAMCLASS_SOFT:
         assert(not Is_Antiform(OUT));
         if (Is_Soft_Escapable_Group(As_Element(OUT))) {
-            Track_Enable_Eval_Target_Cell(ARG);  // not visible yet
-
-            bool threw = Eval_Any_List_At_Throws(
+            if (Eval_Any_List_At_Throws(
                 ARG, As_Element(OUT), SPECIFIED
-            );
-
-            Track_Disable_Eval_Target_Cell(ARG);  // before user sees
-
-            if (threw)
+            )){
                 goto handle_thrown;
-
+            }
             Init_Unreadable(OUT);
         }
         else
@@ -641,8 +633,6 @@ Bounce Action_Executor(Level* L)
         );
         possibly(Is_Light_Null(ARG));  // !!! review
 
-        Track_Enable_Eval_Target_Cell(ARG);  // not visible yet
-
         Push_Level(u_cast(Value*, ARG), sub);
 
         return CONTINUE_SUBLEVEL; }
@@ -659,13 +649,7 @@ Bounce Action_Executor(Level* L)
         if (Is_Soft_Escapable_Group(As_Element(ARG))) {
             Element* arg_in_spare = Move_Cell(SPARE, As_Element(ARG));
 
-            Track_Enable_Eval_Target_Cell(ARG);  // not visible yet
-
-            bool threw = Eval_Any_List_At_Throws(ARG, arg_in_spare, SPECIFIED);
-
-            Track_Disable_Eval_Target_Cell(ARG);  // before user sees
-
-            if (threw)
+            if (Eval_Any_List_At_Throws(ARG, arg_in_spare, SPECIFIED))
                 goto handle_thrown;
         }
         break; }

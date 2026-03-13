@@ -507,9 +507,7 @@ void Startup_Trampoline(void)
     assert(TOP_LEVEL == nullptr);
     assert(BOTTOM_LEVEL == nullptr);
 
-    USED(
-      FORCE_TRACK_VALID_EVAL_TARGET(&g_erased_cell)  // never actually write
-    );
+    USED(FORCE_TRACK_0(&g_erased_cell));  // never actually write
 
     require (
       Level* L = Make_End_Level(  // ensure L->prior [1]

@@ -76,8 +76,7 @@ INLINE Cell* Stepper_Primed_Value_Untracked(Level* L) {
 }
 
 #define Stepper_Primed_Value(L) \
-    u_cast(Sink(Value), FORCE_TRACK_VALID_EVAL_TARGET( \
-        Stepper_Primed_Value_Untracked(L)))
+    u_cast(Sink(Value), FORCE_TRACK_0(Stepper_Primed_Value_Untracked(L)))
 
 
 // If you PUSH() values to the stack, you need to make sure this accrual is

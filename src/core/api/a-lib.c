@@ -1363,9 +1363,7 @@ RebolValue* API_rebValue(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_VALID_EVAL_TARGET(
-        Alloc_Value_Core(CELL_MASK_ERASED_0)
-    );
+    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1481,9 +1479,7 @@ RebolValue* API_rebUndecayed(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_VALID_EVAL_TARGET(
-        Alloc_Value_Core(CELL_MASK_ERASED_0)
-    );
+    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1516,9 +1512,7 @@ RebolValue* API_rebEnrescue(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_VALID_EVAL_TARGET(
-        Alloc_Value_Core(CELL_MASK_ERASED_0)
-    );
+    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1554,9 +1548,7 @@ RebolValue* API_rebRescue2(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_VALID_EVAL_TARGET(
-        Alloc_Value_Core(CELL_MASK_ERASED_0)
-    );
+    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1607,9 +1599,7 @@ RebolValue* API_rebRecover(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_VALID_EVAL_TARGET(
-        Alloc_Value_Core(CELL_MASK_ERASED_0)
-    );
+    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1645,9 +1635,7 @@ RebolValue* API_rebRecoverInterruptible(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_VALID_EVAL_TARGET(
-        Alloc_Value_Core(CELL_MASK_ERASED_0)
-    );
+    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
 
     Flags flags = RUN_VA_FLAG_INTERRUPTIBLE;
     Run_Valist_And_Call_Va_End(
@@ -1686,9 +1674,7 @@ RebolValue* API_rebLift(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_VALID_EVAL_TARGET(
-        Alloc_Value_Core(CELL_MASK_ERASED_0)
-    );
+    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1715,9 +1701,7 @@ RebolValue* API_rebQuote(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_VALID_EVAL_TARGET(
-        Alloc_Value_Core(CELL_MASK_ERASED_0)
-    );
+    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(

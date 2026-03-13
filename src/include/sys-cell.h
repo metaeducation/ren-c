@@ -1376,7 +1376,7 @@ INLINE Stable* Constify(Stable* v) {
 
 #define DECLARE_VALUE(name) \
     Value name##_atom; \
-    Value* const name = FORCE_TRACK_VALID_EVAL_TARGET(&name##_atom); \
+    Value* const name = FORCE_TRACK_0(&name##_atom); \
     Force_Erase_Cell_Untracked(name)  // single assignment of 0 to header
 
 #define DECLARE_STABLE(name) \

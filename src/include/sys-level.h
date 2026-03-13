@@ -596,9 +596,9 @@ INLINE Result(Level*) Prep_Level_Core(
 
     Add_Feed_Reference(L->feed);
 
-    FORCE_TRACK_VALID_EVAL_TARGET(Force_Erase_Cell_Untracked(&L->spare));
-    FORCE_TRACK_VALID_EVAL_TARGET(Force_Erase_Cell_Untracked(&L->scratch));
-    FORCE_TRACK_VALID_EVAL_TARGET(Force_Erase_Cell_Untracked(&L->output));
+    FORCE_TRACK_0(Force_Erase_Cell_Untracked(&L->spare));
+    FORCE_TRACK_0(Force_Erase_Cell_Untracked(&L->scratch));
+    FORCE_TRACK_0(Force_Erase_Cell_Untracked(&L->output));
 
     L->target = nullptr;  // transitional idea: target being phased out
 
