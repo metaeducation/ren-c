@@ -201,7 +201,7 @@ static Result(Stable*) Finalize_Composer_Level(
     const Stable* composee,  // special handling if the output is a sequence
     bool conflate
 ){
-    Stable* out = As_Stable(L->out);
+    Stable* out = As_Stable(Level_Out(L));
 
     if (Is_Null(out)) {  // a composed slot evaluated to VETO error antiform
         Drop_Data_Stack_To(L->baseline.stack_base);
@@ -571,6 +571,8 @@ Bounce Composer_Executor(Level* const L)
         panic (e);
     }
 
+    Copy_Cell(OUT, Level_Out(SUBLEVEL));
+    unnecessary(SUBLEVEL->target);  // unheeded
     Drop_Level(SUBLEVEL);
 
     if (Is_Null(out)) {
@@ -706,6 +708,8 @@ DECLARE_NATIVE(COMPOSE2)
     require (
       Finalize_Composer_Level(SUBLEVEL, input, ARG(CONFLATE))
     );
+    Copy_Cell(OUT, Level_Out(SUBLEVEL));
+    unnecessary(SUBLEVEL->target);
     Drop_Level(SUBLEVEL);
     return BOUNCE_OUT;
 

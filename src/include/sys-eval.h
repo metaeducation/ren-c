@@ -121,7 +121,7 @@ INLINE void Reset_Stepper_Erase_Out(Level* L) {
         FLAG_STATE_BYTE(255)  // set state byte to 0
             | EVAL_EXECUTOR_FLAG_OUT_IS_DISCARDABLE  // what else?
     ));
-    Erase_Cell(L->out);
+    Erase_Cell(Level_Out(L));
     Erase_Cell(&L->spare);
     dont(Erase_Cell(&L->scratch));  // stepper tolerant of not erasing [1]
 }
@@ -158,7 +158,7 @@ INLINE bool Eval_Step_Throws(Init(Value) out, Level* L) {
         or L->executor == &Inert_Stepper_Executor
     );
 
-    L->out = out;
+    L->target = out;
     assert(L->baseline.stack_base == TOP_INDEX);
 
     assert(L == TOP_LEVEL);  // should already be pushed, use core trampoline

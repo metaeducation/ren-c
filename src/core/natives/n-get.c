@@ -84,18 +84,19 @@ Result(None) Get_Var_To_Out_Use_Toplevel(
     if (e)
         return fail (unwrap e);
 
-    Copy_Cell(OUT, SPARE);
+    Value* got = Copy_Cell(OUT, SPARE);  // !!! extra copy
+    heeded(level_->target);  // see bottom of function
 
     require (
-      Unlift_Cell_No_Decay(OUT)  // not unstable if wasn't ^META [1]
+      Unlift_Cell_No_Decay(got)  // not unstable if wasn't ^META [1]
     );
 
     if (Get_Cell_Flag(var, SCRATCH_VAR_NOTE_ONLY_ACTION)) {
-        if (Is_Action(OUT)) {
+        if (Is_Action(got)) {
             // okay
         }
-        else if (Is_Possibly_Unstable_Value_Frame(OUT)) {
-            Activate_Frame(OUT);  // !!! dodgy... should f/ get an action?
+        else if (Is_Possibly_Unstable_Value_Frame(got)) {
+            Activate_Frame(got);  // !!! dodgy... should f/ get an action?
         }
         else
             panic ("GET of word/ or obj.field/ did not yield ACTION!");
@@ -127,10 +128,10 @@ Result(None) Get_Var_To_Out_Use_Toplevel(
         */
 
         if (
-            Not_Cell_Stable(OUT)
-            and not Is_Hot_Potato(OUT)  // !!! review exception, probably bad
+            Not_Cell_Stable(got)
+            and not Is_Hot_Potato(got)  // !!! review exception, probably bad
         ){
-            if (Is_Void(OUT))
+            if (Is_Void(got))
                 return fail (Error_Bad_Pick_Raw(var));
 
             panic ("GET of non-meta WORD!/TUPLE! should always be stable");
@@ -149,6 +150,9 @@ Result(None) Get_Var_To_Out_Use_Toplevel(
     else {  // this should grow out into more forms, like space
         panic ("GET target must be WORD! or TUPLE!, or their META-forms");
     }
+
+    if (level_->target)
+        Copy_Cell(level_->target, OUT);
 
     return none;
 }
@@ -510,6 +514,9 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
     if (error)
         return fail (unwrap error);
 
+    if (level_->target)
+        Copy_Cell(level_->target, OUT);
+
     return none;
 }}
 
@@ -554,9 +561,9 @@ Result(Value*) Meta_Get_Var(
             require (
               Level* level_ = Make_End_Level(
                 &Stepper_Executor,
-                LEVEL_MASK_NONE | FLAG_STATE_BYTE(1)  // rule for trampoline
+                LEVEL_MASK_NONE
             ));
-            dont(Erase_Cell(out));  // ??? why is LEVEL_STATE_BYTE 1 ???
+            Erase_Cell(out);
             Push_Level(out, level_);
 
             heeded (Copy_Cell_May_Bind(SCRATCH, var, context));

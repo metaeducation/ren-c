@@ -221,14 +221,11 @@ INLINE Option(LineNumber) Line_Number_Of_Level(Level* L) {
 #define Level_Num_Slots(L) \
     ((L)->varlist->content.dynamic.used - 1)  // minus rootvar
 
-#define Level_Out(L) \
-    known(Level*, (L))->out
-
 #define Level_Spare(L) \
-    u_cast(Value*, &(L)->spare)
+    (&known(Level*, (L))->spare)
 
 #define Level_Scratch(L) \
-    u_cast(Value*, &(L->scratch))
+    (&known(Level*, (L))->scratch)
 
 INLINE Element* Evaluator_Level_Current(Level* L) {
     assert(L->executor == &Stepper_Executor);
@@ -520,7 +517,9 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
         assert(LEVEL_STATE_BYTE(L) != STATE_0 or Is_Cell_Erased(out))
     );
 
-    L->out = out;  // must be a valid cell for GC [3]
+    L->target = out;  // must be a valid cell for GC [3]
+    if (out and not Is_Cell_Erased(out) and LEVEL_STATE_BYTE(L) != STATE_0)
+        Copy_Cell(Level_Out(L), out);
 
   #if RUNTIME_CHECKS
     //
@@ -618,7 +617,9 @@ INLINE Result(Level*) Prep_Level_Core(
 
     FORCE_TRACK_VALID_EVAL_TARGET(Force_Erase_Cell_Untracked(&L->spare));
     FORCE_TRACK_VALID_EVAL_TARGET(Force_Erase_Cell_Untracked(&L->scratch));
-    Corrupt_If_Needful(L->out);
+    FORCE_TRACK_VALID_EVAL_TARGET(Force_Erase_Cell_Untracked(&L->output));
+
+    L->target = nullptr;  // transitional idea: target being phased out
 
     L->varlist = nullptr;
     L->executor = executor;
@@ -704,12 +705,12 @@ INLINE Result(Level*) Prep_Level_Core(
 INLINE Bounce Native_Thrown_Result(Level* L) {
     Clear_Lingering_Out_Cell_Shield_If_Debug(L);  // for abrupt panics [1]
 
-    Erase_Cell(L->out);
+    Erase_Cell(Level_Out(L));
     assert(Is_Throwing(L));
 
     while (TOP_LEVEL != L) {  // convenience
         Drop_Level(TOP_LEVEL);
-        Erase_Cell(TOP_LEVEL->out);
+        Erase_Cell(Level_Out(TOP_LEVEL));
     }
 
     return BOUNCE_THROWN;
@@ -785,7 +786,7 @@ INLINE Value* Native_Trash_Result_Untracked(
     assert(Get_Parameter_Flag(param, AUTO_TRASH));  // only `return: ~` [1]
   #endif
 
-    return Init_Trash_Named_From_Level(level_->out, level_);
+    return Init_Trash_Named_From_Level(Level_Out(level_), level_);
 }
 
 
@@ -810,8 +811,7 @@ INLINE Value* Native_Trash_Result_Untracked(
 //
 INLINE Value* Native_Copy_Result_Untracked(Level* L, const Value* v) {
     assert(not Is_Api_Value(v));  // too easy to not release()
-    Copy_Cell_Untracked(L->out, v);
-    return L->out;
+    return Copy_Cell_Untracked(Level_Out(L), v);
 }
 
 
@@ -868,7 +868,7 @@ INLINE Value* Native_Copy_Result_Untracked(Level* L, const Value* v) {
     #define SPARE       Level_Spare(level_)
     #define SCRATCH     Level_Scratch(level_)
 
-    #define OUT  level_->out
+    #define OUT  &level_->output
 
     #define BOUNCE_OUT \
         (assert(TOP_LEVEL == level_), BOUNCE_TOPLEVEL_OUT)

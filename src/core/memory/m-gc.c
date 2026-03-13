@@ -780,7 +780,10 @@ static void Mark_Level(Level* L) {
   // Level cells should always contain initialized bits, though erased/fresh
   // cells are allowed.
 
-    Queue_Mark_Maybe_Erased_Cell_Deep(L->out);
+    if (L->target)
+        Queue_Mark_Maybe_Erased_Cell_Deep(L->target);
+
+    Queue_Mark_Maybe_Erased_Cell_Deep(Level_Out(L));
     Queue_Mark_Maybe_Erased_Cell_Deep(&L->feed->fetched);
     Queue_Mark_Maybe_Erased_Cell_Deep(&L->spare);
     Queue_Mark_Maybe_Erased_Cell_Deep(&L->scratch);

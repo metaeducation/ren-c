@@ -136,8 +136,9 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 
 }} erase_parent_spare_now_that_we_are_done_extracting_it: {
 
-    assert(sub->out == Level_Spare(parent));
-    Erase_Cell(sub->out);
+    assert(sub->target == Level_Spare(parent));
+    Erase_Cell(Level_Out(sub));
+    unnecessary(Erase_Cell(sub->target));
 
 } adjust_frame_arguments_now_that_its_safe_to_panic: {
 
@@ -310,8 +311,9 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Writeback_Dual_In_Scratch_To_Spare(
 
 } erase_parent_spare_now_that_we_are_done_extracting_it: {
 
-    assert(sub->out == Level_Spare(parent));
-    Erase_Cell(sub->out);
+    assert(sub->target == Level_Spare(parent));
+    Erase_Cell(Level_Out(sub));
+    unnecessary(Erase_Cell(sub->target));
 
 } adjust_frame_arguments_now_that_its_safe_to_panic: {
 

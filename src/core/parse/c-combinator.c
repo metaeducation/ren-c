@@ -99,7 +99,7 @@ Bounce Combinator_Dispatcher(Level* L)
     if (not b)
         return b;
 
-    if (Is_Failure(L->out))
+    if (Is_Failure(Level_Out(L)))
         return b;  // did not advance, don't update furthest
 
     // This particular parse succeeded, but did the furthest point exceed the

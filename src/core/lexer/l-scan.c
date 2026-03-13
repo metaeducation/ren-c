@@ -3237,10 +3237,10 @@ Bounce Scanner_Executor(Level* level_)
     Bounce b = Scanner_Executor_Core(level_);
     if (u_cast(const void*, b) != nullptr) {
         if (b == BOUNCE_TOPLEVEL_OUT) {
-            if (Is_Failure(level_->out))
+            if (Is_Failure(Level_Out(level_)))
                 assert(TOP_INDEX == STACK_BASE);
             else
-                assert(Is_Tripwire(level_->out));
+                assert(Is_Tripwire(Level_Out(level_)));
         }
         else
             assert(Is_Bounce_A_Level(b));

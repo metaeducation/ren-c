@@ -234,11 +234,11 @@ void Unplug_Stack(
             panic ("Cannot yield across level that's not a continuation");
         }
 
-        assert(temp->out != base->out);  // can't guarantee restoration!
-        if (temp->out == Level_Spare(base))
-            temp->out = SPARE_PROXY;
-        else if (temp->out == Level_Scratch(base))
-            temp->out = SCRATCH_PROXY;
+        assert(temp->target != base->target);  // can't guarantee restoration!
+        if (temp->target == Level_Spare(base))
+            temp->target = SPARE_PROXY;
+        else if (temp->target == Level_Scratch(base))
+            temp->target = SCRATCH_PROXY;
 
         // We make the baseline stack pointers in each level relative to the
         // base level, with that level as if it were 0.  When the level
@@ -366,10 +366,10 @@ void Replug_Stack(Level* base, Stable* plug) {
 
     Level* temp = L;
     while (true) {
-        if (temp->out == SPARE_PROXY)  // replace output placeholder [1]
-            temp->out = Level_Spare(base);
-        else if (temp->out == SCRATCH_PROXY)
-            temp->out = Level_Scratch(base);
+        if (temp->target == SPARE_PROXY)  // replace output placeholder [1]
+            temp->target = Level_Spare(base);
+        else if (temp->target == SCRATCH_PROXY)
+            temp->target = Level_Scratch(base);
 
         temp->baseline.stack_base += base->baseline.stack_base;  // [2]
 

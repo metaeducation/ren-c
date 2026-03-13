@@ -721,7 +721,7 @@ void Startup_Natives(const Element* boot_natives)
     assert(not threw);
     UNUSED(threw);
 
-    assert(Is_Okay(As_Stable(L->out)));
+    assert(Is_Okay(As_Stable(Level_Out(L))));
 
 } finished: {
 

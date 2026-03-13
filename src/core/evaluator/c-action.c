@@ -91,7 +91,7 @@
 //
 Option(Bounce) Irreducible_Bounce(Bounce b) {
     if (b == BOUNCE_TOPLEVEL_OUT) {  // common case, made fastest
-        assert(Is_Cell_Readable(TOP_LEVEL->out));  // must write out
+        assert(Is_Cell_Readable(Level_Out(TOP_LEVEL)));  // must write out
         return none;
     }
 
@@ -121,15 +121,15 @@ Option(Bounce) Irreducible_Bounce(Bounce b) {
 
     if (b == nullptr) {  // could be from a NEEDFUL_RESULT_0 [1]
         if (not g_failure) {
-            Init_Null(TOP_LEVEL->out);
+            Init_Null(Level_Out(TOP_LEVEL));
             return none;
         }
 
         assert(not Is_Throwing(TOP_LEVEL));
 
-        Init_Error_Cell(TOP_LEVEL->out, g_failure);
+        Init_Error_Cell(Level_Out(TOP_LEVEL), g_failure);
         g_failure = nullptr;  // have to do before Force_Location_Of_Error()
-        Failify_Cell_And_Force_Location(TOP_LEVEL->out);
+        Failify_Cell_And_Force_Location(Level_Out(TOP_LEVEL));
 
         return none;
     }
@@ -150,7 +150,7 @@ Option(Bounce) Irreducible_Bounce(Bounce b) {
 
     if (Is_Bounce_Wild(b)) {
         if (b == BOUNCE_OKAY) {
-            Init_Okay(TOP_LEVEL->out);
+            Init_Okay(Level_Out(TOP_LEVEL));
             return none;
         }
         return b;  // can't simplify, may be a panic, continuation, etc.
@@ -161,7 +161,7 @@ Option(Bounce) Irreducible_Bounce(Bounce b) {
     if (Is_Bounce_A_Cell(b)) {  // must be Api Value
         Api(Value*) v = Value_From_Bounce(b);
         assert(Is_Api_Value(v));
-        Copy_Cell(TOP_LEVEL->out, v);
+        Copy_Cell(Level_Out(TOP_LEVEL), v);
         Release_Api_Value_If_Unmanaged(v);
         return none;
     }
@@ -194,14 +194,14 @@ Option(Bounce) Irreducible_Bounce(Bounce b) {
     const char* cp = cast(const char*, b);
     if (cp[0] == '~') {
         if (cp[1] == '\0') {
-            Init_Void(TOP_LEVEL->out);
+            Init_Void(Level_Out(TOP_LEVEL));
             return none;  // make return "~" fast!
         }
         if (
             cp[1] == '<' and cp[2] == '?' and cp[3] == '>'
             and cp[4] == '~' and cp[5] == '\0'
         ) {
-            Init_Tripwire(TOP_LEVEL->out);
+            Init_Tripwire(Level_Out(TOP_LEVEL));
             return none;  // make return "~<?>~" fast!
         }
     }

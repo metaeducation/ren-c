@@ -426,8 +426,8 @@ bool Predicate_Check_Spare_Uses_Scratch(
         assert(
             bounce == BOUNCE_TOPLEVEL_OUT  // no Bounce_Continue(), API vals...
         );
-        if (Is_Failure(L->out))
-            panic (L->out);
+        if (Is_Failure(Level_Out(L)))
+            panic (Level_Out(L));
         panic (Error_No_Logic_Typecheck(label));
     }
   #endif

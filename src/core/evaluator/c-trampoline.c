@@ -79,7 +79,7 @@
 // Optimized builds could use nullptr instead.
 //
 Bounce Just_Use_Out_Executor(Level* L)
-  { crash (L->out); }
+  { crash (Level_Out(L)); }
 
 
 //
@@ -140,8 +140,12 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
   bounce_on_trampoline_skip_just_use_out:
 
-    while (L->executor == &Just_Use_Out_Executor)
+    while (L->executor == &Just_Use_Out_Executor) {
+        /*if (L->target)
+            Copy_Cell(L->target, Level_Out(L));*/
+
         L = L->prior;  // fast skip, allow Is_Cell_Erased() output
+    }
 
   bounce_on_trampoline:
 
@@ -150,7 +154,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     assert(L->executor != &Just_Use_Out_Executor);  // drops skip [1]
 
     if (LEVEL_STATE_BYTE(L) == STATE_0)
-        assert(Is_Cell_Erased(L->out));  // useful invariant for STATE_0 [2]
+        assert(Is_Cell_Erased(Level_Out(L)));  // useful STATE_0 invariant [2]
 
     possibly(L != TOP_LEVEL);  // e.g. REDUCE keeps an evaluator pushed
 
@@ -206,7 +210,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         L = TOP_LEVEL;  // !!! review; should Level* be used in throw?
 
-        possibly(Is_Cell_Erased(L->out));  // not completely enforced ATM
+        possibly(Is_Cell_Erased(Level_Out(L)));  // not completely enforced ATM
 
         // Corrupting the pointer here was well-intentioned, but Drop_Level()
         // needs to know if it is an Action_Executor to drop a stack cell.
@@ -220,10 +224,14 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             and Frame_Phase(label) == Frame_Phase(LIB(UNWIND))
             and g_ts.unwind_level == L  // may be inaccessible [2]
         ){
-            CATCH_THROWN(L->out, L);
+            CATCH_THROWN(Level_Out(L), L);
 
-            if (Get_Level_Flag(L, VANISHABLE_VOIDS_ONLY) and Is_Void(L->out))
+            if (
+                Get_Level_Flag(L, VANISHABLE_VOIDS_ONLY)
+                and Is_Void(Level_Out(L))
+            ){
                 Note_Level_Out_As_Void_To_Make_Heavy(L);
+            }
 
             goto result_in_out;
         }
@@ -278,7 +286,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
       result_in_out:
         UNUSED(bounce);
 
-        Assert_Cell_Readable(TOP_LEVEL->out);
+        assert(Readable_Cell(Level_Out(TOP_LEVEL)));
+
+        if (TOP_LEVEL->target)  // temp bridge attempt for trampo-line
+            Force_Blit_Cell(TOP_LEVEL->target, Level_Out(TOP_LEVEL));
 
         if (Get_Level_Flag(TOP_LEVEL, ROOT_LEVEL)) {
             CLEANUP_BEFORE_EXITING_RECOVER_SCOPE;

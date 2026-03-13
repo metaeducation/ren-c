@@ -397,7 +397,7 @@ DECLARE_NATIVE(JOIN)
 
             heeded (Corrupt_Cell_If_Needful(Level_Spare(sub)));
             heeded (Corrupt_Cell_If_Needful(Level_Scratch(sub)));
-            assert(sub->out == SPARE);
+            assert(sub->target == SPARE);
             assert(LEVEL_STATE_BYTE(sub) == 0);
             LEVEL_STATE_BYTE(sub) = ST_TWEAK_GETTING;
 

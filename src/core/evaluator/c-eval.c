@@ -275,7 +275,7 @@ Bounce Evaluator_Executor(Level* const L)
     }
 
     if (Get_Level_Flag(L, FORCE_HEAVY_BRANCH))
-        Force_Cell_Heavy(L->out);
+        Force_Cell_Heavy(Level_Out(L));
 
     return BOUNCE_OUT;
 }}

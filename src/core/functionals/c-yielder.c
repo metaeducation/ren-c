@@ -300,9 +300,12 @@ Bounce Yielder_Dispatcher(Level* const L)
     assert(yield_level != L);
     assert(LEVEL_STATE_BYTE(yield_level) == ST_YIELD_SUSPENDED);
 
-    Copy_Cell(yield_level->out, yielded_lifted);  // resumed YIELD's result [2]
+    Copy_Cell(
+        Level_Out(yield_level),
+        yielded_lifted  // resumed YIELD's result [2]
+    );
     assume (
-      Unlift_Cell_No_Decay(yield_level->out)
+      Unlift_Cell_No_Decay(Level_Out(yield_level))
     );
     Init_Null(yielded_lifted);
 

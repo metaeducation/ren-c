@@ -146,13 +146,13 @@ static Result(None) Reuse_Sublevel_For_Action_Core(
     const Value* action,
     Option(InfixMode) infix_mode
 ){
-    possibly(action == L->out);
+    possibly(action == Level_Out(L));
 
     Level* sub = SUBLEVEL;
     assert(sub->executor == &Just_Use_Out_Executor);
     assert(sub->feed == L->feed);
     assert(sub->baseline.stack_base == L->baseline.stack_base);
-    assert(sub->out == OUT);
+    assert(sub->target == OUT);
 
     Phase *phase = Frame_Phase(action);
     if (Not_Stub_Flag(phase, PHASE_PURE))
@@ -172,6 +172,8 @@ static Result(None) Reuse_Sublevel_For_Action_Core(
     trap (
       Push_Action(sub, action, infix_mode)
     );
+    if (infix_mode)
+        Copy_Cell(Level_Out(sub), OUT);
 
     Invalidate_Next_Fetched_In_Spare(L);  // can advance feed, invalidates [3]
 
@@ -195,7 +197,7 @@ static Result(None) Reuse_Sublevel_For_Eval_Core(
     assert(sub->executor == &Just_Use_Out_Executor);
     assert(sub->feed == L->feed);  // we change it, and change back later
     assert(sub->baseline.stack_base == L->baseline.stack_base);
-    assert(sub->out == OUT);
+    assert(sub->target == OUT);
 
     sub->flags.bits = (
         FLAG_BASE_BYTE(BASE_BYTE_LEVEL)
@@ -241,7 +243,7 @@ static Result(None) Reuse_Sublevel_Target_Spare_For_Intrinsic_Arg_Core(
     assert(sub->executor == &Just_Use_Out_Executor);
     assert(sub->feed == L->feed);
     assert(sub->baseline.stack_base == L->baseline.stack_base);
-    assert(sub->out == OUT);  // we tweak it... :-/
+    assert(sub->target == OUT);  // we tweak it... :-/
 
     sub->executor = &Stepper_Executor;
 
@@ -253,7 +255,7 @@ static Result(None) Reuse_Sublevel_Target_Spare_For_Intrinsic_Arg_Core(
     );
     inapplicable(LEVEL_FLAG_VANISHABLE_VOIDS_ONLY);  // single step, not multi
 
-    sub->out = Level_Spare(L);  // targets spare, rethink [1]
+    sub->target = Level_Spare(L);  // targets spare, rethink [1]
 
     Erase_Cell(Level_Spare(sub));
     Erase_Cell(Level_Scratch(sub));
@@ -288,7 +290,7 @@ INLINE Result(None) Reuse_Sublevel_Same_Feed_For_Step_Core(Level* L)
     assert(sub->executor == &Just_Use_Out_Executor);
     assert(sub->feed == L->feed);
     possibly(sub->baseline.stack_base != L->baseline.stack_base);   // [0]
-    assert(sub->out == OUT);
+    assert(sub->target == OUT);
 
     if (Is_Feed_At_End(L->feed))  // `eval [x:]`, `eval [o.x:]`, etc. illegal
         return fail (Error_Need_Non_End(CURRENT));
@@ -303,7 +305,7 @@ INLINE Result(None) Reuse_Sublevel_Same_Feed_For_Step_Core(Level* L)
     );
     inapplicable(LEVEL_FLAG_VANISHABLE_VOIDS_ONLY);  // single step, not multi
 
-    assert(Is_Cell_Erased(L->out));
+    assert(Is_Cell_Erased(Level_Out(L)));
 
     Erase_Cell(Level_Spare(sub));
     Erase_Cell(Level_Scratch(sub));
@@ -382,7 +384,7 @@ Option(Phase*) Reuse_Sublevel_To_Determine_Left_Literal_Infix_Core(
     assert(sub->executor == &Just_Use_Out_Executor);
     assert(sub->feed == L->feed);
     assert(sub->baseline.stack_base == L->baseline.stack_base);
-    assert(sub->out == OUT);
+    assert(sub->target == OUT);
 
     const StackIndex base = TOP_INDEX;
     assert(base == STACK_BASE);
@@ -964,12 +966,12 @@ Bounce Stepper_Executor(Level* L)
         if (Is_Antiform(L_next)) {
             Copy_Cell(OUT, L_next);
             trap (
-              Decay_If_Unstable(L->out)  // use ^ instead if you want unstable
+              Decay_If_Unstable(Level_Out(L))  // use ^ for unstable
             );
             Fetch_Next_In_Feed(L->feed);
         }
         else {  // need to honor CELL_FLAG_CONST, etc.
-            Just_Next_In_Feed(L->out, L->feed);  // !!! review infix interop
+            Just_Next_In_Feed(Level_Out(L), L->feed);  // !!! review infix
         }
         Invalidate_Next_Fetched_In_Spare(L);
         goto lookahead;
@@ -1167,6 +1169,9 @@ Bounce Stepper_Executor(Level* L)
       Get_Var_To_Out_Use_Toplevel(CURRENT, GROUP_EVAL_NO)
     );
 
+    heeded(SUBLEVEL->target);  // used to set OUT
+    Erase_Cell(Level_Out(SUBLEVEL));  // !!! Target reused
+
     if (Is_Failure(OUT))  // e.g. couldn't pick word as field from binding
         panic (OUT);  // don't conflate with action result
 
@@ -1269,7 +1274,7 @@ Bounce Stepper_Executor(Level* L)
 
           case PARAMCLASS_LITERAL:
             The_Next_In_Feed(SPARE, L->feed);
-            SUBLEVEL->out = SPARE;  // honor expected invariant
+            SUBLEVEL->target = SPARE;  // honor expected invariant
             goto intrinsic_arg_in_spare;
 
           default:
@@ -1300,8 +1305,8 @@ Bounce Stepper_Executor(Level* L)
         or SUBLEVEL->executor == &Just_Use_Out_Executor  // if we didn't
     );
     assert(SUBLEVEL->feed == L->feed);  // we didn't change it
-    assert(SUBLEVEL->out == SPARE);  // we redirected it
-    SUBLEVEL->out = OUT;  // put it back
+    assert(SUBLEVEL->target == SPARE);  // we redirected it
+    SUBLEVEL->target = OUT;  // put it back
 
     Details* details = Ensure_Frame_Details(CURRENT);
 
@@ -1347,6 +1352,9 @@ Bounce Stepper_Executor(Level* L)
     b = opt Irreducible_Bounce(b);
     if (b)  // can't Bounce_Continue() etc. from an intrinsic dispatch
         panic ("Intrinsic dispatcher returned Irreducible Bounce");
+
+    inapplicable(L->target);  // we didn't call the trampoline
+    Copy_Cell(OUT, Level_Out(SUBLEVEL));
 
     if (
         Get_Level_Flag(L, VANISHABLE_VOIDS_ONLY)
@@ -1676,6 +1684,10 @@ Bounce Stepper_Executor(Level* L)
         possibly(slash_at_tail);  // ...or, exception for arity-0? [2]
         panic (e);  // don't FAIL, PANIC [1]
     }
+
+    heeded(SUBLEVEL->target);  // used to set OUT
+    Erase_Cell(Level_Out(SUBLEVEL));  // !!! need it clear
+
     assert(Is_Action(OUT));
 
     if (slash_at_tail) {  // do not run action, just return it [3]
@@ -1724,6 +1736,10 @@ Bounce Stepper_Executor(Level* L)
     STATE = ST_STEPPER_GENERIC_SET;
 
     Erase_Cell(OUT);  // expected by Reuse_Sublevel_Same_Feed_For_Step()
+
+    Erase_Cell(Level_Out(SUBLEVEL));
+    unnecessary(SUBLEVEL->target);  // !!! ???
+
     require (
       Reuse_Sublevel_Same_Feed_For_Step()
     );

@@ -80,11 +80,11 @@
 
 #define DELEGATE_CORE_3(o,sub_flags,...) \
     (assert(Not_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES)), \
-    assert((o) == level_->out), \
+    assert((o) == Level_Out(level_)), \
     Set_Executor_Flag(ACTION, level_, DELEGATE_CONTROL), \
     LEVEL_STATE_BYTE(level_) = 127, \
     Pushed_Continuation( \
-        level_->out, \
+        Level_Out(level_), \
         (sub_flags), \
         __VA_ARGS__  /* binding, branch, and "with" argument */ \
     ) ? Bounce_Continue(TOP_LEVEL) \

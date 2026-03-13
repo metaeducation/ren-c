@@ -271,7 +271,7 @@ DECLARE_NATIVE(TRANSCODE)
     }
 
     if (ARG(LINE) and Is_Word(unwrap ARG(LINE))) {  // want line number updated
-        Init_Integer(OUT, transcode->line);
+        Init_Integer(Level_Out(SUBLEVEL), transcode->line);
 
         heeded (Corrupt_Cell_If_Needful(Level_Spare(SUBLEVEL)));
         heeded (Corrupt_Cell_If_Needful(Level_Scratch(SUBLEVEL)));
@@ -285,7 +285,6 @@ DECLARE_NATIVE(TRANSCODE)
           )
         );
         SUBLEVEL->baseline.stack_base = STACK_BASE;
-        UNUSED(*OUT);
     }
 
 } process_stack_results_if_any: {

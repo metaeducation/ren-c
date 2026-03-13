@@ -220,7 +220,7 @@ static void Stepper_Shared_Checks(Level* const L)
 
     //=//// v-- BELOW CHECKS ONLY APPLY IN EXITS CASE WITH MORE CODE //////=//
 
-    assert(L_next != L->out);
+    assert(L_next != Level_Out(L));
 
     //=//// ^-- ADD CHECKS EARLIER THAN HERE IF THEY SHOULD ALWAYS RUN ////=//
 }}
@@ -311,7 +311,7 @@ void Stepper_Exiting_Checks(Level* L)
 {
     Stepper_Shared_Checks(L);
 
-    assert(not Is_Base_Marked(L->out));
+    assert(not Is_Base_Marked(Level_Out(L)));
 
     if (Not_Level_At_End(L) and not Level_Is_Variadic(L)) {
         if (Level_Array_Index(L) > Array_Len(Level_Array(L))) {
@@ -323,10 +323,10 @@ void Stepper_Exiting_Checks(Level* L)
   //=//// CHECK FOR STRAY FLAGS ///////////////////////////////////////////=//
 
     if (Is_Throwing(L)) {
-        assert(Is_Cell_Erased(L->out));
+        assert(Is_Cell_Erased(Level_Out(L)));
     }
     else {
-        assert(Not_Cell_Flag(L->out, NOTE));
+        assert(Not_Cell_Flag(Level_Out(L), NOTE));
 
         Flags filtered = (L->flags.bits & ~FLAG_STATE_BYTE(255));
         filtered &= ~ (

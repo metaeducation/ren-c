@@ -69,13 +69,17 @@ INLINE const Element* VAL_THROWN_LABEL(Level* level_) {
     Is_Error(VAL_THROWN_LABEL(level_))  // non-definitional errors [1]
 
 
+#define Level_Out(L) \
+    (&known(Level*, (L))->output)  // should be in sys-level.h
+
+
 INLINE void Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Level* L,
     const Value* arg,
     const Element* label
 ){
-    possibly(label == L->out);
-    possibly(arg == L->out);
+    possibly(label == Level_Out(L));
+    possibly(arg == Level_Out(L));
 
     assert(not Is_Throwing(L));
 
@@ -85,7 +89,7 @@ INLINE void Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     assert(Is_Cell_Erased(&g_ts.thrown_label));
     Copy_Cell(&g_ts.thrown_label, label);
 
-    Erase_Cell(L->out);
+    Erase_Cell(Level_Out(L));
 
     assert(Is_Throwing(L));
 }
@@ -96,7 +100,7 @@ INLINE void Init_Thrown_Panic(Level* L, Error* error) {
     Init_Thrown_With_Label(
         TOP_LEVEL,
         LIB(NULL),
-        Init_Error_Cell(L->out, error)  // error is the "label"
+        Init_Error_Cell(Level_Out(L), error)  // error is the "label"
     );
 }
 

@@ -3282,7 +3282,7 @@ DECLARE_NATIVE(API_TRANSIENT)
     Stub* stub = Compact_Stub_From_Cell(v);
     Set_Flavor_Flag(VALUE_HOLDER, stub, RELEASE);
 
-    Init_Integer(level_->out, p_cast(intptr_t, stub));  // intptr_t [1]
+    Init_Integer(Level_Out(level_), p_cast(intptr_t, stub));  // intptr_t [1]
     return BOUNCE_TOPLEVEL_OUT;
 }
 
@@ -3388,11 +3388,11 @@ Bounce Api_Function_Dispatcher(Level* const L)
 
     require(
       bool check = Typecheck_Coerce_Return_Use_Toplevel(
-        L, param, L->out
+        L, param, Level_Out(L)
       )
     );
     if (not check)
-        panic (Error_Bad_Return_Type(L, L->out, param));
+        panic (Error_Bad_Return_Type(L, Level_Out(L), param));
 
     assert(L == TOP_LEVEL);
 
@@ -3597,8 +3597,8 @@ RebolBounce API_rebDelegate(
     Level* level_ = TOP_LEVEL;  // needed by DELEGATE_SUBLEVEL macro
 
     API_rebPushContinuation_internal(
-        binding,
-        u_cast(RebolValue*, TOP_LEVEL->out),  // don't sink, OUT in valist [1]
+        binding,  // don't sink, OUT in valist v-- [1]
+        u_cast(RebolValue*, Level_Out(TOP_LEVEL)),
         LEVEL_MASK_NONE,
         p, vaptr
     );
@@ -3633,8 +3633,8 @@ RebolBounce API_rebContinue(
     Panic_If_Top_Level_Not_Continuable();
 
     API_rebPushContinuation_internal(
-        binding,
-        u_cast(RebolValue*, TOP_LEVEL->out),  // don't sink, OUT in valist [1]
+        binding,  // don't sink, OUT in valist v-- [1]
+        u_cast(RebolValue*, Level_Out(TOP_LEVEL)),
         LEVEL_FLAG_UNINTERRUPTIBLE,  // default, see rebContinueInterruptbile()
         p, vaptr
     );
@@ -3660,8 +3660,8 @@ RebolBounce API_rebContinueInterruptible(
     Panic_If_Top_Level_Not_Continuable();
 
     API_rebPushContinuation_internal(
-        binding,
-        u_cast(RebolValue*, TOP_LEVEL->out),  // don't sink, OUT in valist [1]
+        binding,  // don't sink, OUT in valist v-- [1]
+        u_cast(RebolValue*, Level_Out(TOP_LEVEL)),
         LEVEL_MASK_NONE,  // will inherit interruptibility of parent.
         p, vaptr
     );

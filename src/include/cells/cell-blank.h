@@ -193,7 +193,7 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
     CELL_FLAG_NOTE
 
 #define Note_Level_Out_As_Void_To_Make_Heavy(L) \
-    ((L)->out->header.bits |= CELL_FLAG_OUT_NOTE_VOID_TO_MAKE_HEAVY)
+    (Level_Out(L)->header.bits |= CELL_FLAG_OUT_NOTE_VOID_TO_MAKE_HEAVY)
 
 #define CELL_MASK_VOID_TO_MAKE_HEAVY \
     (FLAG_HEART(HEART_BLANK_SIGNIFYING_VOID) \
@@ -201,7 +201,7 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
         | CELL_FLAG_OUT_NOTE_VOID_TO_MAKE_HEAVY)
 
 #define Is_Level_Out_Noted_Void_To_Make_Heavy(L) /* one mask operation [2] */ \
-    (((L)->out->header.bits & CELL_MASK_VOID_TO_MAKE_HEAVY) \
+    ((Level_Out(L)->header.bits & CELL_MASK_VOID_TO_MAKE_HEAVY) \
         == CELL_MASK_VOID_TO_MAKE_HEAVY)
 
 

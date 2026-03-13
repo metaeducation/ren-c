@@ -341,6 +341,8 @@ static bool Subparse_Throws(
         return true;
     }
 
+    Copy_Cell(LEVEL->target, Level_Out(LEVEL));
+
     *interrupted_out = false;
     return false;
 }

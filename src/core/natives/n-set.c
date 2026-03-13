@@ -439,7 +439,7 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
 
     Level* sub = SUBLEVEL;
     assert(sub->executor == &Just_Use_Out_Executor);
-    sub->out = SPARE;
+    assert(sub->target == OUT);  // we don't use it
 
     const StackIndex base = STACK_BASE;  // L's stack base for Set_Block()
     const StackIndex stackindex_limit = TOP_INDEX + 1;  // one past pushed
@@ -525,20 +525,20 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
             goto skip_circled_check;  // we checked it wasn't circled
         }
 
-        Init_Null(SPARE);
+        Init_Null(Level_Out(sub));
     }
     else {
-        Copy_Cell(SPARE, pack_at_lifted);
+        Copy_Cell(Level_Out(sub), pack_at_lifted);
         require (
-          Unlift_Cell_No_Decay(SPARE)  // unlift for output...
+          Unlift_Cell_No_Decay(Level_Out(sub))  // unlift for output...
         );
     }
 
     if (Is_Metaform_Blank(var))
         goto circled_check;
 
-    if (Is_Failure(SPARE))  // don't pass thru errors if not ^ sigil
-        panic (SPARE);
+    if (Is_Failure(Level_Out(sub)))  // don't passthru errors if not ^ sigil
+        panic (Level_Out(sub));
 
     if (Is_Space(var))
         goto circled_check;
@@ -551,7 +551,7 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
     LEVEL_STATE_BYTE(sub) = ST_TWEAK_SETTING;
 
     require (
-      Set_Var_To_Out_Use_Toplevel(  // sub's OUT! (L's SPARE)
+      Set_Var_To_Out_Use_Toplevel(  // sub's OUT!
         var, GROUP_EVAL_YES
       )
     );
@@ -563,7 +563,7 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
   // Note: no circling passes through the original PACK!
 
     if (circled == stackindex_var)
-        Copy_Cell(OUT, SPARE);
+        Copy_Cell(OUT, Level_Out(sub));
 
 } skip_circled_check: { //////////////////////////////////////////////////////
 
@@ -595,8 +595,6 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
 
     Drop_Data_Stack_To(STACK_BASE);  // drop writeback variables
     SUBLEVEL->baseline.stack_base = STACK_BASE;
-    assert(sub->out == SPARE);
-    sub->out = OUT;
 
     Corrupt_Cell_If_Needful(SPARE);  // we trashed it
     Corrupt_Cell_If_Needful(SCRATCH);  // we trashed it too

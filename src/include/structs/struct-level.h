@@ -375,6 +375,19 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     //
     Value scratch;  // raw vs. derived class due to union/destructor combo
 
+    // This is where to write the result of the evaluation.  Often it is used
+    // as an intermediate free location to do calculations en route to a final
+    // result, due to being GC-safe during function evaluation.
+    //
+    Value output;
+
+    // This is a legacy concept of being able to point a Level at a cell to
+    // write to.  The new idea is that Levels persist after an evaluation and
+    // the caller consults the output cell--copying if it wants.  So the
+    // "target" pointer is going to be phased out.
+    //
+    Value* target;
+
     // Each executor subclass can store specialized information in the level.
     // We place it here up top where we've been careful to make sure the
     // `spare` is on a (2 * sizeof(uintptr_t)) alignment, in case there are
@@ -408,13 +421,6 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     // startup and never used to run code.
     //
     Level* prior;
-
-    // This is where to write the result of the evaluation.  It should not be
-    // in "movable" memory, hence usually not in an Array Flex's data.  Often
-    // it is used as an intermediate free location to do calculations en route
-    // to a final result, due to being GC-safe during function evaluation.
-    //
-    Value* out;
 
     // The varlist is where arguments for FRAME! are kept.  Though it is
     // ultimately usable as an ordinary Varlist_Array() for a FRAME! value, it
