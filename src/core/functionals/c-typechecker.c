@@ -442,7 +442,7 @@ bool Predicate_Check_Spare_Uses_Scratch(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
     ));
-    Push_Level(nullptr, sub);  // sub's out is L->scratch
+    Push_Level(sub);  // sub's out is L->scratch
     require (
       Push_Action(sub, predicate, PREFIX_0)
     );
@@ -1171,7 +1171,7 @@ Result(Value*) Init_Typechecker(
     require (
       Level* const L = Make_End_Level(&Skip_Me_Executor, LEVEL_MASK_NONE)
     );
-    Push_Level(out, L);
+    Push_Level(L);
 
     USE_LEVEL_SHORTHANDS (L);
 

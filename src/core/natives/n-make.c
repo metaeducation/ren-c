@@ -67,6 +67,9 @@ DECLARE_NATIVE(MAKE)
 //
 Bounce Copy_Quoter_Executor(Level* level_)
 {
+    Copy_Cell(OUT, SUBOUT);
+    Drop_Level(SUBLEVEL);
+
     Tweak_Cell_Lift_Byte(OUT, Type_From_Byte(STATE));
 
     return BOUNCE_OUT;
@@ -126,11 +129,10 @@ DECLARE_NATIVE(COPY)
     Option(const Symbol*) label = Level_Label(level_);
     Option(VarList*) coupling = Level_Coupling(level_);
 
-    Level* sub = Push_Downshifted_Level(OUT, level_);
+    Level* sub = Push_Downshifted_Level(level_);
 
     level_->executor = &Copy_Quoter_Executor;
 
-    assert(Not_Level_Flag(sub, TRAMPOLINE_KEEPALIVE));
     assert(Get_Executor_Flag(ACTION, sub, IN_DISPATCH));
 
     Phase* phase = Frame_Phase(LIB(COPY));

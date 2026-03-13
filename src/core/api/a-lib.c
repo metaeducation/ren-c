@@ -1270,7 +1270,7 @@ static Result(Level*) Run_Valist_And_Call_Va_End(  // va_end()s [1]
     else
         L->flags.bits |= LEVEL_FLAG_UNINTERRUPTIBLE;
 
-    Push_Level_Dont_Inherit_Interruptibility(nullptr, L);
+    Push_Level_Dont_Inherit_Interruptibility(L);
     bool threw = Trampoline_With_Top_As_Root_Throws();
 
     if (threw) {
@@ -1321,11 +1321,11 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     assert(Is_Base_Managed(binding));
     Tweak_Feed_Binding(feed, cast(Context*, binding));
 
-    Sink(Value) value_out = u_cast(Value*, out);
     require (
       Level* L = Make_Level(&Stepper_Executor, feed, flags)
     );
-    Push_Level(value_out, L);
+    Push_Level(L);
+
     if (Trampoline_With_Top_As_Root_Throws()) {
         Drop_Level(L);
         return true;
@@ -1334,14 +1334,16 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     bool too_many = (flags & EVAL_EXECUTOR_FLAG_NO_RESIDUE)
         and Not_Feed_At_End(feed);  // feed will be freed in Drop_Level()
 
-    Drop_Level(L);  // will va_end() if not reified during evaluation
-
     if (too_many)
         panic (Error_Apply_Too_Many_Raw());
 
-    Decay_If_Unstable(value_out) except (Error* e) {
-        panic (e);
-    }
+    Copy_Cell(out, Level_Out(L));
+
+    require (
+      Decay_If_Unstable(out)
+    );
+
+    Drop_Level(L);  // will va_end() if not reified during evaluation
 
     return false;
 }
@@ -1432,13 +1434,10 @@ RebolValue* API_rebTranscodeInto(
 //
 void API_rebPushContinuation_internal(
     RebolContext* binding,
-    RebolValue* out,  // possibly in the valist!
     uintptr_t flags,
     const void* p, void* vaptr
 ){
     ENTER_API;
-
-    possibly(out == p);  // out, spare, scratch can be p or in va_list
 
     DECLARE_ELEMENT (block);
     RebolContext* dummy_binding = nullptr;  // transcode ignores
@@ -1455,7 +1454,7 @@ void API_rebPushContinuation_internal(
     require (
       Level* L = Make_Level_At(&Evaluator_Executor, block, flags)
     );
-    Push_Level(u_cast(Value*, out), L);
+    Push_Level(L);
 }
 
 
@@ -1772,6 +1771,7 @@ void API_rebJumps(
         RUN_VA_MASK_NONE, binding, p, vaptr
       )
     );
+    Drop_Level(L);  // panic would drop, but this silences unused L warning
 
   fake_out_msvc_warning_about_unreachable_code: {
 
@@ -1784,8 +1784,6 @@ void API_rebJumps(
   // it's best not to turn off the warning.  Throw in a runtime twist that
   // it can't guarantee won't happen (but won't) so it doesn't use special
   // knowledge that API_rebJumps() does not return.
-
-    unnecessary(Drop_Level(L));  // will always reach panic
 
     assert(p != nullptr);
     if (p == nullptr)
@@ -3372,9 +3370,15 @@ Bounce Api_Function_Dispatcher(Level* const L)
         goto initial_entry;
 
       case ST_API_FUNC_CONTINUING:  // the CFunc wants to get called again
+        assert(TOP_LEVEL->prior == L);
+        UNUSED(Level_Out(TOP_LEVEL));  // can't get the result (currently (?))
+        Drop_Level(TOP_LEVEL);
         goto run_cfunction;
 
       case ST_API_FUNC_DELEGATING:  // doesn't want callback, but typecheck
+        assert(TOP_LEVEL->prior == L);
+        Copy_Cell(Level_Out(L), Level_Out(TOP_LEVEL));
+        Drop_Level(TOP_LEVEL);
         goto typecheck_out;
 
       default:
@@ -3634,19 +3638,11 @@ static void Panic_If_Top_Level_Not_Continuable(void) {
 // executing the `return`) an interpreter stack level for the native remains
 // in effect, so it will show up in stack traces if there's an error.
 //
-// rebDelegate() can be used to work around the inability of Stable* to store
-// unstable isotopes.  So if a native based on the librebol API wants to
-// return something like an error or a pack, it must use rebDelegate().
-//
-// It's also the right way to perform an abrupt failure, by doing a call
+// This is the right way to perform an abrupt failure, by doing a call
 // to `rebDelegate("panic" ...)`.  Otherwise, exceptions or longjmp() have
 // to dangerously cross arbitrary C stack levels of user code that may not
 // be designed for it (e.g. if the interpreter was built with longjmp() and
 // the API client uses C++ code, things like destructors won't be run.)
-//
-// 1. It is currently legal for callers of rebDelegate() to pass a pointer
-//    to the out cell of the TOP_LEVEL in the valist.  Thus we don't want
-//    to erase the top level's OUT cell in case that is true.
 //
 RebolBounce API_rebDelegate(
     RebolContext* binding,
@@ -3659,8 +3655,7 @@ RebolBounce API_rebDelegate(
     Level* level_ = TOP_LEVEL;  // needed by DELEGATE_SUBLEVEL macro
 
     API_rebPushContinuation_internal(
-        binding,  // don't sink, OUT in valist v-- [1]
-        u_cast(RebolValue*, Level_Out(TOP_LEVEL)),
+        binding,
         LEVEL_MASK_NONE,
         p, vaptr
     );
@@ -3671,20 +3666,22 @@ RebolBounce API_rebDelegate(
 //
 //  rebContinue: API
 //
-// 1. Typically internal natives use the LEVEL_STATE_BYTE() to track what
-//    mode of a continuation they are in.  But actions made by rebFunction()
-//    don't speak directly in terms of their "level", and also can't receive
-//    a value in OUT or SPARE as the result of a continuation.  So they should
-//    track their state in a local variable, and also the code they pass to
-//    the continuation should write to some other local variable or argument
-//    to get the result, e.g.
+// This does a continuation; the function dispatcher will be called again
+// with all its locals still intact when the code completes.
+//
+// Note there's currently no way to get the result of this continuation--the
+// Level is evaluated and then dropped.  There's also no LEVEL_STATE_BYTE()
+// access (it's used to manage the state of the API dispatcher).  So natives
+// based on rebFunction() should track their state in a local variable, and
+// also the code they pass to the continuation should write to some other
+// local variable or argument to get the result, e.g.
 //
 //         return rebContinue(
 //             "local-state: 'evaluating",
 //             "local-result: eval", block
 //         );
 //
-// 2. This file doesn't use REBOL_LEVEL_SHORTHAND_MACROS.
+// 1. This file doesn't use REBOL_LEVEL_SHORTHAND_MACROS.
 //
 RebolBounce API_rebContinue(
     RebolContext* binding,
@@ -3695,12 +3692,11 @@ RebolBounce API_rebContinue(
     Panic_If_Top_Level_Not_Continuable();
 
     API_rebPushContinuation_internal(
-        binding,  // don't sink, OUT in valist v-- [1]
-        u_cast(RebolValue*, Level_Out(TOP_LEVEL)),
+        binding,
         LEVEL_FLAG_UNINTERRUPTIBLE,  // default, see rebContinueInterruptbile()
         p, vaptr
     );
-    return Bounce_Continue(TOP_LEVEL);  // CONTINUE_SUBLEVEL needs macros [2]
+    return Bounce_Continue(TOP_LEVEL);  // CONTINUE_SUBLEVEL needs macros [1]
 }
 
 
@@ -3711,8 +3707,6 @@ RebolBounce API_rebContinue(
 //
 // 1. see rebContinue()
 //
-// 2. see rebContinue()
-//
 RebolBounce API_rebContinueInterruptible(
     RebolContext* binding,
     const void* p, void* vaptr
@@ -3722,13 +3716,12 @@ RebolBounce API_rebContinueInterruptible(
     Panic_If_Top_Level_Not_Continuable();
 
     API_rebPushContinuation_internal(
-        binding,  // don't sink, OUT in valist v-- [1]
-        u_cast(RebolValue*, Level_Out(TOP_LEVEL)),
-        LEVEL_MASK_NONE,  // will inherit interruptibility of parent.
+        binding,
+        (not LEVEL_FLAG_UNINTERRUPTIBLE),  // inherit parent interruptibility
         p, vaptr
     );
     Clear_Level_Flag(TOP_LEVEL, UNINTERRUPTIBLE);
-    return Bounce_Continue(TOP_LEVEL);  // CONTINUE_SUBLEVEL needs macros [2]
+    return Bounce_Continue(TOP_LEVEL);  // CONTINUE_SUBLEVEL needs macros [1]
 }
 
 

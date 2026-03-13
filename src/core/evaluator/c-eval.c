@@ -96,10 +96,10 @@ Bounce Evaluator_Executor(Level* const L)
   // But one state is reserved by the Stepper to say the Evaluator_Executor()
   // has its own Level.
   //
-  // 1. If Stepper_Executor() pushes levels with TRAMPOLINE_KEEPALIVE, then
-  //    the `L` that Evaluator_Executor() gets might not be the prior of
-  //    TOP_LEVEL.  Climbing the stack is very slightly "inefficient" but the
-  //    optimized case of not having a sublevel doesn't pay that "cost".
+  // 1. If Stepper_Executor() pushes levels, the `L` that Evaluator_Executor()
+  //    gets might not be the prior of TOP_LEVEL.  Climbing the stack is very
+  //    slightly "inefficient" but the optimized case of not having a sublevel
+  //    doesn't pay that "cost".
 
     switch (STATE) {
       case ST_EVALUATOR_INITIAL_ENTRY:
@@ -110,6 +110,7 @@ Bounce Evaluator_Executor(Level* const L)
         stepper = TOP_LEVEL;
         while (stepper->prior != L)
             stepper = stepper->prior;
+        Copy_Cell(OUT, Level_Out(stepper));
         goto step_done_with_result_in_out; }
 
       default:  // ST_STEPPER_XXX states (Stepper_Executor() using same Level)
@@ -120,7 +121,6 @@ Bounce Evaluator_Executor(Level* const L)
 } initial_entry: {  //////////////////////////////////////////////////////////
 
     possibly(L != TOP_LEVEL);
-    possibly(Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE));
 
     possibly(Get_Level_Flag(L, VANISHABLE_VOIDS_ONLY));  // see flag definition
 
@@ -139,11 +139,9 @@ Bounce Evaluator_Executor(Level* const L)
           stepper = Make_Level(  // sublevel to hook steps, see [A]
             &Stepper_Executor,
             L->feed,
-            LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
-                | (L->flags.bits & LEVEL_FLAG_VANISHABLE_VOIDS_ONLY)  // [B]
+            (L->flags.bits & LEVEL_FLAG_VANISHABLE_VOIDS_ONLY)  // [B]
         ));
-        definitely(Is_Cell_Erased(OUT));  // we are in STATE_0
-        Push_Level(OUT, stepper);
+        Push_Level(stepper);
 
         STATE = ST_EVALUATOR_STEPPING_IN_SUBLEVEL;  // before `goto finished;`
 

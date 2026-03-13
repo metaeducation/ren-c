@@ -330,8 +330,16 @@ Bounce Action_Executor(Level* L)
             STATE = ST_ACTION_FULFILLING_INFIX_FROM_OUT;
             goto fulfill;
 
-          case ST_ACTION_FULFILLING_ARGS:
-            goto continue_fulfilling;
+          case ST_ACTION_FULFILLING_ARGS: {
+          #if DEBUG_POISON_UNINITIALIZED_CELLS
+            if (not Is_Cell_Poisoned(ARG)) {
+                assert(Is_Null_Signifying_Unspecialized(ARG));
+                Poison_Cell(ARG);
+            }
+          #endif
+            Blit_Cell(ARG, SUBOUT);  // no CELL_MASK_PERSIST
+            Drop_Level(SUBLEVEL);
+            goto continue_fulfilling; }
 
           case ST_ACTION_TYPECHECKING:
             goto typecheck_then_dispatch;
@@ -344,6 +352,8 @@ Bounce Action_Executor(Level* L)
 
     if (Get_Action_Executor_Flag(L, DELEGATE_CONTROL)) {  // delegation done
         Clear_Action_Executor_Flag(L, DELEGATE_CONTROL);
+        Copy_Cell(OUT, SUBOUT);
+        Drop_Level(SUBLEVEL);
         goto check_output;  // since it's done, return type should be checked
     }
 
@@ -477,8 +487,6 @@ Bounce Action_Executor(Level* L)
             goto continue_fulfilling;
         }
 
-        Erase_Cell(ARG);
-
   //=//// ARGUMENT FULFILLMENT ////////////////////////////////////////////=//
 
   // 1. Evaluation argument "hook" parameters (marked in FUNC by `<variadic>`).
@@ -494,6 +502,7 @@ Bounce Action_Executor(Level* L)
 
     if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // don't consume *yet* [1]
         Force_Level_Varlist_Managed(L);
+        Erase_Cell(ARG);
         Init_Varargs_Untyped_Normal(ARG, L);
         goto continue_fulfilling;
     }
@@ -508,6 +517,8 @@ Bounce Action_Executor(Level* L)
   // want the rest of the arguments to come from an input feed.
 
     STATE = ST_ACTION_FULFILLING_ARGS;
+
+    Erase_Cell(ARG);
 
     if (Is_Cell_Erased(OUT)) {  // "nothing" to left
         if (
@@ -602,6 +613,7 @@ Bounce Action_Executor(Level* L)
   //    continuation character in the scanner--probably backslash).
 
     if (Next_Is_End_Or_Blank(L)) {  // [1]
+        Erase_Cell(ARG);
         Handle_Barrier_Hit(ARG, L);
         goto continue_fulfilling;
     }
@@ -625,18 +637,17 @@ Bounce Action_Executor(Level* L)
         require (
           Level* sub = Make_Level(&Stepper_Executor, L->feed, flags)
         );
-        possibly(Is_Light_Null(ARG));  // !!! review
-
-        Push_Level(u_cast(Value*, ARG), sub);
-
+        Push_Level(sub);
         return CONTINUE_SUBLEVEL; }
 
       case PARAMCLASS_LITERAL:
+        Erase_Cell(ARG);
         The_Next_In_Feed(ARG, L->feed);  // pick up binding (may throw away)
         Lookahead_To_Sync_Infix_Defer_Flag(L);  // [1]
         goto continue_fulfilling;
 
       case PARAMCLASS_SOFT: {
+        Erase_Cell(ARG);
         The_Next_In_Feed(ARG, L->feed);  // pick up binding (may throw away)
         Lookahead_To_Sync_Infix_Defer_Flag(L);  // [1]
 

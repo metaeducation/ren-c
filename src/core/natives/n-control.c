@@ -183,7 +183,7 @@ Bounce Group_Branch_Executor(Level* const L)
 
     switch (STATE) {
       case ST_GROUP_BRANCH_INITIAL_ENTRY: goto initial_entry;
-      case ST_GROUP_BRANCH_RUNNING_GROUP: goto group_result_in_scratch;
+      case ST_GROUP_BRANCH_RUNNING_GROUP: goto group_result_in_subout;
       case ST_GROUP_BRANCH_RUNNING_BRANCH:
         Copy_Cell(OUT, SUBOUT);
         Drop_Level(SUBLEVEL);
@@ -192,11 +192,6 @@ Bounce Group_Branch_Executor(Level* const L)
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
-
-  // 1. The Trampoline has some sanity checking asserts that try to stop you
-  //    from making mistakes.  Because this does something weird to use the
-  //    OUT cell as `with` the LEVEL_FLAG_FORCE_HEAVY_BRANCH was taken off at
-  //    the callsite.
 
     if (Is_Cell_Erased(spare_with))
         Init_Null(spare_with);
@@ -208,13 +203,12 @@ Bounce Group_Branch_Executor(Level* const L)
         (not LEVEL_FLAG_FORCE_HEAVY_BRANCH)
             | (not LEVEL_FLAG_VANISHABLE_VOIDS_ONLY)  // all voids act same
     ));
-    definitely(Is_Cell_Erased(SCRATCH));  // we are in STATE_0
-    Push_Level(SCRATCH, sub);
+    Push_Level(sub);
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
     return CONTINUE_SUBLEVEL;
 
-} group_result_in_scratch: {  ////////////////////////////////////////////////
+} group_result_in_subout: {  /////////////////////////////////////////////////
 
   // 1. Allowing a void branch can be useful, consider:
   //
@@ -235,6 +229,9 @@ Bounce Group_Branch_Executor(Level* const L)
   //    though all we do is `return BOUNCE_OUT;`
 
     assert(Is_Level_At_End(L));
+
+    Copy_Cell(SCRATCH, SUBOUT);
+    Drop_Level(SUBLEVEL);
 
     if (Any_Void(SCRATCH))  // void branches giving their input is useful  [1]
         return COPY_TO_OUT(spare_with);
@@ -510,8 +507,8 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
     switch (STATE) {
       case ST_ANY_ALL_NONE_INITIAL_ENTRY: goto initial_entry;
-      case ST_ANY_ALL_NONE_EVAL_STEP: goto eval_step_result_in_spare;
-      case ST_ANY_ALL_NONE_PREDICATE: goto predicate_result_in_scratch;
+      case ST_ANY_ALL_NONE_EVAL_STEP: goto eval_step_result_in_subout;
+      case ST_ANY_ALL_NONE_PREDICATE: goto predicate_result_in_topout;
       default: assert(false);
     }
 
@@ -538,16 +535,14 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     }
 
     Flags flags = (
-        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
-            | LEVEL_FLAG_VANISHABLE_VOIDS_ONLY  // safety for last step [1]
+        LEVEL_FLAG_VANISHABLE_VOIDS_ONLY  // safety for last step [1]
             | (not LEVEL_FLAG_FORCE_HEAVY_BRANCH)  // must see voids [2]
     );
 
     require (
       Level* sub = Make_Level_At(executor, block, flags)
     );
-    definitely(Is_Cell_Erased(SPARE));  // we are in STATE_0
-    Push_Level(SPARE, sub);
+    Push_Level(sub);
 
     if (Is_Level_At_End(sub))
         goto reached_end;
@@ -555,7 +550,9 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     STATE = ST_ANY_ALL_NONE_EVAL_STEP;
     return CONTINUE_SUBLEVEL;
 
-} eval_step_result_in_spare: {  //////////////////////////////////////////////
+} eval_step_result_in_subout: {  /////////////////////////////////////////////
+
+    Copy_Cell(SPARE, SUBOUT);
 
     if (Is_Void(SPARE))  // no vote...ignore and continue
         goto next_eval_step;  // means we skip BLANK! (e.g. comma), review
@@ -581,14 +578,15 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     STATE = ST_ANY_ALL_NONE_PREDICATE;
     return CONTINUE(unwrap predicate, SPARE);  // not branch [2]
 
-} predicate_result_in_scratch: {  ////////////////////////////////////////////
+} predicate_result_in_topout: {  /////////////////////////////////////////////
 
   // 1. The only way a falsey evaluation should make it to the end is if a
   //    predicate let it pass.  Don't want that to trip up `if all` so make
   //    it heavy...but this way `(all:predicate [null] not?/) then [<runs>]`
 
-    Copy_Cell(SCRATCH, SUBOUT);
-    Drop_Level(SUBLEVEL);
+    dont(Copy_Cell(SCRATCH, SUBOUT));
+    Copy_Cell(SCRATCH, Level_Out(TOP_LEVEL));
+    Drop_Level(TOP_LEVEL);
 
     if (Is_Void(SCRATCH))  // allow void predicates to be ignored
         goto next_eval_step;  // (heavy voids will cause an error)
@@ -770,9 +768,9 @@ DECLARE_NATIVE(CASE)
 
     switch (STATE) {
       case ST_CASE_INITIAL_ENTRY: goto initial_entry;
-      case ST_CASE_CONDITION_EVAL_STEP: goto condition_result_in_spare;
-      case ST_CASE_RUNNING_PREDICATE: goto predicate_result_in_spare;
-      case ST_CASE_RUNNING_BRANCH: goto branch_result_in_out;
+      case ST_CASE_CONDITION_EVAL_STEP: goto condition_result_in_subout;
+      case ST_CASE_RUNNING_PREDICATE: goto predicate_result_in_topout;
+      case ST_CASE_RUNNING_BRANCH: goto branch_result_in_topout;
       default: assert(false);
     }
 
@@ -780,12 +778,9 @@ DECLARE_NATIVE(CASE)
 
     require (
       Level* L = Make_Level_At(
-        &Stepper_Executor,
-        cases,
-        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+        &Stepper_Executor, cases, LEVEL_MASK_NONE
     ));
-    definitely(Is_Cell_Erased(SPARE));  // we are in STATE_0
-    Push_Level(SPARE, L);
+    Push_Level(L);
 
     assert(Is_Cell_Erased(OUT));  // erased if STATE_0
     assert(Is_Cell_Erased(SPARE));  // erased if STATE_0
@@ -807,7 +802,7 @@ DECLARE_NATIVE(CASE)
 
     return CONTINUE_SUBLEVEL;  // one step to pass predicate [1]
 
-} condition_result_in_spare: {  //////////////////////////////////////////////
+} condition_result_in_subout: {  /////////////////////////////////////////////
 
   // 1. Expressions between branches are allowed to vaporize via vanishable
   //    functions (e.g. ELIDE), but due to LEVEL_FLAG_VANISHABLE_VOIDS_ONLY,
@@ -818,34 +813,34 @@ DECLARE_NATIVE(CASE)
   //        >> case [opt if condition [<a>] [print "Whoops?"] [<hmm>]]
   //        ** PANIC: Can't decay HEAVY VOID ~()~ for LOGICAL test
 
-    if (Is_Void(SPARE))  // skip over ELIDE, but not non-vanishables [1]
+    if (Is_Void(SUBOUT))  // skip over ELIDE, but not non-vanishables [1]
         goto handle_next_clause;
 
     require (
-      Decay_If_Unstable(SPARE)
+      Decay_If_Unstable(SUBOUT)
     );
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // we tolerate "fallout" from a condition
 
     if (not predicate)
-        goto processed_result_in_spare;
+        goto processed_result_in_subout;
 
     STATE = ST_CASE_RUNNING_PREDICATE;
     SUBLEVEL->executor = &Skip_Me_Executor;
-    return CONTINUE(unwrap predicate, SPARE);  // with == out is legal
+    return CONTINUE(unwrap predicate, SUBOUT);  // new level for predicate
 
-} predicate_result_in_spare: {  //////////////////////////////////////////////
+} predicate_result_in_topout: {  /////////////////////////////////////////////
 
-    Copy_Cell(SPARE, SUBOUT);
-    Drop_Level(SUBLEVEL);
+    Copy_Cell(Level_Out(TOP_LEVEL->prior), Level_Out(TOP_LEVEL));
+    Drop_Level(TOP_LEVEL);
 
-    if (Any_Void(SPARE))  // error on void predicate results (not same as [1])
+    if (Any_Void(SUBOUT))  // void predicate results bad (not same as [1])
         panic (Error_Bad_Void());
 
-    goto processed_result_in_spare;
+    goto processed_result_in_subout;
 
-} processed_result_in_spare: {  //////////////////////////////////////////////
+} processed_result_in_subout: {  /////////////////////////////////////////////
 
   // 1. We want this to panic:
   //
@@ -871,9 +866,9 @@ DECLARE_NATIVE(CASE)
     Fetch_Next_In_Feed(SUBLEVEL->feed);
 
     require (
-      Stable* spare = Decay_If_Unstable(SPARE)
+      Stable* subout = Decay_If_Unstable(SUBOUT)
     );
-    if (not Logical_Test(spare)) {
+    if (not Logical_Test(subout)) {
         if (not Any_Branch(branch))  // CONTINUE_BRANCH does its own check [2]
             panic (Error_Bad_Value_Raw(branch));  // stable
 
@@ -882,11 +877,10 @@ DECLARE_NATIVE(CASE)
 
     STATE = ST_CASE_RUNNING_BRANCH;
     SUBLEVEL->executor = &Skip_Me_Executor;
-    return CONTINUE_BRANCH(branch, SPARE);  // [2]
+    return CONTINUE_BRANCH(branch, SUBOUT);  // [2]
 
-} branch_result_in_out: {  ///////////////////////////////////////////////////
+} branch_result_in_topout: {  ////////////////////////////////////////////////
 
-    dont(Copy_Cell(OUT, SUBOUT));  // SUBLEVEL in-between top level
     Copy_Cell(OUT, Level_Out(TOP_LEVEL));
     Drop_Level(TOP_LEVEL);
 
@@ -971,7 +965,7 @@ DECLARE_NATIVE(SWITCH)
 
     switch (STATE) {
       case ST_SWITCH_EVALUATING_RIGHT:
-        goto right_result_in_spare;
+        goto right_result_in_subout;
 
       case ST_SWITCH_RUNNING_BRANCH:
         dont(Copy_Cell(OUT, SUBOUT));  // TOP_LEVEL holds branch result
@@ -1008,12 +1002,9 @@ DECLARE_NATIVE(SWITCH)
 
     require (
       Level* sub = Make_Level_At(
-        &Stepper_Executor,
-        cases,
-        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+        &Stepper_Executor, cases, LEVEL_MASK_NONE
     ));
-    definitely(Is_Cell_Erased(SPARE));  // we are in STATE_0
-    Push_Level(SPARE, sub);
+    Push_Level(sub);
 
 } next_switch_step: {  ///////////////////////////////////////////////////////
 
@@ -1047,7 +1038,7 @@ DECLARE_NATIVE(SWITCH)
     Reset_Stepper_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL;  // no direct predicate call [1]
 
-} right_result_in_spare: {  //////////////////////////////////////////////////
+} right_result_in_subout: {  /////////////////////////////////////////////////
 
     // 1. At one point the value was allowed to corrupt during comparison, due
     //    to the idea equality was transitive.  So if it changes 0.01 to 1% in
@@ -1069,22 +1060,22 @@ DECLARE_NATIVE(SWITCH)
     //    being evaluated as const.  But we have to proxy that const flag
     //    over to the block.
 
-    if (Is_Void(SPARE))  // skip comments or ELIDEs
+    if (Is_Void(SUBOUT))  // skip comments or ELIDEs
         goto next_switch_step;
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // nothing left, so drop frame and return
 
     require (  // predicate decays?
-      Stable* spare = Decay_If_Unstable(SPARE)
+      Stable* subout = Decay_If_Unstable(SUBOUT)
     );
 
     if (ARG(TYPE)) {
-        if (not Is_Datatype(spare) and not Is_Frame(spare))
+        if (not Is_Datatype(subout) and not Is_Frame(subout))
             panic ("switch:type conditions must be DATATYPE! or FRAME!");
 
         if (not Typecheck_Use_Toplevel(  // *sublevel*'s SPARE!
-            SUBLEVEL, left, spare, SPECIFIED  // ...so passing L->spare ok
+            SUBLEVEL, left, subout, SPECIFIED  // ...so passing L->spare ok
         )){
             goto next_switch_step;
         }
@@ -1096,7 +1087,7 @@ DECLARE_NATIVE(SWITCH)
             SCRATCH,  // <-- output cell
             predicate,
                 rebQ(left),  // first arg (left hand side if infix)
-                rebQ(spare)  // second arg (right side if infix)
+                rebQ(subout)  // second arg (right side if infix)
         )){
             return BOUNCE_THROWN;  // aborts sublevel
         }
@@ -1126,7 +1117,7 @@ DECLARE_NATIVE(SWITCH)
 
     STATE = ST_SWITCH_RUNNING_BRANCH;
     SUBLEVEL->executor = &Skip_Me_Executor;
-    return CONTINUE_BRANCH(scratch, spare);
+    return CONTINUE_BRANCH(scratch, subout);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 

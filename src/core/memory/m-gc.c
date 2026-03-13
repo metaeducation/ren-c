@@ -780,9 +780,6 @@ static void Mark_Level(Level* L) {
   // Level cells should always contain initialized bits, though erased/fresh
   // cells are allowed.
 
-    if (L->target)
-        Queue_Mark_Maybe_Erased_Cell_Deep(L->target);
-
     Queue_Mark_Maybe_Erased_Cell_Deep(Level_Out(L));
     Queue_Mark_Maybe_Erased_Cell_Deep(&L->feed->fetched);
     Queue_Mark_Maybe_Erased_Cell_Deep(&L->spare);
@@ -854,19 +851,11 @@ static void Mark_Level(Level* L) {
         and LEVEL_STATE_BYTE(L) != ST_ACTION_TYPECHECKING
         and Not_Executor_Flag(ACTION, L, DOING_PICKUPS)
     ){
-        key_tail = L->u.action.key + 1;  // don't mark uninitialized bits [2]
+        key_tail = L->u.action.key;  // don't mark uninitialized bits [2]
     }
 
     Arg* arg = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++arg) {  // key_tail may be truncated [2]
-        if (Is_Cell_Erased(arg)) {
-            assert(
-                Is_Level_Fulfilling_Or_Typechecking(L)
-                and LEVEL_STATE_BYTE(L) != ST_ACTION_TYPECHECKING
-                and key == L->u.action.key
-            );
-            continue;  // only the current cell is allowed to be erased [3]
-        }
         Queue_Mark_Cell_Deep(arg);
     }
 }}

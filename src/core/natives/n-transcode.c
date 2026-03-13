@@ -176,7 +176,7 @@ DECLARE_NATIVE(TRANSCODE)
     else
         panic (":LINE must be INTEGER! or an ANY-WORD? integer variable");
 
-    Erase_Cell(OUT);  // restore OUT to STATE_0 expectation
+    Corrupt_Cell_If_Needful(OUT);
 
     // Because we're building a frame, we can't make a {bp, END} packed array
     // and start up a variadic feed...because the stack variable would go
@@ -189,9 +189,7 @@ DECLARE_NATIVE(TRANSCODE)
       Feed* feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED)
     );
 
-    Flags flags =
-        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
-        | FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
+    Flags flags = FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
 
     if (ARG(NEXT) or ARG(ONE))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
@@ -205,10 +203,11 @@ DECLARE_NATIVE(TRANSCODE)
 
     UNUSED(size);  // currently we don't use this information
 
-    Level* sub = Make_Scan_Level(transcode, feed, flags);
+    require (
+      Level* sub = Make_Scan_Level(transcode, feed, flags)
+    );
+    Push_Level(sub);
 
-    definitely(Is_Cell_Erased(OUT));  // we used it, but cleared it
-    Push_Level(OUT, sub);
     STATE = ST_TRANSCODE_SCANNING;
     return CONTINUE_SUBLEVEL;
 
@@ -225,7 +224,11 @@ DECLARE_NATIVE(TRANSCODE)
         goto scan_to_stack_maybe_failed;
 
       case ST_TRANSCODE_ENSURE_NO_MORE:
-        if (not Is_Failure(OUT)) {  // !!! return this error, or new one?
+        if (Is_Failure(SUBOUT)) {  // !!! return this error, or new one?
+            Copy_Cell(OUT, SUBOUT);
+            assert(TOP_INDEX == STACK_BASE);
+        }
+        else {
             if (TOP_INDEX == STACK_BASE + 1) {  // didn't scan anything else
                 Move_Cell(OUT, TOP_ELEMENT);
                 DROP();
@@ -254,13 +257,14 @@ DECLARE_NATIVE(TRANSCODE)
     //
     // Return a block of the results, so [1] and [[1]] in those cases.
 
-    if (Is_Failure(OUT)) {
+    if (Is_Failure(SUBOUT)) {
+        Copy_Cell(OUT, SUBOUT);
         assert(TOP_INDEX == STACK_BASE);
         Drop_Level(SUBLEVEL);
         return BOUNCE_OUT;
     }
 
-    assert(Is_Tripwire(OUT));  // TRASH! if it's not a FAILURE!
+    assert(Is_Tripwire(SUBOUT));  // TRASH! if it's not a FAILURE!
 
     if (ARG(ONE)) {  // want *exactly* one element
         if (TOP_INDEX == STACK_BASE)

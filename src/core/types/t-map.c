@@ -416,8 +416,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 
     switch (STATE) {
       case ST_MAKE_MAP_INITIAL_ENTRY: goto initial_entry;
-      case ST_MAKE_MAP_EVAL_STEP_KEY: goto key_step_result_in_out;
-      case ST_MAKE_MAP_EVAL_STEP_VALUE: goto value_step_result_in_out;
+      case ST_MAKE_MAP_EVAL_STEP_KEY: goto key_step_result_in_subout;
+      case ST_MAKE_MAP_EVAL_STEP_VALUE: goto value_step_result_in_subout;
       default: assert(false);
     }
 
@@ -441,13 +441,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
         executor = &Stepper_Executor;
     }
 
-    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
-
     require (
-      Level* sub = Make_Level_At(executor, arg, flags)
+      Level* sub = Make_Level_At(executor, arg, LEVEL_MASK_NONE)
     );
-    definitely(Is_Cell_Erased(SPARE));  // we are in STATE_0
-    Push_Level(SPARE, sub);
+    Push_Level(sub);
 
     if (Is_Level_At_End(sub))
         goto finished;
@@ -461,13 +458,13 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
     Reset_Stepper_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL;
 
-} key_step_result_in_out: { //////////////////////////////////////////////////
+} key_step_result_in_subout: { ///////////////////////////////////////////////
 
-    if (Is_Void(SPARE))
+    if (Is_Void(SUBOUT))
         goto reduce_key;  // try again...
 
     require (
-      Stable* key = Decay_If_Unstable(SPARE)
+      Stable* key = Decay_If_Unstable(SUBOUT)
     );
     if (Is_Logic(key))
         panic ("LOGIC! can't be used as a key in MAP!");
@@ -486,13 +483,13 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
     Reset_Stepper_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL;
 
-} value_step_result_in_out: { ////////////////////////////////////////////////
+} value_step_result_in_subout: { /////////////////////////////////////////////
 
-    if (Is_Void(SPARE))
+    if (Is_Void(SUBOUT))
         goto reduce_value;  // try again...
 
     require (
-      Stable* val = Decay_If_Unstable(SPARE)
+      Stable* val = Decay_If_Unstable(SUBOUT)
     );
     if (Is_Logic(val))
         panic ("LOGIC! can't be used as value in MAP!");

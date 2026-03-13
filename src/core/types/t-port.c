@@ -125,10 +125,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
     };
 
     switch (STATE) {
-      case ST_TYPE_PORT_INITIAL_ENTRY :
+      case ST_TYPE_PORT_INITIAL_ENTRY:
         goto initial_entry;
 
-      case ST_TYPE_PORT_RUNNING_ACTOR :
+      case ST_TYPE_PORT_RUNNING_ACTOR:
+        Copy_Cell(OUT, SUBOUT);
+        Drop_Level(SUBLEVEL);
         goto post_process_output;
 
       default : assert(false);
@@ -186,7 +188,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
     if (not Is_Action(SCRATCH))
         panic (Error_No_Port_Action_Raw(verb));
 
-    Push_Redo_Action_Level(OUT, level_, SCRATCH);
+    Push_Redo_Action_Level(level_, SCRATCH);
 
     STATE = ST_TYPE_PORT_RUNNING_ACTOR;
     return CONTINUE_SUBLEVEL;

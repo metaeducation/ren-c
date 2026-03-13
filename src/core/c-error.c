@@ -160,9 +160,8 @@ Error* Panic_Abruptly_Helper(Error* error)
     assert(not (Is_Throwing(TOP_LEVEL) and Is_Throwing_Panic(TOP_LEVEL)));
 
     // The topmost level must be the one issuing the error.  If a level was
-    // pushed with LEVEL_FLAG_TRAMPOLINE_KEEPALIVE that finished executing
-    // but remained pushed, it must be dropped before the level that pushes
-    // it issues a panic.
+    // pushed that finished executing but remained pushed, it must be dropped
+    // before the level that pushed it issues a panic.
     //
     // !!! This turned out to be too restrictive, it's too often useful to
     // panic() while a Level is still pushed (e.g. one being reused across

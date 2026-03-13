@@ -155,23 +155,22 @@ Result(None) Set_Var_To_Out_Use_Toplevel(
 //
 Result(None) Set_Word_Or_Tuple(const Element* var, const Value* value)
 {
-    DECLARE_VALUE (setval);
-    Copy_Cell(setval, value);
-
     require (
-      Level* sub = Make_End_Level(&Skip_Me_Executor, LEVEL_MASK_NONE)
+      Level* sub = Make_End_Level(
+        &Skip_Me_Executor, FLAG_STATE_BYTE(ST_TWEAK_SETTING)
+      )
     );
-    LEVEL_STATE_BYTE(sub) = ST_TWEAK_SETTING;  // != 0, tolerate unerased out
-    Push_Level(setval, sub);
+    Push_Level(sub);
 
     Corrupt_Cell_If_Needful(Level_Spare(sub));
     Corrupt_Cell_If_Needful(Level_Scratch(sub));
 
+    Copy_Cell(Level_Out(sub), value);
     require (
       Set_Var_To_Out_Use_Toplevel(var, GROUP_EVAL_NO)
     );
     require (  // Set_Var() can return FAILURE! on missing non-meta assigns
-      Ensure_No_Failures_Including_In_Packs(setval)
+      Ensure_No_Failures_Including_In_Packs(Level_Out(sub))
     );
 
     Drop_Level(sub);
@@ -439,7 +438,6 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
 
     Level* sub = SUBLEVEL;
     assert(sub->executor == &Skip_Me_Executor);
-    assert(sub->target == OUT);  // we don't use it
 
     const StackIndex base = STACK_BASE;  // L's stack base for Set_Block()
     const StackIndex stackindex_limit = TOP_INDEX + 1;  // one past pushed
@@ -669,7 +667,7 @@ DECLARE_NATIVE(SET)
         require (
           Level* sub = Make_End_Level(&Skip_Me_Executor, LEVEL_MASK_NONE)
         );
-        Push_Level(SPARE, sub);
+        Push_Level(sub);
 
         require (
           Push_Set_Block_Instructions_To_Stack_Throws(

@@ -85,7 +85,6 @@ Result(None) Get_Var_To_Out_Use_Toplevel(
         return fail (unwrap e);
 
     Value* got = Copy_Cell(OUT, SPARE);  // !!! extra copy
-    heeded(level_->target);  // see bottom of function
 
     require (
       Unlift_Cell_No_Decay(got)  // not unstable if wasn't ^META [1]
@@ -151,9 +150,6 @@ Result(None) Get_Var_To_Out_Use_Toplevel(
         panic ("GET target must be WORD! or TUPLE!, or their META-forms");
     }
 
-    if (level_->target)
-        Copy_Cell(level_->target, OUT);
-
     return none;
 }
 
@@ -168,30 +164,24 @@ Result(None) Get_Word_Or_Tuple(Sink(Value) out, const Element* var)
     require (
       Level* sub = Make_End_Level(&Skip_Me_Executor, LEVEL_MASK_NONE)
     );
-    DECLARE_VALUE (temp);  // !!! out may not be TRACK_FLAG_VALID_EVAL_TARGET
-    Push_Level(temp, sub);
+    Push_Level(sub);
 
     heeded (Corrupt_Cell_If_Needful(Level_Spare(sub)));
     heeded (Corrupt_Cell_If_Needful(Level_Scratch(sub)));
-
-    Option(Error*) error = SUCCESS;
 
     LEVEL_STATE_BYTE(sub) = ST_TWEAK_GETTING;
 
     Get_Var_To_Out_Use_Toplevel(
         var, GROUP_EVAL_YES
     ) except (Error* e) {
-        error = e;
+        Drop_Level(sub);
+        Corrupt_Cell_If_Needful(out);
+        return fail (e);
     }
 
+    Copy_Cell(out, Level_Out(sub));
     Drop_Level(sub);
 
-    if (error) {
-        Corrupt_Cell_If_Needful(out);
-        return fail (unwrap error);
-    }
-
-    Copy_Cell(out, temp);
     return none;
 }
 
@@ -445,8 +435,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
         LEVEL_FLAG_DEBUG_STATE_0_OUT_NOT_ERASED_OK
       )
     );
-    dont(Erase_Cell(Level_Spare(L)));  // spare read before erase
-    Push_Level(Level_Spare(L), sub);
+    Push_Level(sub);
 
     error = Trap_Call_Pick_Refresh_Dual_In_Spare(
         L,
@@ -454,18 +443,22 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
         TOP_INDEX,
         false  // not tweaking, so do indirection
     );
-    Drop_Level(sub);
     DROP();
 
-    if (error)
+    if (error) {
+        Drop_Level(sub);
         goto return_error;
+    }
 
-    if (Is_Null(As_Stable(SPARE))) {
+    if (Is_Null(As_Stable(SUBOUT))) {
+        Drop_Level(sub);
         error = Error_Bad_Value(path);  // e.g. `lib/` or `lib/unknown`
         goto return_error;
     }
 
-    Copy_Cell(OUT, SPARE);
+    Copy_Cell(OUT, SUBOUT);
+    Drop_Level(sub);
+
     require (
       Unlift_Cell_No_Decay(OUT)
     );
@@ -514,9 +507,6 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
     if (error)
         return fail (unwrap error);
 
-    if (level_->target)
-        Copy_Cell(level_->target, OUT);
-
     return none;
 }}
 
@@ -563,8 +553,7 @@ Result(Value*) Meta_Get_Var(
                 &Stepper_Executor,
                 LEVEL_MASK_NONE
             ));
-            Erase_Cell(out);
-            Push_Level(out, level_);
+            Push_Level(level_);
 
             heeded (Copy_Cell_May_Bind(SCRATCH, var, context));
             heeded (Corrupt_Cell_If_Needful(SPARE));
@@ -573,6 +562,8 @@ Result(Value*) Meta_Get_Var(
                 // need to drop level before returning
                 error = e;
             }
+
+            Copy_Cell(out, Level_Out(level_));
 
             Drop_Level(level_);
         }

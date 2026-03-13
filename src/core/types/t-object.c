@@ -2007,7 +2007,7 @@ DECLARE_NATIVE(CONSTRUCT)
     switch (STATE) {
       case ST_CONSTRUCT_INITIAL_ENTRY: goto initial_entry;
       case ST_CONSTRUCT_EVAL_STEP: goto continue_processing_spec;
-      case ST_CONSTRUCT_EVAL_SET_STEP:  goto eval_set_step_result_in_spare;
+      case ST_CONSTRUCT_EVAL_SET_STEP:  goto eval_set_step_result_in_subout;
 
       default: assert(false);
     }
@@ -2044,13 +2044,10 @@ DECLARE_NATIVE(CONSTRUCT)
         executor = &Stepper_Executor;
     }
 
-    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
-
     require (
-      Level* sub = Make_Level_At(executor, spec, flags)
+      Level* sub = Make_Level_At(executor, spec, LEVEL_MASK_NONE)
     );
-    definitely(Is_Cell_Erased(SPARE));  // we are in STATE_0
-    Push_Level(SPARE, sub);
+    Push_Level(sub);
 
 } continue_processing_spec: {  ////////////////////////////////////////////////
 
@@ -2115,7 +2112,7 @@ DECLARE_NATIVE(CONSTRUCT)
     STATE = ST_CONSTRUCT_EVAL_SET_STEP;
     return CONTINUE_SUBLEVEL;
 
-} eval_set_step_result_in_spare: {  //////////////////////////////////////////
+} eval_set_step_result_in_subout: {  /////////////////////////////////////////
 
   // 1. CONSTRUCT isn't generically handling all the SET assignment behavior
   //    (e.g. SET-BLOCK!)... and in that behavior is things like validation
@@ -2125,12 +2122,12 @@ DECLARE_NATIVE(CONSTRUCT)
   //    line up with the function locals dialect.  Just to get the system
   //    working, this mimics SET's tolerance of trash and void.
 
-    Value* adjusted_spare;
-    if (Is_Non_Meta_Assignable_Unstable_Antiform(SPARE))  // [1] :-/
-        adjusted_spare = SPARE;
+    Value* adjusted_subout;
+    if (Is_Non_Meta_Assignable_Unstable_Antiform(SUBOUT))  // [1] :-/
+        adjusted_subout = SUBOUT;
     else {
       require (
-        adjusted_spare = Decay_If_Unstable(SPARE)
+        adjusted_subout = Decay_If_Unstable(SUBOUT)
       );
     }
 
@@ -2142,7 +2139,7 @@ DECLARE_NATIVE(CONSTRUCT)
 
         Copy_Cell(
             Slot_Init_Hack(Varlist_Slot(varlist, unwrap index)),
-            adjusted_spare
+            adjusted_subout
         );
 
         DROP();

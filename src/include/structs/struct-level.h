@@ -99,19 +99,9 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
 #undef LEVEL_FLAG_15
 
 
-//=//// LEVEL_FLAG_TRAMPOLINE_KEEPALIVE ///////////////////////////////////=//
+//=//// LEVEL_FLAG_16 /////////////////////////////////////////////////////=//
 //
-// This flag asks the trampoline function to not call Drop_Level() when it
-// sees that the level's `executor` has reached the `nullptr` state.  Instead
-// it stays on the level stack, and control is passed to the previous level's
-// executor (which will then be receiving its level pointer parameter that
-// will not be the current top of stack).
-//
-// It's a feature used by routines which want to make several successive
-// requests on a level (REDUCE, ANY, CASE, etc.) without tearing down the
-// level and putting it back together again.
-//
-#define LEVEL_FLAG_TRAMPOLINE_KEEPALIVE \
+#define LEVEL_FLAG_16 \
     FLAG_LEFT_BIT(16)
 
 
@@ -380,13 +370,6 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     // result, due to being GC-safe during function evaluation.
     //
     Value output;
-
-    // This is a legacy concept of being able to point a Level at a cell to
-    // write to.  The new idea is that Levels persist after an evaluation and
-    // the caller consults the output cell--copying if it wants.  So the
-    // "target" pointer is going to be phased out.
-    //
-    Value* target;
 
     // Each executor subclass can store specialized information in the level.
     // We place it here up top where we've been careful to make sure the

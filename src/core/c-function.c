@@ -28,18 +28,14 @@
 // This code should be shared with CONSTRUCT, for building an object on the
 // stack...and share features with that dialect.
 //
-static Result(None) Push_Keys_And_Params_For_Fence(
-    Level* const L,
-    const Element* fence
-){
-    USE_LEVEL_SHORTHANDS (L);
-
+static Result(None) Push_Keys_And_Params_For_Fence(const Element* fence)
+{
     assert(Is_Fence(fence));
 
     require (
       Level* sub = Make_Level_At(&Stepper_Executor, fence, LEVEL_MASK_NONE)
     );
-    Push_Level(SPARE, sub);
+    Push_Level(sub);
 
     while (Not_Level_At_End(sub)) {
         const Element* item = At_Level(sub);
@@ -103,15 +99,16 @@ static Result(None) Push_Keys_And_Params_For_Fence(
             return fail (Error_No_Catch_For_Throw(sub));
         }
 
-        if (meta or Is_Non_Meta_Assignable_Unstable_Antiform(SPARE)) {
-            if (Is_Failure(SPARE))  // don't want to quietly store errors
-                return fail (Cell_Error(SPARE));
 
-            Move_Cell(PUSH(), SPARE);
+        if (meta or Is_Non_Meta_Assignable_Unstable_Antiform(Level_Out(sub))) {
+            if (Is_Failure(Level_Out(sub)))  // don't quietly store errors
+                return fail (Cell_Error(Level_Out(sub)));
+
+            Move_Cell(PUSH(), Level_Out(sub));
         }
         else {
             require (
-              Stable* decayed = Decay_If_Unstable(SPARE)
+              Stable* decayed = Decay_If_Unstable(Level_Out(sub))
             );
 
             Move_Cell(PUSH(), decayed);
@@ -155,8 +152,7 @@ static Result(None) Push_Keys_And_Params_Core(
     bool seen_returner = false;
     StackIndex returner_index;
 
-    Sink(Value) eval = Stepper_Primed_Value(L);
-    Push_Level(eval, L);
+    Push_Level(L);
 
   push_returner_if_not_augmenting: {
 
@@ -272,7 +268,7 @@ static Result(None) Push_Keys_And_Params_Core(
 
     Element* spare = Copy_Cell_May_Bind(SPARE, v, Level_Binding(L));
     trap (
-        Push_Keys_And_Params_For_Fence(L, spare)
+      Push_Keys_And_Params_For_Fence(spare)
     );
     goto next_spec_item;
 
@@ -530,7 +526,7 @@ Result(None) Push_Keys_And_Params(
       Level* L = Make_Level_At(
         &Stepper_Executor,
         spec,
-        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+        LEVEL_MASK_NONE
     ));
 
     Push_Keys_And_Params_Core(

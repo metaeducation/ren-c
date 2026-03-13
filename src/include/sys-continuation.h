@@ -46,15 +46,15 @@
 
 #define CONTINUE(...) \
     CONTINUE_CORE( \
-        LEVEL_FLAG_VANISHABLE_VOIDS_ONLY | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE, SPECIFIED, __VA_ARGS__)
+        LEVEL_FLAG_VANISHABLE_VOIDS_ONLY, SPECIFIED, __VA_ARGS__)
 
 #define CONTINUE(...) \
     CONTINUE_CORE( \
-        LEVEL_FLAG_VANISHABLE_VOIDS_ONLY | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE, SPECIFIED, __VA_ARGS__)
+        LEVEL_FLAG_VANISHABLE_VOIDS_ONLY, SPECIFIED, __VA_ARGS__)
 
 #define CONTINUE_BRANCH(...) \
     CONTINUE_CORE( \
-        LEVEL_FLAG_FORCE_HEAVY_BRANCH | LEVEL_FLAG_VANISHABLE_VOIDS_ONLY | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE, \
+        LEVEL_FLAG_FORCE_HEAVY_BRANCH | LEVEL_FLAG_VANISHABLE_VOIDS_ONLY, \
         SPECIFIED, __VA_ARGS__)
 
 
@@ -85,7 +85,7 @@
     Pushed_Continuation( \
         (sub_flags), \
         __VA_ARGS__  /* binding, branch, and "with" argument */ \
-    ), TOP_LEVEL->target = Level_Out(level_), Bounce_Continue(TOP_LEVEL))
+    ), Bounce_Continue(TOP_LEVEL))
 
 #define DELEGATE_CORE_2(sub_flags,...) \
     DELEGATE_CORE_3((sub_flags), __VA_ARGS__, nullptr)

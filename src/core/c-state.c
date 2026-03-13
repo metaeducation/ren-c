@@ -142,9 +142,6 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 
 #define DATASTACK_FLAG_HAS_SCRATCH          STUB_SUBCLASS_FLAG_27
 
-#define SPARE_PROXY     m_cast(Value*, LIB(SPACE))
-#define SCRATCH_PROXY   m_cast(Value*, LIB(NULL))
-
 #define PLUG_SUSPENDED_LEVEL(plug)   (plug)->link.p
 
 INLINE Level* Plug_Suspended_Level(const Array* plug)
@@ -233,12 +230,6 @@ void Unplug_Stack(
             assert(!"Can't yield across non-continuation-level");
             panic ("Cannot yield across level that's not a continuation");
         }
-
-        assert(temp->target != base->target);  // can't guarantee restoration!
-        if (temp->target == Level_Spare(base))
-            temp->target = SPARE_PROXY;
-        else if (temp->target == Level_Scratch(base))
-            temp->target = SCRATCH_PROXY;
 
         // We make the baseline stack pointers in each level relative to the
         // base level, with that level as if it were 0.  When the level
@@ -366,11 +357,6 @@ void Replug_Stack(Level* base, Stable* plug) {
 
     Level* temp = L;
     while (true) {
-        if (temp->target == SPARE_PROXY)  // replace output placeholder [1]
-            temp->target = Level_Spare(base);
-        else if (temp->target == SCRATCH_PROXY)
-            temp->target = Level_Scratch(base);
-
         temp->baseline.stack_base += base->baseline.stack_base;  // [2]
 
         if (temp->prior == nullptr)

@@ -124,8 +124,6 @@ Bounce Yielder_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    assert(L == TOP_LEVEL);
-
     Details* details = Ensure_Level_Details(L);
 
     Stable* original_frame = Details_At(details, IDX_YIELDER_ORIGINAL_FRAME);
@@ -134,6 +132,8 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     switch (STATE) {  // Can't use STATE byte for "mode" (see ST_YIELDER enum)
       case ST_YIELDER_INVOKED: {
+        assert(L == TOP_LEVEL);
+
         if (Is_Null(original_frame))
             goto begin_body;  // first run, haven't set original frame yet
 
@@ -147,9 +147,6 @@ Bounce Yielder_Dispatcher(Level* const L)
         goto invoke_yielder_that_abruptly_panicked; }
 
       case ST_YIELDER_RUNNING_BODY: {
-        UNUSED(SUBOUT);  // body result discarded
-        Drop_Level(SUBLEVEL);
-
         if (not Is_Null(yielded_lifted))  // YIELD is suspending us
             goto yielding;
 
@@ -359,6 +356,9 @@ Bounce Yielder_Dispatcher(Level* const L)
     assert(Is_Frame(original_frame));
 
     if (not Is_Throwing(L)) {
+        UNUSED(SUBOUT);  // body result discarded
+        Drop_Level(SUBLEVEL);
+
         Init_Space(original_frame);  // body reached end, signal completed [3]
         goto invoke_completed_yielder;
     }

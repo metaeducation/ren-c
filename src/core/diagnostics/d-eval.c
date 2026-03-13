@@ -332,7 +332,6 @@ void Stepper_Exiting_Checks(Level* L)
         filtered &= ~ (
             FLAG_BASE_BYTE(BASE_BYTE_LEVEL)
                 | LEVEL_FLAG_ROOT_LEVEL
-                | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
         );
 
         // These options to Stepper_Executor() should not change over the

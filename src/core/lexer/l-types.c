@@ -411,11 +411,11 @@ DECLARE_NATIVE(OF)
     require (
       Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags)
     );
+    Push_Level(sub);
+
     Copy_Plain_Cell(Evaluator_Level_Current(sub), OUT);
     assert(Is_Frame(Evaluator_Level_Current(sub)));
-
-    Erase_Cell(OUT);  // !!! rethink the STATE_0 logic
-    Push_Level(OUT, sub);
+    Corrupt_Cell_If_Needful(OUT);
 
     return DELEGATE_SUBLEVEL;  // !!! could/should we replace this level?
 }}

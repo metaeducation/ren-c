@@ -52,33 +52,6 @@
 //
 
 
-// !!! This is for historical non-stackless code, which needs a place to write
-// output for a stepper that has a lifetime at least as long as the Level.
-// e.g. this is illegal:
-//
-//      DECLARE_VALUE (result);  // stack-declared Cell
-//      Level* L = Make_Level_At(
-//          &Stepper_Executor, spec, LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
-//      );
-//      Push_Level_Erase_Out_If_State_0(result, L);
-//      panic ("This throws a level to the trampoline where result is dead");
-//
-// Simply put, when the Trampoline gets control after a longjmp() or throw, the
-// Level's L->out pointer will be corrupt...the stack-declared result is gone.
-//
-// Instead of DECLARE_VALUE, use Stepper_Primed_Value(L).  It takes advantage
-// of the fact that there's a cell's worth of spare space which a stepper
-// that is not called by Evaluator_Executor() does not use.
-//
-INLINE Cell* Stepper_Primed_Value_Untracked(Level* L) {
-    assert(L->executor == &Stepper_Executor);
-    return &L->u.eval.primed;
-}
-
-#define Stepper_Primed_Value(L) \
-    u_cast(Sink(Value), FORCE_TRACK_0(Stepper_Primed_Value_Untracked(L)))
-
-
 // If you PUSH() values to the stack, you need to make sure this accrual is
 // accounted for if taking multiple eval steps and reusing a stepper.
 //
@@ -157,12 +130,14 @@ INLINE bool Eval_Step_Throws(Init(Value) out, Level* L) {
         or L->executor == &Inert_Stepper_Executor
     );
 
-    L->target = out;
     assert(L->baseline.stack_base == TOP_INDEX);
-
     assert(L == TOP_LEVEL);  // should already be pushed, use core trampoline
 
-    return Trampoline_With_Top_As_Root_Throws();
+    bool threw = Trampoline_With_Top_As_Root_Throws();
+    if (not threw)
+        Copy_Cell(out, Level_Out(L));
+
+    return threw;
 }
 
 
@@ -184,8 +159,10 @@ INLINE bool Eval_Any_List_At_Core_Throws(
         flags
     ));
 
-    Push_Level(out, L);
+    Push_Level(L);
     bool threw = Trampoline_With_Top_As_Root_Throws();
+    if (not threw)
+        Copy_Cell(out, Level_Out(L));
     Drop_Level(L);
     return threw;
 }
@@ -222,9 +199,12 @@ INLINE bool Eval_Element_Core_Throws(
     require (
       Level* L = Make_Level(&Stepper_Executor, feed, flags)
     );
+    Push_Level(L);
 
-    Push_Level(out, L);
     bool threw = Trampoline_With_Top_As_Root_Throws();
+    if (not threw)
+        Copy_Cell(out, Level_Out(L));
+
     Drop_Level(L);
 
     return threw;
@@ -243,7 +223,7 @@ INLINE bool Eval_Branch_Throws(
     const Element* branch
 ){
     if (not Pushed_Continuation(
-        LEVEL_FLAG_FORCE_HEAVY_BRANCH | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE,
+        LEVEL_FLAG_FORCE_HEAVY_BRANCH,
         SPECIFIED, branch,
         nullptr
     )){

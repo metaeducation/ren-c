@@ -127,7 +127,6 @@ bool Try_Match_For_Compose(
 //    so long as it is passed in the `main_level` member.
 //
 static void Push_Composer_Level(
-    Value* out,
     Level* main_level,
     const Stable* list_or_seq,  // may be quasi or quoted (SPLICE! if toplevel)
     Context* context
@@ -166,9 +165,9 @@ static void Push_Composer_Level(
             context,
             Is_Cell_Erased(adjusted) ? As_Element(list_or_seq) : adjusted
         ),
-        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
+        LEVEL_MASK_NONE
     ));
-    Push_Level(out, sub);  // sublevel may fail
+    Push_Level(sub);  // sublevel may fail
 
     sub->u.compose.main_level = main_level;   // pass options [2]
     sub->u.compose.changed = false;
@@ -362,7 +361,7 @@ Bounce Composer_Executor(Level* const L)
 
     if (not Try_Match_For_Compose(SPARE, at, pattern)) {
         if (deep or Any_Sequence_Heart(heart)) {  // sequences "same level"
-            Push_Composer_Level(OUT, main_level, at, L_binding);
+            Push_Composer_Level(main_level, at, L_binding);
             STATE = ST_COMPOSER_RECURSING_DEEP;
             return CONTINUE_SUBLEVEL;
         }
@@ -550,13 +549,15 @@ Bounce Composer_Executor(Level* const L)
   //    arrays that don't have some substitution under them.  This may need
   //    to be controlled by a refinement.
 
-    if (Is_Light_Null(OUT)) {  // VETO encountered
+    if (Is_Light_Null(SUBOUT)) {  // VETO encountered
         Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);  // [1]
         Drop_Level(SUBLEVEL);
+
+        Init_Null_Signifying_Vetoed(OUT);
         return BOUNCE_OUT;
     }
 
-    assert(Is_Okay(As_Stable(OUT)));  // "return values" are on data stack
+    assert(Is_Okay(As_Stable(SUBOUT)));  // "return values" are on data stack
 
     if (not SUBLEVEL->u.compose.changed) {  // optimize on no substitutions [2]
         Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);  // [1]
@@ -567,15 +568,14 @@ Bounce Composer_Executor(Level* const L)
         goto handle_next_item;
     }
 
-    Stable* out = Finalize_Composer_Level(
+    Stable* subout = Finalize_Composer_Level(
         SUBLEVEL, At_Level(L), conflate
     ) except (Error* e) {
         Drop_Level(SUBLEVEL);  // have to drop level before panic !!! (why?)
         panic (e);
     }
 
-    Copy_Cell(OUT, Level_Out(SUBLEVEL));
-    unnecessary(SUBLEVEL->target);  // unheeded
+    Stable* out = Copy_Cell(OUT, subout);
     Drop_Level(SUBLEVEL);
 
     if (Is_Null(out)) {
@@ -600,7 +600,7 @@ Bounce Composer_Executor(Level* const L)
   //    and also means the caller can decide if they want the accrued items or
   //    not depending on the `changed` field in the level.
 
-    assert(Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE));  // caller needs [1]
+    dont(Drop_Data_Stack_To(STACK_BASE));  // caller needs [1]
 
     assert(Is_Logic(As_Stable(OUT)));  // null if veto
 
@@ -699,20 +699,19 @@ DECLARE_NATIVE(COMPOSE2)
     Context* binding =
         Is_Splice(input) ? UNBOUND : List_Binding(As_Element(input));
 
-    Push_Composer_Level(OUT, level_, input, binding);
+    Push_Composer_Level(level_, input, binding);
 
     STATE = ST_COMPOSE2_COMPOSING_LIST;
     return CONTINUE_SUBLEVEL;
 
 } list_compose_finished_out_is_null_if_vetoed: {  ////////////////////////////
 
-    assert(Is_Logic(As_Stable(OUT)));
+    assert(Is_Logic(As_Stable(SUBOUT)));
 
     require (
       Finalize_Composer_Level(SUBLEVEL, input, ARG(CONFLATE))
     );
     Copy_Cell(OUT, Level_Out(SUBLEVEL));
-    unnecessary(SUBLEVEL->target);
     Drop_Level(SUBLEVEL);
     return BOUNCE_OUT;
 
@@ -846,17 +845,17 @@ DECLARE_NATIVE(COMPOSE2)
                 Heart_Of_Builtin_Fundamental(pattern_at)
             );
 
-            Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
-                | FLAG_STATE_BYTE(Scanner_State_For_Terminal(terminal));
+            Flags flags = FLAG_STATE_BYTE(Scanner_State_For_Terminal(terminal));
 
             if (stack_index != TOP_INDEX - 1)
                 flags |= SCAN_EXECUTOR_FLAG_SAVE_LEVEL_DONT_POP_ARRAY;
 
-            Level* sub = Make_Scan_Level(transcode, g_end_feed, flags);
-            sub->baseline.stack_base = base;  // we will drop to this
+            require (
+              Level* sub = Make_Scan_Level(transcode, g_end_feed, flags)
+            );
+            Push_Level(sub);
 
-            unnecessary(Erase_Cell(OUT));  // LEVEL_STATE_BYTE is not STATE_0
-            Push_Level(OUT, sub);
+            sub->baseline.stack_base = base;  // we will drop to this
 
           #if RUNTIME_CHECKS
             --pattern_depth;
@@ -869,9 +868,8 @@ DECLARE_NATIVE(COMPOSE2)
             Level* prior = sub->prior;
             transcode->saved_levels = prior;
             sub->baseline.stack_base = base;  // we drop to here before scan
-            unnecessary(Erase_Cell(OUT));  // LEVEL_STATE_BYTE is not STATE_0
             sub->prior = nullptr;  // expected by Push_Level()
-            Push_Level(OUT, sub);
+            Push_Level(sub);
             sub = prior;
 
           #if RUNTIME_CHECKS
@@ -904,8 +902,8 @@ DECLARE_NATIVE(COMPOSE2)
   //    * the code that was scanned from inside the pattern
   //    * the offset right after the end character where the pattern matched
 
-    if (Is_Failure(OUT))  // transcode had a problem
-        panic (OUT);
+    if (Is_Failure(SUBOUT))  // transcode had a problem
+        panic (SUBOUT);
 
     Element* handle = As_Element(SCRATCH);
     TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, handle);

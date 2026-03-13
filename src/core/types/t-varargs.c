@@ -196,7 +196,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
                 shared,
                 EVAL_EXECUTOR_FLAG_FULFILLING_ARG
             ));
-            Push_Level(out, L_temp);
+            Push_Level(L_temp);
 
             // Note: a sublevel is not needed here because this is a single use
             // level, whose state can be overwritten.
@@ -302,8 +302,11 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             require (
               Level* sub = Make_Level(&Stepper_Executor, L->feed, flags)
             );
-            Push_Level(out, sub);
+            Push_Level(sub);
             bool threw = Trampoline_With_Top_As_Root_Throws();
+            if (not threw)
+                Copy_Cell(out, Level_Out(sub));
+
             Drop_Level(sub);
             if (threw)  // !!! Stackful, should yield!
                 return true;

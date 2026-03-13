@@ -95,6 +95,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
     for (; key != tail; ++key, ++param, ++arg, ++n) {
         if (Is_Specialized(param)) {  // includes locals
             Blit_Cell(arg, param);
+            Clear_Param_Shield_If_Tracking(arg);
 
           continue_specialized:
 
@@ -108,6 +109,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
 
             assert(Not_Cell_Flag(param, PARAM_MARKED_SEALED));
             Blit_Cell(arg, param);
+            Clear_Param_Shield_If_Tracking(arg);
 
             if (binder)
                 Add_Binder_Index(unwrap binder, symbol, n);

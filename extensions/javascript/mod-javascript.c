@@ -247,12 +247,12 @@ INLINE Level* Level_From_Frame_Id(heapaddr_t id) {
     return Level_Of_Varlist_May_Panic(varlist);  // should still be valid...
 }
 
-INLINE Stable* Value_From_Value_Id(heapaddr_t id) {
+INLINE Value* Value_From_Value_Id(heapaddr_t id) {
     if (id == 0)
         return nullptr;
 
-    Stable* v = cast(Stable*, Pointer_From_Heapaddr(id));
-    assert(not Is_Null(v));  // API speaks in nullptr only
+    Value* v = cast(Value*, Pointer_From_Heapaddr(id));
+    assert(not Is_Light_Null(v));  // API speaks in nullptr only
     return v;
 }
 
@@ -475,10 +475,7 @@ void RunPromise(void)
       Level* L = Make_Level_At(&Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL)
     );
 
-    Push_Level_Dont_Inherit_Interruptibility(  // you can HALT inside a promise
-        Alloc_Value(),
-        L
-    );
+    Push_Level_Dont_Inherit_Interruptibility(L);  // can HALT inside a promise
     goto run_promise;
 
 } run_promise: {  ////////////////////////////////////////////////////////////
@@ -489,17 +486,6 @@ void RunPromise(void)
         return;  // the setTimeout() on resolve/reject will queue us back
     }
 
-    Stable* metaresult;
-    if (r == BOUNCE_THROWN) {
-        assert(Is_Throwing(TOP_LEVEL));
-        Error* error = Error_No_Catch_For_Throw(TOP_LEVEL);
-        metaresult = Init_Context_Cell(TOP_LEVEL->out, error);
-    }
-    else
-        metaresult = Lift_Cell(TOP_LEVEL->out);
-
-    Drop_Level(TOP_LEVEL);
-
     // Note: The difference between `throw()` and `reject()` in JS is subtle.
     //
     // https://stackoverflow.com/q/33445415/
@@ -507,18 +493,21 @@ void RunPromise(void)
     TRACE("RunPromise() finished Running Array");
 
     if (info->state == PROMISE_STATE_RUNNING) {
-        if (rebUnboxLogic("error? @", metaresult)) {
+        if (r == BOUNCE_THROWN) {
             //
             // Note this could be an uncaught throw error, or a specific
             // panic() error.
             //
+            assert(Is_Throwing(TOP_LEVEL));
             info->state = PROMISE_STATE_REJECTED;
             TRACE("RunPromise() => promise is rejecting due to error");
           #if DEBUG_HAS_PROBE
-            if (g_probe_panics)
-                PROBE(metaresult);
+            if (g_probe_panics) {
+                Error* error = Error_No_Catch_For_Throw(TOP_LEVEL);
+                PROBE(error);
+            }
           #endif
-            Free_Value(metaresult);  // !!! report the error?
+            // !!! report the error?
         }
         else {
             info->state = PROMISE_STATE_RESOLVED;
@@ -528,8 +517,7 @@ void RunPromise(void)
             // But what if it doesn't pay attention to it and release it?
             // It could cause leaks.
             //
-            Api(Stable*) result = rebStable("unlift", rebQ(metaresult));
-            Free_Value(metaresult);
+            Api(Value*) result = Copy_Cell(Alloc_Value(), Level_Out(TOP_LEVEL));
             rebUnmanage(result);
 
             EM_ASM(
@@ -565,6 +553,8 @@ void RunPromise(void)
             throw_id  // => $1 (table entry will be freed)
         );
     }
+
+    Drop_Level(TOP_LEVEL);
 
     assert(PG_Promises == info);
     PG_Promises = info->next;
@@ -619,7 +609,7 @@ EXTERN_C void API_rebResolveNative_internal(
         Bounce_From_Bounce_Id(bounce_id)
     );
     if (b == BOUNCE_TOPLEVEL_OUT) {
-        Assert_Cell_Stable(OUT);  // nullptr b means OUT holds the cell
+        assert(Readable_Cell(OUT));  // nullptr b means OUT holds the cell
     }
     else { // others "irreducible"
         if (Is_Bounce_A_Level(b))
@@ -655,7 +645,7 @@ EXTERN_C void API_rebRejectNative_internal(
 
     TRACE("reb.RejectNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
 
-    Stable* error = Value_From_Value_Id(error_id);
+    Value* error = Value_From_Value_Id(error_id);
 
     if (error == nullptr) {  // Signals halt...not normal error [3]
         TRACE("JavaScript_Dispatcher() => throwing a halt");
@@ -663,7 +653,7 @@ EXTERN_C void API_rebRejectNative_internal(
         Init_Null(OUT);
     }
     else {
-        assert(Is_Error(error));
+        assert(Is_Possibly_Unstable_Value_Error(error));
         Copy_Cell(OUT, error);
         rebRelease(error);
     }
@@ -1164,13 +1154,13 @@ DECLARE_NATIVE(JS_EVAL_P)
             Heapaddr_From_Pointer(source)
         );
     }
-    Stable* value = Value_From_Value_Id(addr);
-    if (not value or not Is_Error(value))
+    Value* value = Value_From_Value_Id(addr);
+    if (not value or not Is_Possibly_Unstable_Value_Error(value))
         return value;  // evaluator takes ownership of handle
 
   handle_error: {
 
-    Stable* errval = Value_From_Value_Id(addr);
+    Value* errval = Value_From_Value_Id(addr);
     unnecessary(rebRelease(errval));
     panic (errval);
 }}

@@ -106,7 +106,7 @@ void Push_Frame_Continuation(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
     ));
-    Push_Level(nullptr, L);
+    Push_Level(L);
     require (
       Prep_Action_Level(L, frame, with)
     );
@@ -150,7 +150,7 @@ bool Pushed_Continuation(
             assert(Is_Cell_Erased(Level_Spare(grouper)));
         else
             Copy_Cell(Level_Spare(grouper), unwrap with);
-        Push_Level(nullptr, grouper);
+        Push_Level(grouper);
         goto pushed_continuation;
     }
 
@@ -203,7 +203,7 @@ bool Pushed_Continuation(
           Level* L = Make_Level(
             &Evaluator_Executor, feed, flags
         ));
-        Push_Level(nullptr, L);
+        Push_Level(L);
 
         goto pushed_continuation; }
 
@@ -214,7 +214,7 @@ bool Pushed_Continuation(
             FLAG_STATE_BYTE(1)
           )
         );
-        Push_Level(nullptr, dummy);
+        Push_Level(dummy);
 
         Copy_Cell(Level_Out(dummy), branch);
         require (
@@ -237,7 +237,7 @@ bool Pushed_Continuation(
             FLAG_STATE_BYTE(1)
           )
         );
-        Push_Level(nullptr, dummy);
+        Push_Level(dummy);
 
         Clear_Cell_Sigil(
           Copy_Cell_May_Bind(Level_Out(dummy), branch, binding)
@@ -292,7 +292,7 @@ bool Pushed_Continuation(
         Copy_Cell_May_Bind(arg, branch, binding);
         Tweak_Cell_Type_Matching_Heart(arg, HEART_BLOCK);  // :[1 + 2] => [3], not :[3]
 
-        Push_Level(nullptr, L);
+        Push_Level(L);
         goto pushed_continuation; }}
 
       case TYPE_PATH: {
@@ -321,7 +321,7 @@ bool Pushed_Continuation(
             &Just_Use_Out_Executor, FLAG_STATE_BYTE(1)
           )
         );
-        Push_Level(nullptr, dummy);
+        Push_Level(dummy);
 
         Unquote_Quoted_Cell(Copy_Cell(Level_Out(dummy), branch));
         goto pushed_continuation;  /* should be "just use out" */

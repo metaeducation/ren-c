@@ -226,14 +226,13 @@ DECLARE_NATIVE(JOIN)
     switch (STATE) {
       case ST_JOIN_MOLD_STEPPING:
         assert(Not_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT));
-        goto mold_step_result_in_spare;
+        goto mold_step_result_in_subout;
 
       case ST_JOIN_STACK_STEPPING:
-        goto stack_step_result_in_spare;
+        goto stack_step_result_in_subout;
 
       case ST_JOIN_EVALUATING_THE_GROUP:
-        dont(Copy_Cell(SPARE, SUBOUT));  // SUBLEVEL in-between top level
-        Copy_Cell(SPARE, Level_Out(TOP_LEVEL));
+        Copy_Cell(Level_Out(TOP_LEVEL->prior), Level_Out(TOP_LEVEL));
         Drop_Level(TOP_LEVEL);
 
         if (Is_Pinned_Form_Of(BLOCK, unwrap rest))
@@ -244,7 +243,7 @@ DECLARE_NATIVE(JOIN)
         }
         assert(Get_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT));
 
-        goto mold_step_result_in_spare;
+        goto mold_step_result_in_subout;
 
       default: assert(false);
     }
@@ -259,7 +258,7 @@ DECLARE_NATIVE(JOIN)
 
     Level* sub;
 
-    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
+    Flags flags = LEVEL_MASK_NONE;
     if (Is_Block(unwrap rest)) {
         require (
           sub = Make_Level_At(&Stepper_Executor, unwrap rest, flags)
@@ -284,8 +283,7 @@ DECLARE_NATIVE(JOIN)
           sub = Make_Level(&Inert_Stepper_Executor, feed, flags)
         );
     }
-    definitely(Is_Cell_Erased(SPARE));  // we are in STATE_0
-    Push_Level(SPARE, sub);
+    Push_Level(sub);
 
     if (delimiter)
         assert(Not_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING));
@@ -402,7 +400,6 @@ DECLARE_NATIVE(JOIN)
 
             heeded (Corrupt_Cell_If_Needful(Level_Spare(sub)));
             heeded (Corrupt_Cell_If_Needful(Level_Scratch(sub)));
-            assert(sub->target == SPARE);
             assert(LEVEL_STATE_BYTE(sub) == 0);
             LEVEL_STATE_BYTE(sub) = ST_TWEAK_GETTING;
 
@@ -414,7 +411,7 @@ DECLARE_NATIVE(JOIN)
 
             LEVEL_STATE_BYTE(sub) = STATE_0;
             Fetch_Next_In_Feed(sub->feed);
-            goto mold_step_result_in_spare;
+            goto mold_step_result_in_subout;
         }
 
         if (item_heart == HEART_GROUP) {
@@ -451,7 +448,7 @@ DECLARE_NATIVE(JOIN)
     STATE = ST_JOIN_MOLD_STEPPING;
     return CONTINUE_SUBLEVEL;  // just evaluate it
 
-} mold_step_result_in_spare: { ///////////////////////////////////////////////
+} mold_step_result_in_subout: { //////////////////////////////////////////////
 
   // 1. spaced [null ...]
   //
@@ -470,19 +467,19 @@ DECLARE_NATIVE(JOIN)
   //
   //    The same principle would apply to a "space-delimited format".
 
-    if (Any_Void(SPARE))  // spaced [elide print "hi"], etc
+    if (Any_Void(SUBOUT))  // spaced [elide print "hi"], etc
         goto next_mold_step;  // vaporize
 
-    if (Is_Cell_A_Veto_Hot_Potato(SPARE))
+    if (Is_Cell_A_Veto_Hot_Potato(SUBOUT))
         goto vetoed;
 
     require (
-      Stable* spare = Decay_If_Unstable(SPARE)  // may error [1]
+      Stable* subout = Decay_If_Unstable(SUBOUT)  // may error [1]
     );
 
-    if (Is_Splice(spare)) {  // only allow splice for mold, for now
+    if (Is_Splice(subout)) {  // only allow splice for mold, for now
         const Element* tail;
-        const Element* at = List_At(&tail, spare);
+        const Element* at = List_At(&tail, subout);
         if (at == tail)
             goto next_mold_step;  // vaporize
 
@@ -496,21 +493,21 @@ DECLARE_NATIVE(JOIN)
             goto next_mold_step;
         }
     }
-    else if (Is_Antiform(spare))
-        return fail (Error_Bad_Antiform(spare));
+    else if (Is_Antiform(subout))
+        return fail (Error_Bad_Antiform(subout));
 
-    if (Is_Rune(spare)) {  // do not delimit (unified w/char) [2]
+    if (Is_Rune(subout)) {  // do not delimit (unified w/char) [2]
         if (delimiter)
             Clear_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING);
-        Copy_Cell(PUSH(), spare);
+        Copy_Cell(PUSH(), subout);
         Sync_Toplevel_Baseline_After_Pushes(SUBLEVEL);
         goto next_mold_step;
     }
 
-    possibly(Is_Text(spare) and String_Len_At(spare) == 0);  // delimits [3]
+    possibly(Is_Text(subout) and String_Len_At(subout) == 0);  // delimits [3]
 
     Push_Join_Delimiter_If_Pending();
-    Copy_Cell(PUSH(), spare);
+    Copy_Cell(PUSH(), subout);
     Sync_Toplevel_Baseline_After_Pushes(SUBLEVEL);
     if (Get_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT))
         Set_Cell_Flag(TOP, STACK_NOTE_MOLD);
@@ -530,21 +527,21 @@ DECLARE_NATIVE(JOIN)
 
     return CONTINUE_SUBLEVEL;
 
-} stack_step_result_in_spare: { //////////////////////////////////////////////
+} stack_step_result_in_subout: { /////////////////////////////////////////////
 
-    if (Any_Void(SPARE))
+    if (Any_Void(SUBOUT))
         goto next_stack_step;  // vaporize
 
-    if (Is_Cell_A_Veto_Hot_Potato(SPARE))
+    if (Is_Cell_A_Veto_Hot_Potato(SUBOUT))
         goto vetoed;
 
     require (
-      Stable* spare = Decay_If_Unstable(SPARE)
+      Stable* subout = Decay_If_Unstable(SUBOUT)
     );
 
-    if (Is_Splice(spare)) {
+    if (Is_Splice(subout)) {
         const Element* tail;
-        const Element* at = List_At(&tail, spare);
+        const Element* at = List_At(&tail, subout);
 
         if (at == tail)
             goto next_stack_step;  // don't mark produced something
@@ -558,11 +555,11 @@ DECLARE_NATIVE(JOIN)
 
         goto next_stack_step;
     }
-    else if (Is_Antiform(spare))
-        return fail (Error_Bad_Antiform(spare));
+    else if (Is_Antiform(subout))
+        return fail (Error_Bad_Antiform(subout));
 
     Push_Join_Delimiter_If_Pending();
-    Copy_Cell(PUSH(), spare);
+    Copy_Cell(PUSH(), subout);
     Sync_Toplevel_Baseline_After_Pushes(SUBLEVEL);
     Mark_Join_Delimiter_Pending();
 

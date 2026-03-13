@@ -61,17 +61,11 @@ DECLARE_NATIVE(REEVAL)
     require (
       Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags)
     );
+    Push_Level(sub);
+
     Copy_Cell(Evaluator_Level_Current(sub), v);  // evaluator's CURRENT
 
-    definitely(Is_Cell_Erased(OUT));  // we are in STATE_0
-    Push_Level(OUT, sub);  // review: rewrite stackless
-    bool threw = Trampoline_With_Top_As_Root_Throws();
-    Drop_Level(sub);
-
-    if (threw)
-        return THROWN;
-
-    return BOUNCE_OUT;
+    return DELEGATE_SUBLEVEL;
 }
 
 
@@ -243,7 +237,7 @@ DECLARE_NATIVE(SHOVE)
     require (
       Level* sub = Make_Level(&Action_Executor, level_->feed, flags)
     );
-    Push_Level(OUT, sub);
+    Push_Level(sub);
     require (
       Push_Action(sub, shovee, infix_mode)  // know if it's infix [2]
     );
@@ -342,7 +336,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         panic (source); }  // would panic anyway [2]
 
       case ST_EVALUATE_SINGLE_STEPPING:
-        goto single_step_result_in_out;
+        goto single_step_result_in_subout;
 
       default: assert(false);
     }
@@ -396,13 +390,10 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         source,  // all lists treated the same [1]
         flags
     ));
-    definitely(Is_Cell_Erased(OUT));  // we are in STATE_0
-    Push_Level(OUT, sub);
+    Push_Level(sub);
 
     if (not ARG(STEP))  // plain evaluation to end, maybe void/none
         return DELEGATE_SUBLEVEL;
-
-    Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
 
     if (Is_Level_At_End(sub)) {
         Drop_Level(sub);
@@ -432,7 +423,6 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         source,
         with
     );
-    TOP_LEVEL->target = OUT;
     return DELEGATE_SUBLEVEL;
 
 } initial_entry_varargs: { ///////////////////////////////////////////////////
@@ -477,11 +467,10 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
       Level* sub = Make_Level(  // need evaluation in a sublevel [3]
         &Evaluator_Executor, L->feed, LEVEL_MASK_NONE
     ));
-    definitely(Is_Cell_Erased(OUT));  // we are in STATE_0
-    Push_Level(OUT, sub);
+    Push_Level(sub);
     return DELEGATE_SUBLEVEL;
 
-} single_step_result_in_out: {  //////////////////////////////////////////////
+} single_step_result_in_subout: {  ///////////////////////////////////////////
 
   // 1. There may have been a LET statement in the code.  If there was, we
   //    have to incorporate the binding it added into the reported state
@@ -501,7 +490,6 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
     Context* binding = Level_Binding(SUBLEVEL);
     SERIES_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index
-    Drop_Level(SUBLEVEL);
 
     Tweak_Cell_Binding(source, binding);  // integrate LETs [1]
 
@@ -509,10 +497,15 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         Source* pack = Make_Source_Managed(2);
         Set_Flex_Len(pack, 2);
         Copy_Lifted_Cell(Array_At(pack, 0), source);  // pack wants META values
-        Copy_Lifted_Cell(Array_At(pack, 1), OUT);  // may be FAILURE!
+        Copy_Lifted_Cell(Array_At(pack, 1), SUBOUT);  // may be FAILURE!
 
         Init_Pack(OUT, pack);
     }
+    else {
+        Copy_Cell(OUT, SUBOUT);
+    }
+
+    Drop_Level(SUBLEVEL);
 
     return BOUNCE_OUT;
 }}
@@ -540,7 +533,7 @@ DECLARE_NATIVE(EVAL_FREE)
 
     switch (STATE) {
       case ST_EVAL_FREE_INITIAL_ENTRY: goto initial_entry;
-      case ST_EVAL_FREE_EVALUATING: goto result_in_out;
+      case ST_EVAL_FREE_EVALUATING: goto result_in_subout;
       default: assert(false);
     }
 
@@ -562,6 +555,7 @@ DECLARE_NATIVE(EVAL_FREE)
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
     ));
+    Push_Level(L);
 
     Set_Action_Level_Label(L, Frame_Label_Deep(frame));
 
@@ -586,13 +580,13 @@ DECLARE_NATIVE(EVAL_FREE)
 
     Begin_Action(L, PREFIX_0);
 
-    definitely(Is_Cell_Erased(OUT));  // we are in STATE_0
-    Push_Level(OUT, L);
-
     STATE = ST_EVAL_FREE_EVALUATING;
     return CONTINUE_SUBLEVEL;
 
-} result_in_out: { ///////////////////////////////////////////////////////////
+} result_in_subout: { ////////////////////////////////////////////////////////
+
+    Copy_Cell(OUT, SUBOUT);
+    Drop_Level(SUBLEVEL);
 
     Diminish_Stub(Frame_Phase(frame));  // the "FREE" of EVAL-FREE
 
@@ -736,10 +730,9 @@ Bounce Native_Frame_Filler_Core(Level* level_)
       Level* L = Make_Level_At(
         &Stepper_Executor,
         args,
-        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+        LEVEL_MASK_NONE
     ));
-    assert(Is_Cell_Erased(SPARE));  // caller guarantees (does it need to?)
-    Push_Level(SPARE, L);
+    Push_Level(L);
 
     require (
       EVARS *e = Alloc_On_Heap(EVARS)
@@ -768,7 +761,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
       case ST_FRAME_FILLER_LABELED_EVAL_STEP:
         if (THROWING)
             goto finalize_maybe_throwing;
-        goto labeled_step_result_in_spare;
+        goto labeled_step_result_in_subout;
 
       case ST_FRAME_FILLER_UNLABELED_EVAL_STEP:
         if (THROWING)
@@ -777,7 +770,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
             assert(ARG(RELAX));
             goto handle_next_item;
         }
-        goto unlabeled_step_result_in_spare;
+        goto unlabeled_step_result_in_subout;
 
       default : assert(false);
     }
@@ -907,25 +900,25 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     Reset_Stepper_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL;
 
-} labeled_step_result_in_spare: {  ///////////////////////////////////////////
+} labeled_step_result_in_subout: {  //////////////////////////////////////////
 
     Index index = VAL_UINT32(ARG(INDEX));
 
     slot = Varlist_Slot(Cell_Varlist(frame), index);
     param = Phase_Param(Frame_Phase(op), index);
 
-    goto copy_spare_to_var_in_frame;
+    goto copy_subout_to_var_in_frame;
 
-} unlabeled_step_result_in_spare: {  /////////////////////////////////////////
+} unlabeled_step_result_in_subout: {  ////////////////////////////////////////
 
     EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
 
     slot = e->slot;
     param = e->param;
 
-    goto copy_spare_to_var_in_frame;
+    goto copy_subout_to_var_in_frame;
 
-} copy_spare_to_var_in_frame: {  /////////////////////////////////////////////
+} copy_subout_to_var_in_frame: {  ////////////////////////////////////////////
 
   // 1. If you were invoking a function normally, then passing in a void to
   //    an <opt> parameter would get turned into a NULL.  The NULL is the
@@ -938,7 +931,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     possibly(Get_Parameter_Flag(param, UNDO_OPT));  // our responsibility? [1]
     USED(param);
 
-    Move_Cell(Slot_Init_Hack(slot), SPARE);
+    Move_Cell(Slot_Init_Hack(slot), SUBOUT);
     goto handle_next_item;
 
 } finalize_maybe_throwing: { /////////////////////////////////////////////////
@@ -1127,8 +1120,7 @@ DECLARE_NATIVE(RUN)
     require (
       Level* sub = Make_Action_Sublevel(level_)
     );
-    definitely(Is_Cell_Erased(OUT));  // we are in STATE_0
-    Push_Level(OUT, sub);
+    Push_Level(sub);
     require (
       Push_Action(sub, action, PREFIX_0)
     );

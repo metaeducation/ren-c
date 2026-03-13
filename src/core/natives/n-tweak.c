@@ -80,7 +80,7 @@ static Option(Error*) Trap_Adjust_Lifted_Antiform_For_Tweak(Value* spare)
 //
 Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     Level* parent,
-    Level* const sub,  // sublevel will Push_Level() if not already pushed
+    Level* const sub,  // already pushed
     StackIndex picker_index,
     bool dont_indirect
 ){
@@ -136,9 +136,7 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 
 }} erase_parent_spare_now_that_we_are_done_extracting_it: {
 
-    assert(sub->target == Level_Spare(parent));
     Erase_Cell(Level_Out(sub));
-    unnecessary(Erase_Cell(sub->target));
 
 } adjust_frame_arguments_now_that_its_safe_to_panic: {
 
@@ -179,6 +177,8 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     bool threw = Trampoline_With_Top_As_Root_Throws();
     if (threw)  // don't want to return casual error you can TRY from
         return Error_No_Catch_For_Throw(sub);
+
+    Copy_Cell(Level_Spare(parent), Level_Out(sub));
 
     assert(sub == TOP_LEVEL);
     unnecessary(Drop_Action(sub));  // !! action is dropped, should it be?
@@ -311,9 +311,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Writeback_Dual_In_Scratch_To_Spare(
 
 } erase_parent_spare_now_that_we_are_done_extracting_it: {
 
-    assert(sub->target == Level_Spare(parent));
     Erase_Cell(Level_Out(sub));
-    unnecessary(Erase_Cell(sub->target));
 
 } adjust_frame_arguments_now_that_its_safe_to_panic: {
 
@@ -358,6 +356,8 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Writeback_Dual_In_Scratch_To_Spare(
 
     if (threw)  // don't want to return casual error you can TRY from
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+
+    Copy_Cell(Level_Spare(parent), Level_Out(sub));
 
     Stable* stable_spare = As_Stable(Level_Spare(parent));
     if (Is_Logic(stable_spare)) {  // "success" even if unavailable [1]
@@ -651,8 +651,6 @@ Option(Error*) Tweak_Stack_Steps_With_Dual_Scratch_To_Dual_Spare(void)
     );
     const TweakMode mode = u_cast(TweakMode, STATE);
 
-    assert(OUT != SCRATCH and OUT != SPARE);
-
   #if NEEDFUL_DOES_CORRUPTIONS  // confirm caller pre-corrupted spare [1]
     assert(Not_Cell_Readable(SPARE));
   #endif
@@ -680,8 +678,7 @@ Option(Error*) Tweak_Stack_Steps_With_Dual_Scratch_To_Dual_Spare(void)
         LEVEL_FLAG_DEBUG_STATE_0_OUT_NOT_ERASED_OK
       )
     );
-    dont(Erase_Cell(SPARE));  // spare will be used, then erased before call
-    Push_Level(SPARE, sub);
+    Push_Level(sub);
 
   poke_again: { //////////////////////////////////////////////////////////////
 

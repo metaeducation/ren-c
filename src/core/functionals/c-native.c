@@ -642,7 +642,6 @@ void Startup_Natives(const Element* boot_natives)
     assert(Series_Index(boot_natives) == 0);  // should be head, sanity check
     assert(Cell_Binding(boot_natives) == UNBOUND);
 
-    DECLARE_VALUE (dual_step);
     require (
       Level* L = Make_Level_At_Core(
         &Evaluator_Executor,
@@ -651,8 +650,7 @@ void Startup_Natives(const Element* boot_natives)
         LEVEL_MASK_NONE
             | LEVEL_FLAG_VANISHABLE_VOIDS_ONLY  // irrelevant, won't vaporize!
     ));
-    definitely(Is_Cell_Erased(dual_step));  // DECLARE_VALUE erases
-    Push_Level(dual_step, L);
+    Push_Level(L);
 
   setup_native_dispatcher_enumeration: {
 

@@ -322,6 +322,8 @@ static void Shutdown_Action_Spec_Tags(void)
 //
 static void Init_Root_Vars(void)
 {
+    USED(FORCE_TRACK_0(&g_erased_cell));  // no longer used, keep it around?
+
   make_bounce_signals: {
 
     Init_Bounce_Wild(g_bounce_thrown, C_THROWN);

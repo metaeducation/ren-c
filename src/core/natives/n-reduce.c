@@ -163,7 +163,7 @@ DECLARE_NATIVE(REDUCE)
         goto initial_entry_non_list;  // semantics in question [1]
 
       case ST_REDUCE_EVAL_STEP:
-        goto reduce_step_result_in_spare;
+        goto reduce_step_result_in_subout;
 
       case ST_REDUCE_RUNNING_PREDICATE:
         goto predicate_finished;
@@ -187,8 +187,7 @@ DECLARE_NATIVE(REDUCE)
         &Stepper_Executor,
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
     ));
-    definitely(Is_Cell_Erased(OUT));  // we are in STATE_0
-    Push_Level(OUT, sub);
+    Push_Level(sub);
 
     Copy_Cell(Evaluator_Level_Current(sub), v);
 
@@ -197,13 +196,12 @@ DECLARE_NATIVE(REDUCE)
 } initial_entry_list: {  /////////////////////////////////////////////////////
 
     require (
-      Level* sub = Make_Level_At(
+      Level* sub = Make_Level_At(  // reused for each step
         &Stepper_Executor,
         v,  // TYPE_BLOCK or TYPE_GROUP
-        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
+        LEVEL_MASK_NONE
     ));
-    definitely(Is_Cell_Erased(SPARE));  // we are in STATE_0
-    Push_Level(SPARE, sub);
+    Push_Level(sub);
 
     goto next_reduce_step;
 
@@ -237,7 +235,7 @@ DECLARE_NATIVE(REDUCE)
     Reset_Stepper_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL;
 
-} reduce_step_result_in_spare: { /////////////////////////////////////////////
+} reduce_step_result_in_subout: { ////////////////////////////////////////////
 
   // 1. If not doing (pack [...]) semantics, we skip voids.  Consider:
   //
@@ -248,30 +246,30 @@ DECLARE_NATIVE(REDUCE)
   //    able to vanish the light void that IF makes.
 
     if (Get_Level_Flag(LEVEL, REDUCE_IS_ACTUALLY_PACK)) {
-        Copy_Lifted_Cell(PUSH(), SPARE);
+        Copy_Lifted_Cell(PUSH(), SUBOUT);
         Sync_Toplevel_Baseline_After_Pushes(SUBLEVEL);
         goto next_reduce_step;
     }
 
     if (not predicate)  // default is no processing
-        goto process_spare;
+        goto process_subout;
 
-    if (Is_Void(SPARE))
+    if (Is_Void(SUBOUT))
         goto next_reduce_step;  // don't pass voids to predicate [1]
 
     SUBLEVEL->executor = &Skip_Me_Executor;
     STATE = ST_REDUCE_RUNNING_PREDICATE;
 
-    return CONTINUE(unwrap predicate, SPARE);  // arg may also be output
+    return CONTINUE(unwrap predicate, SUBOUT);  // arg may also be output
 
 } predicate_finished: {  /////////////////////////////////////////////////////
 
-    Copy_Cell(SPARE, SUBOUT);
-    Drop_Level(SUBLEVEL);
+    Copy_Cell(Level_Out(TOP_LEVEL->prior), Level_Out(TOP_LEVEL));
+    Drop_Level(TOP_LEVEL);
 
-    goto process_spare;
+    goto process_subout;
 
-} process_spare: {  //////////////////////////////////////////////////////////
+} process_subout: {  /////////////////////////////////////////////////////////
 
   // 1. The sublevel that is pushed to run reduce evaluations uses the data
   //    stack position captured in BASELINE to tell things like whether a
@@ -282,18 +280,18 @@ DECLARE_NATIVE(REDUCE)
   // 2. See above section for how we remembered the newline that was on the
   //    source originally, and cache it on the input argument cell.
 
-    if (Is_Void(SPARE))
+    if (Is_Void(SUBOUT))
         goto next_reduce_step;  // void results are skipped by reduce
 
-    if (Is_Cell_A_Veto_Hot_Potato(SPARE))
+    if (Is_Cell_A_Veto_Hot_Potato(SUBOUT))
         goto vetoed;  // veto means stop processing and return NULL
 
     require (
-      Stable* spare = Decay_If_Unstable(SPARE)
+      Stable* subout = Decay_If_Unstable(SUBOUT)
     );
-    if (Is_Splice(spare)) {
+    if (Is_Splice(subout)) {
         const Element* tail;
-        const Element* at = List_At(&tail, spare);
+        const Element* at = List_At(&tail, subout);
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);  // [2]
         for (; at != tail; ++at) {
             Copy_Cell(PUSH(), at);  // Note: no binding on antiform SPLICE!
@@ -303,10 +301,10 @@ DECLARE_NATIVE(REDUCE)
             }
         }
     }
-    else if (Is_Antiform(spare))
-        panic (Error_Bad_Antiform(spare));  // [4]
+    else if (Is_Antiform(subout))
+        panic (Error_Bad_Antiform(subout));  // [4]
     else {
-        Move_Cell(PUSH(), As_Element(spare));
+        Move_Cell(PUSH(), As_Element(subout));
 
         if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // [2]
             Set_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -449,8 +447,8 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     switch (STATE) {
       case ST_REDUCE_EACH_INITIAL_ENTRY: goto initial_entry;
-      case ST_REDUCE_EACH_REDUCING_STEP: goto reduce_step_result_in_spare;
-      case ST_REDUCE_EACH_RUNNING_BODY: goto body_result_in_out;
+      case ST_REDUCE_EACH_REDUCING_STEP: goto reduce_step_result_in_subout;
+      case ST_REDUCE_EACH_RUNNING_BODY: goto body_result_in_topout;
       default : assert(false);
     }
 
@@ -459,7 +457,7 @@ DECLARE_NATIVE(REDUCE_EACH)
   // 1. This current REDUCE-EACH only works with one variable; it should be
   //    able to take a block of variables.
 
-    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
+    Flags flags = LEVEL_MASK_NONE;
 
     require (
       VarList* varlist = Create_Loop_Context_May_Bind_Body(body, vars)
@@ -483,8 +481,7 @@ DECLARE_NATIVE(REDUCE_EACH)
     trap (
       Level* sub = Make_Level_At(executor, block, flags)
     );
-    definitely(Is_Cell_Erased(SPARE));  // we are in STATE_0
-    Push_Level(SPARE, sub);
+    Push_Level(sub);
 
 } reduce_next: { ////////////////////////////////////////////////////////////
 
@@ -505,7 +502,7 @@ DECLARE_NATIVE(REDUCE_EACH)
     Reset_Stepper_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL;
 
-} reduce_step_result_in_spare: {  ////////////////////////////////////////////
+} reduce_step_result_in_subout: {  ////////////////////////////////////////////
 
   // 1. See notes in REDUCE for why it just skips over VOID! results.  For
   //    compatibility, we make REDUCE-EACH do the same thing.
@@ -514,11 +511,11 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Slot* slot = Varlist_Slot(Cell_Varlist(vars), 1);
 
-    if (Is_Void(SPARE))
+    if (Is_Void(SUBOUT))
         goto reduce_next;  // REDUCE-compatible semantics [1]
 
     trap (
-      Write_Loop_Slot_May_Unbind_Or_Decay(slot, SPARE)
+      Write_Loop_Slot_May_Unbind_Or_Decay(slot, SUBOUT)
     );
 
 } invoke_loop_body: {
@@ -529,11 +526,11 @@ DECLARE_NATIVE(REDUCE_EACH)
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for break/continue
     return CONTINUE_BRANCH(body);
 
-} body_result_in_out: { //////////////////////////////////////////////////////
+} body_result_in_topout: { ///////////////////////////////////////////////////
 
     if (not THROWING) {
-        Copy_Cell(OUT, SUBOUT);
-        Drop_Level(SUBLEVEL);
+        Copy_Cell(OUT, Level_Out(TOP_LEVEL));
+        Drop_Level(TOP_LEVEL);
     }
 
     if (Loop_Body_Threw_And_Cant_Catch_Continue(OUT, LEVEL))

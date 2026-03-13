@@ -101,7 +101,7 @@ enum {
 //     mfoo: func [a :b c] [...]  =>  bar: func [:b d e] [...]
 //                     foo:b 1 2  =>  bar:b 1 2
 //
-void Push_Redo_Action_Level(Value* out, Level* L1, const Value* run)
+void Push_Redo_Action_Level(Level* L1, const Value* run)
 {
     Source* normals = Make_Source(Level_Num_Slots(L1));  // max, e.g. no refines
 
@@ -148,16 +148,14 @@ void Push_Redo_Action_Level(Value* out, Level* L1, const Value* run)
 
     Shutdown_Evars(&e);
 
-    Flags flags = LEVEL_MASK_NONE;
-
     DECLARE_ELEMENT (block);
     Init_Block(block, normals);
     require (
-      Level* L2 = Make_Level_At(&Action_Executor, block, flags)
+      Level* L2 = Make_Level_At(&Action_Executor, block, LEVEL_MASK_NONE)
     );
     L2->baseline.stack_base = base;
 
-    Push_Level(out, L2);
+    Push_Level(L2);
     require (
       Push_Action(L2, run, PREFIX_0)
     );
@@ -240,7 +238,7 @@ Bounce Hijacker_Dispatcher(Level* const L)
     // Otherwise, we assume the frame was built for the function prior to
     // the hijacking...and has to be remapped.
     //
-    Push_Redo_Action_Level(OUT, L, hijacker_frame);
+    Push_Redo_Action_Level(L, hijacker_frame);
     return DELEGATE_SUBLEVEL;
 }
 

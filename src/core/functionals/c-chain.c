@@ -53,13 +53,13 @@ enum {
 // move the built level into a new level that can be executed with a new
 // entry to Process_Action().
 //
-// 1. Note that it can occur that this may be a TRAMPOLINE_KEEPALIVE sublevel
-//    of something like another CASCADE, that it intends to reuse (!)  This
-//    means it started out thinking we were going to run an action in that
-//    frame and drop it, when in reality we're changing the executor and
-//    everything.  This is clearly voodoo but maybe it can be formalized.
+// 1. Note that it can occur that this may be a sublevel of something like
+//    another CASCADE, that it intends to reuse (!)  This means it started out
+//    thinking we were going to run an action in that frame and drop it, when
+//    in reality we're changing the executor and everything.  This is clearly
+//    voodoo but maybe it can be formalized.
 //
-Level* Push_Downshifted_Level(Value* out, Level* L) {
+Level* Push_Downshifted_Level(Level* L) {
     assert(L->executor == &Action_Executor);
 
     Flags flags = ACTION_EXECUTOR_FLAG_IN_DISPATCH;
@@ -67,15 +67,14 @@ Level* Push_Downshifted_Level(Value* out, Level* L) {
     require (
       Level* sub = Make_Level(&Action_Executor, L->feed, flags)
     );
-    dont(Erase_Cell(out));  // ??? or, erase if STATE_0?
-    Push_Level(out, sub);
+    Push_Level(sub);
     assert(sub->varlist == nullptr);
     sub->varlist = L->varlist;
     assert(Misc_Runlevel(sub->varlist) == L);
     Tweak_Misc_Runlevel(sub->varlist, sub);
     sub->rootvar = Array_Head(Varlist_Array(sub->varlist));
 
-    L->varlist = nullptr;  // Note: may be TRAMPOLINE_KEEPALIVE! [1]
+    L->varlist = nullptr;  // could be another CASCADE, see [1]
     Corrupt_If_Needful(L->rootvar);
 
     Corrupt_If_Needful(L->executor);  // caller must set
@@ -155,7 +154,7 @@ Bounce Cascader_Executor(Level* const L)
         Cell_Array(Details_At(details, IDX_CASCADER_PIPELINE))
     );
 
-    Level* sub = Push_Downshifted_Level(OUT, L);  // steals varlist [1]
+    Level* sub = Push_Downshifted_Level(L);  // steals varlist [1]
     L->executor = &Cascader_Executor;  // so trampoline calls us [2]
 
     const Element* first = List_Item_At(pipeline);
@@ -183,7 +182,6 @@ Bounce Cascader_Executor(Level* const L)
     Set_Action_Level_Label(sub, Frame_Label_Deep(first));
 
     STATE = ST_CASCADER_RUNNING_SUBFUNCTION;
-    Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);
     return CONTINUE_SUBLEVEL;
 
 } run_next_in_pipeline: {  ///////////////////////////////////////////////////
@@ -194,6 +192,8 @@ Bounce Cascader_Executor(Level* const L)
     //    !!! One side effect of this is that unless CASCADE changes to check,
     //    pipeline items can consume more than one argument.  Interesting,
     //    but it might be bugs waiting to happen, trying it this way for now.
+
+    Copy_Cell(OUT, SUBOUT);
 
     Level* sub = SUBLEVEL;
     if (sub->varlist and Not_Base_Managed(sub->varlist))

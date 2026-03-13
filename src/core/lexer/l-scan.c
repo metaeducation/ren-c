@@ -856,11 +856,11 @@ Result(const Byte*) Scan_Utf8_Item_Into_Mold(
                  FLAG_STATE_BYTE(Scanner_State_For_Terminal(terminal))
             );
 
-            Level* scan = Make_Scan_Level(&transcode, g_end_feed, flags);
+            require (
+              Level* scan = Make_Scan_Level(&transcode, g_end_feed, flags)
+            );
+            Push_Level(scan);
 
-            DECLARE_VALUE (discard);
-            definitely(Is_Cell_Erased(discard));  // DECLARE_VALUE erases
-            Push_Level(discard, scan);
             bool threw = Trampoline_With_Top_As_Root_Throws();
             Drop_Data_Stack_To(scan->baseline.stack_base);  // !!! new mode?
             Drop_Level(scan);
@@ -2107,12 +2107,12 @@ void Init_Transcode(
 // Initialize the per-level scanner state structure.  Note that whether this
 // will be a variadic transcode or not is based on the Level's "Feed".
 //
-Level* Make_Scan_Level(
+Result(Level*) Make_Scan_Level(
     TranscodeState* transcode,
     Feed* feed,
     Flags flags
 ){
-    require (
+    trap (
       Level* L = Make_Level(&Scanner_Executor, feed, flags)
     );
 
@@ -2467,15 +2467,15 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         crash (L);
     }
 
-    Level* sub = Make_Scan_Level(
+    require (
+      Level* sub = Make_Scan_Level(
         transcode,
         L->feed,
-        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
+        FLAG_STATE_BYTE(mode)
             | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
-            | FLAG_STATE_BYTE(mode)
+      )
     );
-    unnecessary(Erase_Cell(OUT));  // LEVEL_STATE_BYTE is not STATE_0
-    Push_Level(OUT, sub);
+    Push_Level(sub);
     return CONTINUE_SUBLEVEL;
 
 } case TOKEN_BLOCK_END: //// END LIST (']' or '}' or ')') ////////////////////
@@ -2729,15 +2729,15 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
 } case TOKEN_CONSTRUCT: { ////////////////////////////////////////////////////
 
-    Level* sub = Make_Scan_Level(
+    require (
+      Level* sub = Make_Scan_Level(
         transcode,
         L->feed,
-        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
+        FLAG_STATE_BYTE(ST_SCANNER_BLOCK_MODE)
             | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
-            | FLAG_STATE_BYTE(ST_SCANNER_BLOCK_MODE)
+      )
     );
-    unnecessary(Erase_Cell(OUT));  // LEVEL_STATE_BYTE is not STATE_0
-    Push_Level(OUT, sub);  // do stackful, for now
+    Push_Level(sub);  // do stackful, for now
 
     bool threw = Trampoline_With_Top_As_Root_Throws();
 
@@ -2746,11 +2746,13 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         return fail (Error_No_Catch_For_Throw(L));
     }
 
-    if (Is_Failure(OUT)) {
+    if (Is_Failure(SUBOUT)) {
+        Copy_Cell(OUT, SUBOUT);
         Drop_Level(sub);
         return BOUNCE_OUT;
     }
 
+    Drop_Level(sub);
     goto construct_scan_to_stack_finished;
 
 } case TOKEN_END:  // handled way above, before the switch()
@@ -2881,7 +2883,8 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
 } child_array_scanned: {  ////////////////////////////////////////////////////
 
-    if (Is_Failure(OUT)) {
+    if (Is_Failure(SUBOUT)) {
+        Copy_Cell(OUT, SUBOUT);
         Drop_Level(SUBLEVEL);
         Drop_Data_Stack_To(STACK_BASE);
         return BOUNCE_OUT;
@@ -2983,26 +2986,31 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
 } recursive_scan_rest_of_sequence_after_head: {
 
-    Level* sub = Make_Scan_Level(
+    require (
+      Level* sub = Make_Scan_Level(
         transcode,
         L->feed,
         FLAG_STATE_BYTE(sub_mode)
             | SCAN_EXECUTOR_FLAG_INTERSTITIAL_SCAN
+      )
     );
-    unnecessary(Erase_Cell(OUT));  // LEVEL_STATE_BYTE is not STATE_0
-    Push_Level(OUT, sub);
+    Push_Level(sub);
 
     bool threw = Trampoline_With_Top_As_Root_Throws();
 
-    Drop_Level_Unbalanced(sub);  // allow stack accrual
-
-    if (threw)  // automatically drops failing stack before throwing
+    if (threw) {  // automatically drops failing stack before throwing
+        Drop_Level_Unbalanced(sub);  // allow stack accrual
         return fail (Error_No_Catch_For_Throw(L));
+    }
 
-    if (Is_Failure(OUT)) {  // no auto-drop without `return fail ()`
+    if (Is_Failure(Level_Out(sub))) {  // no auto-drop without `return fail ()`
+        Copy_Cell(OUT, Level_Out(sub));
+        Drop_Level_Unbalanced(sub);  // allow stack accrual
         Drop_Data_Stack_To(STACK_BASE);
         return BOUNCE_OUT;
     }
+
+    Drop_Level_Unbalanced(sub);  // allow stack accrual
 
     if (sub_mode != ST_SCANNER_TUPLE_MODE)
         goto pop_sequence_or_conflation;
@@ -3450,11 +3458,11 @@ Result(Option(Source*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
     TranscodeState* transcode = &transcode_struct;
 
     Flags flags = FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
-    Level* L = Make_Scan_Level(transcode, feed, flags);
+    require (
+      Level* L = Make_Scan_Level(transcode, feed, flags)
+    );
+    Push_Level(L);
 
-    DECLARE_VALUE (temp);
-    definitely(Is_Cell_Erased(temp));  // DECLARE_VALUE erases
-    Push_Level(temp, L);
     if (Trampoline_With_Top_As_Root_Throws())
         return fail (Error_No_Catch_For_Throw(L));
 

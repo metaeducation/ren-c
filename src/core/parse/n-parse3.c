@@ -251,7 +251,7 @@ static bool Subparse_Throws(
 ){
     assert(Has_Series_Heart(input));
 
-    Push_Level(out, L);
+    Push_Level(L);
 
     require (
       Push_Action(L, LIB(SUBPARSE), PREFIX_0)
@@ -333,15 +333,15 @@ static bool Subparse_Throws(
 
     b = Irreducible_Bounce(b);
 
-    Drop_Level(L);
-
     if (b != BOUNCE_TOPLEVEL_OUT) {
         assert(b == BOUNCE_THROWN);
+        Drop_Level(L);
         assert(Is_Throwing_Panic(TOP_LEVEL));
         return true;
     }
 
-    Copy_Cell(LEVEL->target, Level_Out(LEVEL));
+    Copy_Cell(out, Level_Out(L));
+    Drop_Level(L);
 
     *interrupted_out = false;
     return false;
@@ -472,29 +472,27 @@ bool Process_Group_For_Parse_Throws(
         ? SPECIFIED
         : Derive_Binding(P_RULE_BINDING, group);
 
-    DECLARE_VALUE (eval);
-
     require (
       Level* sub = Make_Level_At_Core(
         &Evaluator_Executor, group, derived, LEVEL_MASK_NONE
       )
     );
-    definitely(Is_Cell_Erased(eval));  // DECLARE_VALUE erases
-    Push_Level(eval, sub);
+    Push_Level(sub);
 
     if (Trampoline_With_Top_As_Root_Throws())
         return true;
 
-    Drop_Level(sub);
-
-    if (Is_Cell_A_Veto_Hot_Potato(eval)) {
+    if (Is_Cell_A_Veto_Hot_Potato(Level_Out(sub))) {
+        Drop_Level(sub);
         *veto = true;
         return false;
     }
 
     require (
-      Ensure_No_Failures_Including_In_Packs(eval)
+      Ensure_No_Failures_Including_In_Packs(Level_Out(sub))
     );
+
+    Drop_Level(sub);
 
     // !!! The input is not locked from modification by agents other than the
     // PARSE's own REMOVE etc.  This is a sketchy idea, but as long as it's

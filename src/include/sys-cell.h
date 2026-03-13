@@ -1282,9 +1282,7 @@ INLINE Cell* Move_Cell_Core_Untracked(Cell* out, Cell* c, Flags copy_mask)
 //
 
 INLINE Cell* Force_Blit_Cell_Untracked(Cell* out, const Cell* c) {
-    out->header = c->header;
-    out->extra = c->extra;
-    out->payload = c->payload;
+    Mem_Copy(out, c, sizeof(Cell));
 
   #if DEBUG_TRACK_COPY_PRESERVES
     dont(out->track_flags = c->track_flags);  // see definition

@@ -2416,7 +2416,6 @@ DECLARE_NATIVE(FOR)
         // way around, with FOR-EACH delegating to FOR).
         //
         rebPushContinuation_internal(
-            u_cast(RebolValue*, OUT),  // <-- output cell (can be in valist)
             LEVEL_MASK_NONE,
             CANON(FOR_EACH), rebQ(ARG(VARS)), rebQ(value), body
         );

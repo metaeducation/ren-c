@@ -68,7 +68,7 @@ enum {
 
 
 //
-//  Make_Pushed_Level_From_Action_Feed_May_Throw: C
+//  Make_Pushed_Level_From_Frame_And_Feed: C
 //
 // 1. The idea of creating a level from an evaluative step which includes infix
 //    as part of the step would ultimately have to make a composite level that
@@ -83,34 +83,34 @@ enum {
 //    can theoretically just be put back into the reuse list, or managed
 //    and handed out for other purposes.  Caller's choice.
 //
-Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
-    Sink(Stable) out,
-    Stable* action,
+Result(Level*) Make_Pushed_Level_From_Frame_And_Feed(
+    const Element* frame,
     Feed* feed,
     StackIndex base,
     bool error_on_deferred
 ){
-    require (
+    trap (
       Level* L = Make_Level(
         &Action_Executor,
         feed,
-        LEVEL_MASK_NONE  // FULFILL_ONLY added after Push_Action()
+        LEVEL_MASK_NONE  // we add FULFILL_ONLY after Push_Action()
     ));
+    Push_Level(L);
+
     L->baseline.stack_base = base;  // incorporate refinements
-    Push_Level(u_cast(Value*, out), L);
 
     if (error_on_deferred)  // can't deal with ELSE/THEN [1]
         L->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX;
 
     require (
-      Push_Action(L, action, PREFIX_0)
+      Push_Action(L, frame, PREFIX_0)
     );
 
     ParamList* varlist = L->varlist;  // Drop_Action() will null out L->varlist
 
     Set_Executor_Flag(ACTION, L, FULFILL_ONLY);  // Push_Action() won't allow
 
-    assert(Level_Coupling(L) == Frame_Coupling(action));  // no invocation
+    assert(Level_Coupling(L) == Frame_Coupling(frame));  // no invocation
 
     if (Trampoline_With_Top_As_Root_Throws())
         return L;
@@ -123,13 +123,13 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     assert(Get_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED));
     Clear_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);  // [2]
 
-    L->u.action.original = Frame_Phase(action);
+    L->u.action.original = Frame_Phase(frame);
 
   require (
-    Tweak_Level_Phase(L, Frame_Phase(action))  // Drop_Action() cleared
+    Tweak_Level_Phase(L, Frame_Phase(frame))  // Drop_Action() cleared
   );
 
-    Tweak_Level_Coupling(L, Frame_Coupling(action));
+    Tweak_Level_Coupling(L, Frame_Coupling(frame));
 
     return L;  // may not be at end or thrown, e.g. (/x: does+ just y x = 'y)
 }
@@ -192,25 +192,23 @@ Result(None) Init_Invokable_From_Feed(
     // It probably shouldn't, but since it does we need the action afterward
     // to put the phase back.
     //
-    DECLARE_ELEMENT (frame);
-    Move_Cell(frame, out);
-    Push_Lifeguard(frame);
+    Element* out_frame = out;
+    Push_Lifeguard(out_frame);
 
-    Option(VarList*) coupling = Frame_Coupling(frame);
+    Option(VarList*) coupling = Frame_Coupling(out_frame);
 
-    Value* sink_out = u_cast(Value*, out);
-
-    Level* L = Make_Pushed_Level_From_Action_Feed_May_Throw(
-        sink_out,  // result not used by this routine, so non-Element bits ok
-        frame,
+    require (
+      Level* L = Make_Pushed_Level_From_Frame_And_Feed(
+        out_frame,
         feed,
         base,
         error_on_deferred
+      )
     );
 
     if (Is_Throwing(L)) {  // signals threw
         Drop_Level(L);
-        Drop_Lifeguard(frame);
+        Drop_Lifeguard(out_frame);
         panic (Error_No_Catch_For_Throw(L));
     }
 
@@ -218,18 +216,18 @@ Result(None) Init_Invokable_From_Feed(
     // managed, but Push_Action() does not use ordinary series creation to
     // make its nodes, so manual ones don't wind up in the tracking list.
     //
-    assert(Level_Coupling(L) == Frame_Coupling(frame));
+    assert(Level_Coupling(L) == Frame_Coupling(out_frame));
     assert(Not_Base_Managed(L->varlist));
 
     ParamList* varlist = L->varlist;  // executor is nullptr
     L->varlist = nullptr;  // don't let Drop_Level() free varlist (we want it)
     Tweak_Misc_Runlevel(varlist, nullptr);  // disconnect from L
     Drop_Level(L);
-    Drop_Lifeguard(frame);
+    Drop_Lifeguard(out_frame);
 
     Set_Base_Managed_Bit(varlist);  // can't use Manage_Stub
 
-    Lens* lens = Lens_Inputs(Frame_Phase(frame));
+    Lens* lens = Lens_Inputs(Frame_Phase(out_frame));
     Init_Frame(out, varlist, lens, coupling);
 
     return none;

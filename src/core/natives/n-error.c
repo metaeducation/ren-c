@@ -60,10 +60,10 @@ DECLARE_NATIVE(TRY)
 //
 //  /enrecover: native [
 //
-//  "Sandbox to intercept failures; FAILURE! -> ERROR! else lifted result"
+//  "Sandbox to intercept panics; PANIC -> ERROR! else lifted result"
 //
 //      return: [error! quoted! quasiform!]
-//      code "Code to sandbox, intercept errors at any depth (including typos)"
+//      code "Code to sandbox, intercept panics at any depth (including typos)"
 //          [frame! any-list?]
 //      :relax "Allow non-erroring premature exits (THROW, RETURN, etc.)"
 //  ]
@@ -73,7 +73,7 @@ DECLARE_NATIVE(ENRECOVER)
 // Note: During boot, this operation is removed from LIB and moved to the
 // system utilities, so it is typically called as SYS.UTIL/ENRECOVER.  Reason
 // is to help raise awareness of the risks involved with using this function,
-// because it's dangerous to react to these errors (or suppress them) due to
+// because it's dangerous to react to these panics (or suppress them) due to
 // how little you know about what actually happened.
 {
     INCLUDE_PARAMS_OF_ENRECOVER;
@@ -87,7 +87,7 @@ DECLARE_NATIVE(ENRECOVER)
 
     switch (STATE) {
       case ST_ENRECOVER_INITIAL_ENTRY: goto initial_entry;
-      case ST_ENRECOVER_EVALUATING: goto eval_result_in_out;
+      case ST_ENRECOVER_EVALUATING: goto eval_result_in_subout_or_thrown;
       default: assert(false);
     }
 
@@ -99,22 +99,23 @@ DECLARE_NATIVE(ENRECOVER)
         code,
         LEVEL_FLAG_VANISHABLE_VOIDS_ONLY  // EVAL-BLOCK!-like semantics?
     ));
-    definitely(Is_Cell_Erased(OUT));  // we are in STATE_0
-    Push_Level(OUT, L);
+    Push_Level(L);
 
     STATE = ST_ENRECOVER_EVALUATING;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // fail not caught by default
     return CONTINUE_SUBLEVEL;
 
-} eval_result_in_out: {  /////////////////////////////////////////////////////
+} eval_result_in_subout_or_thrown: {  ////////////////////////////////////////
 
     if (not THROWING) {  // successful result
-        if (Is_Failure(OUT)) {
-            Disarm_Failure(OUT);
-            return BOUNCE_OUT;
-        }
+        Copy_Cell(OUT, SUBOUT);
+        Drop_Level(SUBLEVEL);
 
-        Lift_Cell(OUT);
+        if (Is_Failure(OUT))
+            Disarm_Failure(OUT);
+        else
+            Lift_Cell(OUT);
+
         return BOUNCE_OUT;
     }
 
@@ -149,6 +150,10 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 // Unlike SYS.UTIL/ENRECOVER, the ENRESCUE function only reacts to errors from
 // the expressions it directly evaluates.  Hence it doesn't intercept panics,
 // making it much safer to react to the errors one gets back from it.
+//
+// !!! This function is a lot like the Evaluator_Executor(), and anything it
+// doesn't do that the evaluator does is likely an incorrect deviation; so
+// the two should be unified.
 {
     INCLUDE_PARAMS_OF_ENRESCUE;
 
@@ -162,8 +167,8 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 
     switch (STATE) {
       case ST_ENRESCUE_INITIAL_ENTRY: goto initial_entry;
-      case ST_ENRESCUE_EVAL_STEPPING: goto eval_result_in_spare;
-      case ST_ENRESCUE_RUNNING_FRAME: goto eval_result_in_spare;
+      case ST_ENRESCUE_EVAL_STEPPING: goto eval_result_in_subout;
+      case ST_ENRESCUE_RUNNING_FRAME: goto eval_result_in_subout;
       default: assert(false);
     }
 
@@ -173,18 +178,15 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 
     Init_Void(OUT);  // default if all evaluations produce void
 
-    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;  // reused for each step
-
     Level* sub;
     if (Is_Block(code)) {
         require (
           sub = Make_Level_At(
             &Stepper_Executor,
             code,  // TYPE_BLOCK or TYPE_GROUP
-            flags
+            LEVEL_MASK_NONE
         ));
-        definitely(Is_Cell_Erased(SPARE));  // we are in STATE_0
-        Push_Level(SPARE, sub);
+        Push_Level(sub);
 
         if (Is_Level_At_End(sub))
             goto finished;
@@ -195,7 +197,7 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
     }
 
     bool pushed = Pushed_Continuation(
-        flags,
+        LEVEL_MASK_NONE,
         SPECIFIED,
         code,
         nullptr
@@ -208,22 +210,23 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
     unnecessary(Enable_Dispatcher_Catching_Of_Throws(LEVEL));  // [1]
     return CONTINUE_SUBLEVEL;
 
-} eval_result_in_spare: {  ///////////////////////////////////////////////////
+} eval_result_in_subout: {  //////////////////////////////////////////////////
 
-    if (Is_Failure(SPARE)) {
+    if (Is_Failure(SUBOUT)) {
+        Move_Cell(OUT, SUBOUT);
         Drop_Level(SUBLEVEL);
-        Move_Cell(OUT, SPARE);
+
         Disarm_Failure(OUT);
         return OUT_BRANCHED;
     }
 
     if (STATE == ST_ENRESCUE_RUNNING_FRAME) {
-        Copy_Cell(OUT, SPARE);
+        Copy_Cell(OUT, SUBOUT);
         goto finished;
     }
 
-    if (not Any_Void(SPARE))
-        Move_Cell(OUT, SPARE);
+    if (not Any_Void(SUBOUT))
+        Move_Cell(OUT, SUBOUT);
 
     if (Is_Level_At_End(SUBLEVEL))
         goto finished;
@@ -234,7 +237,8 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 } finished: {  ///////////////////////////////////////////////////////////////
 
     Drop_Level(SUBLEVEL);
-    Lift_Cell(OUT);  // ^META result, may be initial void state
+
+    Lift_Cell(OUT);  // lifted result, may be initial void state
     return BOUNCE_OUT;
 }}
 

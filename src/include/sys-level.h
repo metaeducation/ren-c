@@ -466,10 +466,8 @@ INLINE void Free_Level_Internal(Level* L) {
 // 4. Uninterruptibility is inherited by default by Push_Level(), but
 //    interruptibility is not.
 //
-INLINE void Push_Level_Dont_Inherit_Interruptibility(
-    Value* target,  // prohibit passing Element/Stable/Slot [1]
-    Level* L
-){
+INLINE void Push_Level_Dont_Inherit_Interruptibility(Level* L)
+{
     assert(
         ((not TOP_LEVEL) or (TOP_LEVEL->executor != &Intrinsic_Executor))
         or g_gc.disabled  // allow PROBE() from intrinsics
@@ -478,32 +476,6 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
   #if RUNTIME_CHECKS
     assert(L->prior == nullptr);  // Prep_Level_Core() should null it
   #endif
-
-  #if RUNTIME_CHECKS
-    if (target) {
-        assert(target != &L->spare and target != &L->scratch);
-        assert(
-            not (target->header.bits &
-                (BASE_FLAG_ROOT | BASE_FLAG_MARKED | BASE_FLAG_MANAGED)
-            )
-        );
-    }
-  #endif
-
-    dont(  // flags too scarce for DEBUG_STATE_0_OUT_NOT_ERASED_OK right now
-      assert(LEVEL_STATE_BYTE(L) != STATE_0 or Is_Cell_Erased(target))
-    );
-
-    L->target = target;  // must be a valid cell for GC [3]
-    if (
-        target
-        and not Is_Cell_Erased(target)
-        and LEVEL_STATE_BYTE(L) != STATE_0
-    ){
-        if (g_tick == 100622)
-            debug_break();
-        Copy_Cell(Level_Out(L), target);
-    }
 
   #if RUNTIME_CHECKS
     //
@@ -519,11 +491,8 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
     assert(L->alloc_value_list == L);
 }
 
-INLINE void Push_Level(  // inherit interrupt and purity [4]
-    Value* target,
-    Level* L
-){
-    Push_Level_Dont_Inherit_Interruptibility(target, L);
+INLINE void Push_Level(Level* L) {  // inherit interrupt and purity [4]
+    Push_Level_Dont_Inherit_Interruptibility(L);
     L->flags.bits |= (
         L->prior->flags.bits & (  // [4]
             LEVEL_FLAG_UNINTERRUPTIBLE | LEVEL_FLAG_PURE
@@ -599,8 +568,6 @@ INLINE Result(Level*) Prep_Level_Core(
     FORCE_TRACK_0(Force_Erase_Cell_Untracked(&L->spare));
     FORCE_TRACK_0(Force_Erase_Cell_Untracked(&L->scratch));
     FORCE_TRACK_0(Force_Erase_Cell_Untracked(&L->output));
-
-    L->target = nullptr;  // transitional idea: target being phased out
 
     L->varlist = nullptr;
     L->executor = executor;

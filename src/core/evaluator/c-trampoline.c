@@ -88,8 +88,11 @@ Bounce Skip_Me_Executor(Level* L)
 // The "Just_Use_Out_Executor()" is a dummy executor for a Level that has had
 // its output cell primed with a value to return.
 //
-Bounce Just_Use_Out_Executor(Level* level_)
-  { return BOUNCE_OUT; }
+Bounce Just_Use_Out_Executor(Level* level_) {
+    possibly(level_ != TOP_LEVEL);  // "punches hole" for pushed level
+    UNUSED(level_);
+    return BOUNCE_TOPLEVEL_OUT;
+}
 
 
 //
@@ -206,9 +209,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //    (e.g. the body block).  To "punch a hole" through the evaluation
   //    level it sets the executor to Just_Use_Out and can get the result
   //    without dropping the level.  But thrown values like CONTINUE lead
-  //    to a problem of how to express wanting TRAMPOLINE_KEEPALIVE to be
-  //    applicable to throw situations as well--not all want it.  For now
-  //    we conflate Just_Use_Out with the intent of keepalive on throw.
+  //    to a problem... for now we conflate Just_Use_Out with the intent of
+  //    keepalive on throw.
 
     if (bounce == BOUNCE_THROWN) {
       handle_thrown:
@@ -243,7 +245,6 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         }
 
         if (Get_Level_Flag(L, ROOT_LEVEL)) {  // don't abort top
-            assert(Not_Level_Flag(TOP_LEVEL, TRAMPOLINE_KEEPALIVE));
             CLEANUP_BEFORE_EXITING_RECOVER_SCOPE;
             return BOUNCE_THROWN;
         }
@@ -253,8 +254,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         L = TOP_LEVEL;
 
         if (L->executor == &Skip_Me_Executor) {
-            if (Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE))
-                L = L->prior;  // don't let it be aborted [3]
+            L = L->prior;  // don't let it be aborted [3]
         }
 
         goto bounce_on_trampoline;  // executor will see the throw
@@ -294,25 +294,14 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         assert(Readable_Cell(Level_Out(TOP_LEVEL)));
 
-        if (TOP_LEVEL->target)  // temp bridge attempt for trampo-line
-            Force_Blit_Cell(TOP_LEVEL->target, Level_Out(TOP_LEVEL));
-
         if (Get_Level_Flag(TOP_LEVEL, ROOT_LEVEL)) {
             CLEANUP_BEFORE_EXITING_RECOVER_SCOPE;
             return BOUNCE_TOPLEVEL_OUT;
         }
 
-        if (
-            TOP_LEVEL->prior->executor == &Action_Executor
-            and Get_Executor_Flag(ACTION, TOP_LEVEL->prior, DELEGATE_CONTROL)
-        ){
-            Force_Blit_Cell(Level_Out(TOP_LEVEL->prior), Level_Out(TOP_LEVEL));
-        }
-
         L = TOP_LEVEL->prior;
 
-        if (Not_Level_Flag(TOP_LEVEL, TRAMPOLINE_KEEPALIVE))
-            Drop_Level(TOP_LEVEL);
+        dont(Drop_Level(TOP_LEVEL));  // output value wouldn't be received
 
         // some pending level now has a result
 
@@ -507,17 +496,12 @@ void Startup_Trampoline(void)
     assert(TOP_LEVEL == nullptr);
     assert(BOTTOM_LEVEL == nullptr);
 
-    USED(FORCE_TRACK_0(&g_erased_cell));  // never actually write
-
     require (
       Level* L = Make_End_Level(  // ensure L->prior [1]
         &Skip_Me_Executor,  // executor is irrelevant (permit nullptr?)
         LEVEL_FLAG_UNINTERRUPTIBLE  // can't interrupt while initializing [2]
     ));
-    Push_Level_Dont_Inherit_Interruptibility(  // to attach API handles to [3]
-        u_cast(Value*, &g_erased_cell),
-        L
-    );
+    Push_Level_Dont_Inherit_Interruptibility(L);  // to attach API handles [3]
 
     Corrupt_If_Needful(L->prior);  // catches enumeration past bottom_level
     g_ts.bottom_level = L;

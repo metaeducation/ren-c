@@ -470,10 +470,7 @@ Result(bool) Equal_Values(const Stable* s, const Stable* t, bool strict)
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
     ));
-
-    DECLARE_VALUE (value_out);
-    definitely(Is_Cell_Erased(value_out));
-    Push_Level(value_out, L);
+    Push_Level(L);
 
     require (
       Push_Action(L, LIB(EQUAL_Q), PREFIX_0)
@@ -489,17 +486,23 @@ Result(bool) Equal_Values(const Stable* s, const Stable* t, bool strict)
     Init_Logic(Erase_ARG(RELAX), relax);
 
     bool threw = Trampoline_With_Top_As_Root_Throws();
-    Drop_Level(L);
     if (threw)
         return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
-    if (Is_Failure(value_out))
-        return false;
+    bool logic;
 
-    require (
-      Stable* out = Decay_If_Unstable(value_out)
-    );
-    return Cell_Logic(out);
+    if (Is_Failure(Level_Out(L)))
+        logic = false;
+    else {
+        require (
+          Stable* out = Decay_If_Unstable(Level_Out(L))
+        );
+
+        logic = Cell_Logic(out);
+    }
+
+    Drop_Level(L);
+    return logic;
 }
 
 
@@ -542,9 +545,7 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Stable* s, const Stable* t)
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
     ));
-    DECLARE_VALUE (value_out);
-    definitely(Is_Cell_Erased(value_out));
-    Push_Level(value_out, L);
+    Push_Level(L);
     require (
       Push_Action(L, LIB(LESSER_Q), PREFIX_0)
     );
@@ -556,18 +557,23 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Stable* s, const Stable* t)
     Copy_Cell(Erase_ARG(VALUE2), t);
 
     bool threw = Trampoline_With_Top_As_Root_Throws();
-    Drop_Level(L);
     if (threw)
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
 
-    if (Is_Failure(value_out))
-        return false;
+    bool comparable;
 
-    require (
-      Stable* out = Decay_If_Unstable(value_out)
-    );
-    *lesser = Cell_Logic(out);
-    return true;
+    if (Is_Failure(Level_Out(L))) {
+        comparable = false;
+    } else {
+        require (
+          Stable* out = Decay_If_Unstable(Level_Out(L))
+        );
+        *lesser = Cell_Logic(out);
+        comparable = true;
+    }
+
+    Drop_Level(L);
+    return comparable;
 }
 
 

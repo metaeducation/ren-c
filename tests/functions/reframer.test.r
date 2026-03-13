@@ -9,8 +9,8 @@
 (
     f1: make frame! append/
     assert [not has f1 'return]
-    assert [unset? $f1.series]
-    assert [unset? $f1.value]
+    assert [null? f1.series]
+    assert [null? f1.value]
     assert [null? f1.part]
     assert [null? f1.dup]
     assert [null? f1.line]

@@ -390,9 +390,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
             &Action_Executor, LEVEL_MASK_NONE
         )
       );
-        DECLARE_VALUE (out);
-        definitely(Is_Cell_Erased(out));
-        Push_Level(out, sub);
+        Push_Level(sub);
 
       require (
         Push_Action(sub, LIB(MOLDIFY), PREFIX_0)
@@ -418,14 +416,16 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
         if (threw)  // don't want to return casual error you can TRY from
             panic (Error_No_Catch_For_Throw(sub));
 
-        unnecessary(Drop_Action(sub));  // !! action dropped, should it be?
-        Drop_Level(sub);
+        Value* out = Level_Out(sub);
 
         if (Is_Failure(out))
             panic (out);
 
         if (not Is_Trash(out))
             panic ("MOLD is supposed to return TRASH!");
+
+        unnecessary(Drop_Action(sub));  // !! action dropped, should it be?
+        Drop_Level(sub);
 
         if (tildes)
             Append_Codepoint(mo->strand, '~');

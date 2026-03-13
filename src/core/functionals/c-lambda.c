@@ -136,15 +136,13 @@ Bounce Lambda_Dispatcher(Level* const L)
     Element* spare_rebound = Copy_Cell(SPARE, block);
     Tweak_Cell_Binding(spare_rebound, L->varlist);
 
-    Flags flags = LEVEL_MASK_NONE
-        | (not LEVEL_FLAG_VANISHABLE_VOIDS_ONLY);  // allow vanish [1]
+    Flags flags = (not LEVEL_FLAG_VANISHABLE_VOIDS_ONLY);  // allow vanish [1]
 
     require (
       Level* sub = Make_Level_At_Core(
         &Evaluator_Executor, spare_rebound, SPECIFIED, flags
     ));
-    definitely(Is_Cell_Erased(OUT));  // we are in STATE_0
-    Push_Level(OUT, sub);
+    Push_Level(sub);
 
     if (not result_param)
         return DELEGATE_SUBLEVEL;  // no typecheck callback needed (ARROW)
@@ -162,6 +160,9 @@ Bounce Lambda_Dispatcher(Level* const L)
     return CONTINUE_SUBLEVEL;
 
 } lambda_finished: { /////////////////////////////////////////////////////////
+
+    Copy_Cell(OUT, SUBOUT);
+    Drop_Level(SUBLEVEL);
 
     assert(not Is_Parameter_Unconstrained(unwrap result_param));
 

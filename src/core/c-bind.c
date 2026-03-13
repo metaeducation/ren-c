@@ -838,15 +838,14 @@ DECLARE_NATIVE(LET)
 
     Flags flags =
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
-        | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
+            | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
 
     require (
       Level* sub = Make_Level(&Stepper_Executor, LEVEL->feed, flags)
     );
     Copy_Cell(Evaluator_Level_Current(sub), spare);
 
-    dont(Erase_Cell(OUT));  // LEVEL_STATE_BYTE is not STATE_0
-    Push_Level(OUT, sub);
+    Push_Level(sub);
 
     STATE = ST_LET_EVAL_STEP;
     return CONTINUE_SUBLEVEL;
@@ -877,6 +876,9 @@ DECLARE_NATIVE(LET)
     //    call for it.  But with evaluator hooks we don't know what kinds of
     //    overrides it may have (maybe the binding for items not at the head
     //    of a path is relevant?)  Simplest thing to do is drop the cache.
+
+    Copy_Cell(OUT, SUBOUT);
+    Drop_Level(SUBLEVEL);
 
     goto integrate_let_bindings;
 
