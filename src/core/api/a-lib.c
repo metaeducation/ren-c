@@ -1236,15 +1236,12 @@ RebolValue* API_rebArg(
 //    Note that if vaptr is not null, then if p is null it actually means
 //    that it intends to represent a nulled cell as the first va_list item.
 //
-static Result(None) Run_Valist_And_Call_Va_End(  // va_end()s [1]
-    Contra(Value) out,
+static Result(Level*) Run_Valist_And_Call_Va_End(  // va_end()s [1]
     Flags run_flags,  // RUN_VA_FLAG_INTERRUPTIBLE, etc.
     RebolContext* binding,
     const void* p,  // null vaptr means void* array [2] else first param [3]
     Option(void*) vaptr  // guides interpretation of p [4]
 ){
-    assert(Is_Cell_Erased(out));
-
     trap (
       Feed* feed = Make_Variadic_Feed(
         p, v_cast(va_list*, opt vaptr), FEED_MASK_DEFAULT
@@ -1273,15 +1270,15 @@ static Result(None) Run_Valist_And_Call_Va_End(  // va_end()s [1]
     else
         L->flags.bits |= LEVEL_FLAG_UNINTERRUPTIBLE;
 
-    definitely(Is_Cell_Erased(out));  // checked on entry
-    Push_Level_Dont_Inherit_Interruptibility(out, L);
+    Push_Level_Dont_Inherit_Interruptibility(nullptr, L);
     bool threw = Trampoline_With_Top_As_Root_Throws();
-    Drop_Level(L);
 
-    if (threw)
+    if (threw) {
+        Drop_Level(L);
         return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+    }
 
-    return none;
+    return L;
 }
 
 
@@ -1363,26 +1360,24 @@ RebolValue* API_rebValue(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
-
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End(
-        v, flags, binding, p, vaptr
+    Level* L = Run_Valist_And_Call_Va_End(
+        flags, binding, p, vaptr
     ) except (Error* e) {
-        Free_Value(v);  // rebRelease() would test cell validity
         panic (e);
     }
 
     require(  // !!! Review: fold rebUndecayed() in via handling of ^
-      Decay_If_Unstable(v)
+      Value* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (Is_Light_Null(v)) {
-        Free_Value(v);
-        return nullptr;  // No NULLED cells in API, see Nullptr_If_Nulled_Cell()
+    if (Is_Light_Null(out)) {
+        Drop_Level(L);
+        return nullptr;  // No Is_Null() in API, see Nullptr_If_Nulled_Cell()
     }
 
-    Set_Base_Root_Bit(v);
+    Value* v = Copy_Cell(Alloc_Value_Owned_By(L->prior), out);
+    Drop_Level(L);
     return v;  // caller must rebRelease()
 }
 
@@ -1479,22 +1474,20 @@ RebolValue* API_rebUndecayed(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
-
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End(
-        v, flags, binding, p, vaptr
+    Level* L = Run_Valist_And_Call_Va_End(
+        flags, binding, p, vaptr
     ) except (Error* e) {
-        Free_Value(v);  // rebRelease() would test cell validity
         panic (e);
     }
 
-    if (Is_Light_Null(v)) {
-        Free_Value(v);
-        return nullptr;  // No NULLED cells in API, see Nullptr_If_Nulled_Cell()
+    if (Is_Light_Null(Level_Out(L))) {
+        Drop_Level(L);
+        return nullptr;  // No Is_Null() in API, see Nullptr_If_Nulled_Cell()
     }
 
-    Set_Base_Root_Bit(v);
+    Value* v = Copy_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
+    Drop_Level(L);
     return v;  // caller must rebRelease()
 }
 
@@ -1512,15 +1505,15 @@ RebolValue* API_rebEnrescue(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
-
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End(
-        v, flags, binding, p, vaptr
+    Level* L = Run_Valist_And_Call_Va_End(
+        flags, binding, p, vaptr
     ) except (Error* e) {
-        Free_Value(v);  // rebRelease() would test cell validity
         panic (e);
     }
+
+    Value* v = Copy_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
+    Drop_Level(L);
 
     Lift_Cell(v);
     assert(not Is_Light_Null(v));  // lift operations cannot produce NULL
@@ -1530,7 +1523,6 @@ RebolValue* API_rebEnrescue(
     else
         assert(Type_Of_Raw(v) > MAX_TYPE_NOQUOTE_NOQUASI);
 
-    Set_Base_Root_Bit(v);
     return v;  // caller must rebRelease()
 }
 
@@ -1548,15 +1540,15 @@ RebolValue* API_rebRescue2(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
-
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End(
-        v, flags, binding, p, vaptr
+    Level* L = Run_Valist_And_Call_Va_End(
+        flags, binding, p, vaptr
     ) except (Error* e) {
-        Free_Value(v);  // rebRelease() would test cell validity
         panic (e);
     }
+
+    Value* v = Copy_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
+    Drop_Level(L);
 
     Lift_Cell(v);
 
@@ -1579,7 +1571,6 @@ RebolValue* API_rebRescue2(
         panic (e);
     }
 
-    Set_Base_Root_Bit(v);
     *value = v;  // caller must rebRelease()
     return nullptr;
 }
@@ -1599,24 +1590,21 @@ RebolValue* API_rebRecover(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
-
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End(
-        v, flags, binding, p, vaptr
-    ) except (Error* e) {;
-        Init_Error_Cell(v, e);
-        Set_Base_Root_Bit(v);
+    Level* L = Run_Valist_And_Call_Va_End(
+        flags, binding, p, vaptr
+    ) except (Error* e) {
+        Value* error = Init_Error_Cell(Alloc_Value(), e);
         Corrupt_If_Needful(*value);  // !!! should introduce POISON API values
-        return v;
+        return error;
     }
 
-    Decay_If_Unstable(v) except (Error* e) {
-        panic (e);
-    }
+    require (
+      Value* out = Decay_If_Unstable(Level_Out(L))
+    );
 
-    Set_Base_Root_Bit(v);
-    *value = v;
+    *value = Copy_Cell(Alloc_Value_Owned_By(L->prior), out);
+    Drop_Level(L);
     return nullptr;
 }
 
@@ -1635,24 +1623,21 @@ RebolValue* API_rebRecoverInterruptible(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
-
     Flags flags = RUN_VA_FLAG_INTERRUPTIBLE;
-    Run_Valist_And_Call_Va_End(
-        v, flags, binding, p, vaptr
+    Level* L = Run_Valist_And_Call_Va_End(
+        flags, binding, p, vaptr
     ) except (Error* e) {
-        Init_Error_Cell(v, e);
-        Set_Base_Root_Bit(v);
+        Value* error = Init_Error_Cell(Alloc_Value(), e);
         Corrupt_If_Needful(*value);  // !!! should introduce POISON API values
-        return v;
+        return error;
     }
 
     require (
-      Decay_If_Unstable(v)
+      Value* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    Set_Base_Root_Bit(v);
-    *value = v;
+    *value = Copy_Cell(Alloc_Value_Owned_By(L->prior), out);
+    Drop_Level(L);
     return nullptr;
 }
 
@@ -1674,18 +1659,17 @@ RebolValue* API_rebLift(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
-
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End(
-        v, flags, binding, p, vaptr
+    Level* L = Run_Valist_And_Call_Va_End(
+        flags, binding, p, vaptr
     ) except (Error* e) {
-        Free_Value(v);  // rebRelease() would test cell validity
         panic (e);
     }
 
+    Value* v = Copy_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
+    Drop_Level(L);
+
     Lift_Cell(v);
-    Set_Base_Root_Bit(v);
     return v;
 }
 
@@ -1701,18 +1685,18 @@ RebolValue* API_rebQuote(
 ){
     ENTER_API;
 
-    Value* v = FORCE_TRACK_0(Alloc_Value_Core(CELL_MASK_ERASED_0));
-
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End(
-        v, flags, binding, p, vaptr
+    Level* L = Run_Valist_And_Call_Va_End(
+        flags, binding, p, vaptr
     ) except (Error* e) {
-        Free_Value(v);  // rebRelease() would test cell validity
         panic (e);
     }
 
-    if (Is_Antiform(v))
+    if (Is_Antiform(Level_Out(L)))
         panic ("rebQuote() called on expression that returned an antiform");
+
+    Value* v = Copy_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
+    Drop_Level(L);
 
     Quote_Cell(As_Element(v));
     return v;
@@ -1734,14 +1718,15 @@ void API_rebElide(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (  // reuse semantics of ELIDE w.r.t. FAILURE!s, packs
-      Ensure_No_Failures_Including_In_Packs(eval)
+      Ensure_No_Failures_Including_In_Packs(Level_Out(L))
     );
-    UNUSED(eval);
+    Drop_Level(L);
 }
 
 
@@ -1782,28 +1767,34 @@ void API_rebJumps(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
-    UNUSED(eval);
 
-    // Note: If we just `panic()` here, then while MSVC compiles %a-lib.c at
-    // higher optimization levels it can conclude that API_rebJumps() never
-    // returns.  Then it will give an error on the attempt to put a DEAD_END()
-    // notification in the inline wrapper `rebJumps()`, which is needed to
-    // suppress the warning when API_rebJumps() isn't available.  This Catch-22
-    // of saying the DEAD_END() itself is unreachable code is annoying...but
-    // it's best not to turn off the warning.  Throw in a runtime twist that
-    // it can't guarantee won't happen (but won't) so it doesn't use special
-    // knowledge that API_rebJumps() does not return.
-    //
+  fake_out_msvc_warning_about_unreachable_code: {
+
+  // Note: If we just `panic()` here, then while MSVC compiles %a-lib.c at
+  // higher optimization levels it can conclude that API_rebJumps() never
+  // returns.  Then it will give an error on the attempt to put a DEAD_END()
+  // notification in the inline wrapper `rebJumps()`, which is needed to
+  // suppress the warning when API_rebJumps() isn't available.  This Catch-22
+  // of saying the DEAD_END() itself is unreachable code is annoying...but
+  // it's best not to turn off the warning.  Throw in a runtime twist that
+  // it can't guarantee won't happen (but won't) so it doesn't use special
+  // knowledge that API_rebJumps() does not return.
+
+    unnecessary(Drop_Level(L));  // will always reach panic
+
     assert(p != nullptr);
     if (p == nullptr)
         return;
 
+} panic_when_code_doesnt_jump: {
+
     panic ("rebJumps() ran code, but it didn't FAIL or QUIT or THROW, etc.");
-}
+}}
 
 
 //
@@ -1820,14 +1811,18 @@ bool API_rebLogical(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
-    return Logical_Test(v);
+    bool logic = Logical_Test(out);
+    Drop_Level(L);
+
+    return logic;
 }
 
 
@@ -1858,15 +1853,21 @@ bool API_rebDid(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
 
-    if (Is_Light_Null(eval) or Is_Void(eval) or Is_Failure(eval))
-        return false;
+    bool logic = (
+        not Is_Light_Null(Level_Out(L))
+        and not Is_Void(Level_Out(L))
+        and not Is_Failure(Level_Out(L))
+    );
 
-    return true;
+    Drop_Level(L);
+
+    return logic;
 }
 
 
@@ -1881,7 +1882,6 @@ bool API_rebDidnt(
 ){
     return not API_rebDid(binding, p, vaptr);
 }
-
 
 
 //
@@ -1900,30 +1900,37 @@ intptr_t API_rebUnbox(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (Is_Logic(v)) {
-        return Cell_Logic(v) ? 1 : 0;
+    intptr_t i;
+    if (Is_Logic(out)) {
+        i = Cell_Logic(out) ? 1 : 0;
     }
-    else switch (opt Type_Of(v)) {
+    else switch (opt Type_Of(out)) {
       case TYPE_INTEGER:
-        return VAL_INT64(v);
+        i = VAL_INT64(out);
+        break;
 
       case TYPE_RUNE: {
-        Codepoint c = Get_Rune_Single_Codepoint(v) except (Error* e) {
+        i = Get_Rune_Single_Codepoint(out) except (Error* e) {
             panic (e);
         }
-        return c; }
+        break; }
 
       default:
         panic ("C-based rebUnbox() only supports INTEGER!, CHAR!, and LOGIC!");
     }
+
+    Drop_Level(L);
+
+    return i;
 }
 
 
@@ -1940,18 +1947,22 @@ bool API_rebUnboxLogic(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (not Is_Logic(v))
+    if (not Is_Logic(out))
         panic ("rebUnboxLogic() called on non-LOGIC!");
 
-    return Cell_Logic(v);
+    bool logic = Cell_Logic(out);
+    Drop_Level(L);
+
+    return logic;
 }
 
 
@@ -1964,18 +1975,22 @@ bool API_rebUnboxBoolean(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (not Is_Boolean(v))
+    if (not Is_Boolean(out))
         panic ("rebUnboxBoolean() called on non-[true false]!");
 
-    return Cell_True(v);
+    bool logic = Cell_True(out);
+    Drop_Level(L);
+
+    return logic;
 }
 
 
@@ -1988,18 +2003,22 @@ bool API_rebUnboxYesNo(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (not Is_YesNo(v))
+    if (not Is_YesNo(out))
         panic ("rebUnboxYesNo() called on non-[yes no]!");
 
-    return Cell_Yes(v);
+    bool logic = Cell_Yes(out);
+    Drop_Level(L);
+
+    return logic;
 }
 
 
@@ -2012,18 +2031,22 @@ bool API_rebUnboxOnOff(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (not Is_OnOff(v))
+    if (not Is_OnOff(out))
         panic ("rebUnboxOnOff() called on non-[on off]!");
 
-    return Cell_On(v);
+    bool logic = Cell_On(out);
+    Drop_Level(L);
+
+    return logic;
 }
 
 
@@ -2036,20 +2059,23 @@ int32_t API_rebUnboxInteger(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (not Is_Integer(v))
+    if (not Is_Integer(out))
         panic ("rebUnboxInteger() called on non-INTEGER!");
 
-    REBI64 i = VAL_INT64(v);
+    int64_t i = VAL_INT64(out);
     if (i < INT32_MIN or i > INT32_MAX)
         panic ("rebUnboxInteger() called on INTEGER! out of range!");
+
+    Drop_Level(L);
 
     return i_cast(int32_t, i);
 }
@@ -2064,18 +2090,22 @@ int64_t API_rebUnboxInteger64(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (not Is_Integer(v))
+    if (not Is_Integer(out))
         panic ("rebUnboxInteger64() called on non-INTEGER!");
 
-    return VAL_INT64(v);
+    int64_t i = VAL_INT64(out);
+    Drop_Level(L);
+
+    return i;
 }
 
 
@@ -2088,21 +2118,29 @@ double API_rebUnboxDecimal(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (Is_Decimal(v))
-        return VAL_DECIMAL(v);
+    double d;
 
-    if (Is_Integer(v))
-        return cast(double, VAL_INT64(v));
+    if (Is_Decimal(out)) {
+        d = VAL_DECIMAL(out);
+    }
+    else if (Is_Integer(out)) {
+        d = cast(double, VAL_INT64(out));
+    }
+    else
+        panic ("rebUnboxDecimal() called on non-DECIMAL! or non-INTEGER!");
 
-    panic ("rebUnboxDecimal() called on non-DECIMAL! or non-INTEGER!");
+    Drop_Level(L);
+
+    return d;
 }
 
 
@@ -2120,18 +2158,22 @@ uint32_t API_rebUnboxChar(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (not Is_Rune_And_Is_Char(v))
+    if (not Is_Rune_And_Is_Char(out))
         panic ("rebUnboxChar() called on non-CHAR");  // API error [1]
 
-    return Rune_Known_Single_Codepoint(v);
+    uint32_t c = Rune_Known_Single_Codepoint(out);
+    Drop_Level(L);
+
+    return c;
 }
 
 
@@ -2145,20 +2187,25 @@ void* API_rebUnboxHandleCData(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (Type_Of(v) != TYPE_HANDLE)
+    if (Type_Of(out) != TYPE_HANDLE)
         panic ("rebUnboxHandleCData() called on non-HANDLE!");
 
     if (size_out)
-        *size_out = Cell_Handle_Len(v);
-    return Cell_Handle_Pointer(void*, v);
+        *size_out = Cell_Handle_Len(out);
+
+    void* pointer = Cell_Handle_Pointer(void*, out);
+    Drop_Level(L);
+
+    return pointer;
 }
 
 
@@ -2173,18 +2220,22 @@ RebolHandleCleaner* API_rebExtractHandleCleaner(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (Type_Of(v) != TYPE_HANDLE)
+    if (Type_Of(out) != TYPE_HANDLE)
         panic ("rebUnboxHandleCleaner() called on non-HANDLE!");
 
-    return opt Cell_Handle_Cleaner(v);
+    RebolHandleCleaner* cleaner = opt Cell_Handle_Cleaner(out);
+    Drop_Level(L);
+
+    return cleaner;
 }
 
 
@@ -2232,15 +2283,19 @@ size_t API_rebSpellInto(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    return Spell_Into(buf, buf_size, v);
+    size_t size = Spell_Into(buf, buf_size, out);
+    Drop_Level(L);
+
+    return size;
 }
 
 
@@ -2259,22 +2314,27 @@ char* API_rebSpellOpt(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (Is_Null(v))
+    if (Is_Null(out)) {
+        Drop_Level(L);
         return nullptr;
+    }
 
-    size_t size = Spell_Into(nullptr, 0, v);
+    size_t size = Spell_Into(nullptr, 0, out);
     char* result = rebAllocN(char, size);  // no +1 for term needed...
     assert(result[size] == '\0');  // ...see rebRepossess() for why this is
 
-    size_t check = Spell_Into(result, size, v);
+    size_t check = Spell_Into(result, size, out);
+    Drop_Level(L);
+
     assert(check == size);
     UNUSED(check);
 
@@ -2367,15 +2427,19 @@ unsigned int API_rebSpellIntoWide(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    return Spell_Into_Wide(buf, buf_chars, v);
+    unsigned int num_chars = Spell_Into_Wide(buf, buf_chars, out);
+    Drop_Level(L);
+
+    return num_chars;
 }
 
 
@@ -2391,23 +2455,28 @@ REBWCHAR* API_rebSpellWideOpt(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (Is_Null(v))
+    if (Is_Null(out)) {
+        Drop_Level(L);
         return nullptr;
+    }
 
-    REBLEN len = Spell_Into_Wide(nullptr, 0, v);
+    REBLEN len = Spell_Into_Wide(nullptr, 0, out);
     REBWCHAR* result = cast(
         REBWCHAR*, rebAllocBytes(sizeof(REBWCHAR) * (len + 1))
     );
 
-    REBLEN check = Spell_Into_Wide(result, len, v);
+    REBLEN check = Spell_Into_Wide(result, len, out);
+    Drop_Level(L);
+
     assert(check == len);
     UNUSED(check);
 
@@ -2448,21 +2517,23 @@ size_t API_rebBytesInto(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
     Size bsize = buf_size;  // see `Size`: we use signed sizes internally
 
-    if (not Any_Bytes_Type(Type_Of(v)))
+    if (not Any_Bytes_Type(Type_Of(out)))
         panic ("rebBytes() APIs need BLOB! or ANY-UTF8? datatypes");
 
     Size size;
-    const Byte* data = Cell_Bytes_At(&size, v);
+    const Byte* data = Cell_Bytes_At(&size, out);
+    Drop_Level(L);
 
     if (buf == nullptr) {
         assert(bsize == 0);
@@ -2489,24 +2560,27 @@ unsigned char* API_rebBytesOpt(  // unsigned char, no Byte required by API
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (Is_Null(v)) {
+    if (Is_Null(out)) {
+        Drop_Level(L);
         *size_out = 0;
         return nullptr;  // opt on input makes void, means null out
     }
 
-    if (not Any_Bytes_Type(Type_Of(v)))
+    if (not Any_Bytes_Type(Type_Of(out)))
         panic ("rebBytes() APIs need BLOB! or ANY-UTF8? datatypes");
 
     Size size;
-    const Byte* data = Cell_Bytes_At(&size, v);
+    const Byte* data = Cell_Bytes_At(&size, out);
+    Drop_Level(L);
 
     Byte* result = rebAllocN(Byte, size);  // no +1 needed...
     assert(result[size] == '\0');  // ...see rebRepossess() for why
@@ -2552,21 +2626,23 @@ const unsigned char* API_rebLockBytes(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (not Any_Bytes_Type(Type_Of(v)))
+    if (not Any_Bytes_Type(Type_Of(out)))
         panic ("rebLockBytes() only works with types with byte storage");
 
     // !!! lock code here [1]
 
     Size size;
-    const Byte* bytes = Cell_Bytes_At(&size, v);
+    const Byte* bytes = Cell_Bytes_At(&size, out);
+    Drop_Level(L);
 
     *size_out = size;
     return bytes;
@@ -2591,24 +2667,26 @@ unsigned char* API_rebLockMutableBytes(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
     require (
-      Run_Valist_And_Call_Va_End(eval, RUN_VA_MASK_NONE, binding, p, vaptr)
+      Level* L = Run_Valist_And_Call_Va_End(
+        RUN_VA_MASK_NONE, binding, p, vaptr
+      )
     );
     require (
-      Stable* v = Decay_If_Unstable(eval)
+      Stable* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    if (not Any_Bytes_Type(Type_Of(v)))
+    if (not Any_Bytes_Type(Type_Of(out)))
         panic ("rebLockBytes() only works with types with byte storage");
 
-    if (Is_Flex_Read_Only(Cell_Flex(v)))
+    if (Is_Flex_Read_Only(Cell_Flex(out)))
         panic ("rebLockMutableBytes() called on read-only input");
 
     // !!! lock code here [1]
 
     Size size;
-    const Byte* bytes = Cell_Bytes_At(&size, v);
+    const Byte* bytes = Cell_Bytes_At(&size, out);
+    Drop_Level(L);
 
     *size_out = size;
     return m_cast(Byte*, bytes);  // we checked it was mutable

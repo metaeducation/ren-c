@@ -476,7 +476,7 @@ void RunPromise(void)
     );
 
     Push_Level_Dont_Inherit_Interruptibility(  // you can HALT inside a promise
-        cast(Value*, Alloc_Value_Core(CELL_MASK_ERASED_0)),  // don't set root
+        Alloc_Value(),
         L
     );
     goto run_promise;

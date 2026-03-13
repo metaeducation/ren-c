@@ -568,8 +568,9 @@ void Startup_Core(void)
 
     Startup_Datatypes();
 
-    known_nullptr(g_datatypes_module) = Alloc_Element();
-    Init_Module(g_datatypes_module, g_datatypes_context);  // GC protect
+    known_nullptr(g_datatypes_module) = Init_Module(  // GC protect
+        Alloc_Value(), g_datatypes_context
+    );
 
 } startup_lib: {
 
@@ -590,8 +591,9 @@ void Startup_Core(void)
 
     Startup_Lib();
 
-    known_nullptr(g_lib_module) = Alloc_Element();
-    Init_Module(g_lib_module, g_lib_context);  // GC protect
+    known_nullptr(g_lib_module) = Init_Module(  // GC protect
+        Alloc_Value(), g_lib_context
+    );
 
 } initialize_core_api_binding: {
 
@@ -846,8 +848,7 @@ void Startup_Core(void)
 
     SeaOfVars* util = Alloc_Sea_Core(BASE_FLAG_MANAGED);
     Tweak_Link_Inherit_Bind(util, g_lib_context);
-    known_nullptr(g_sys_util_module) = Alloc_Element();
-    Init_Module(g_sys_util_module, util);
+    known_nullptr(g_sys_util_module) = Init_Module(Alloc_Value(), util);
     known_nullptr(g_sys_util_context) = util;
 
     rebElide(

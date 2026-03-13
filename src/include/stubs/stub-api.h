@@ -141,10 +141,7 @@ INLINE Api(Stable*) Known_Stable_Api(Api(Value*) v) {
 //    of a panic() that interrupts the level, and reporting any leaks.
 //
 // 3. Giving the cell itself BASE_FLAG_ROOT lets a Stable* be discerned as
-//    either a "public" API handle or not.  We don't want evaluation targets
-//    to have this flag, because it's legal for the Level's ->out cell to be
-//    erased--not legal for API values.  So if an evaluation is done into an
-//    API handle, the flag has to be off...and then added later.
+//    either a "public" API handle or not.
 //
 //    Having BASE_FLAG_ROOT is still tolerated as a "fresh" state for
 //    purposes of init.  The flag is not copied by Copy_Cell().
@@ -152,7 +149,7 @@ INLINE Api(Stable*) Known_Stable_Api(Api(Value*) v) {
 #define CELL_MASK_API_INITABLE \
     (CELL_MASK_UNREADABLE | BASE_FLAG_ROOT)
 
-INLINE Value* Alloc_Value_Core(Flags flags)  // Value*, not Init(Value) [1]
+INLINE Value* Alloc_Value_Core(Flags flags, Level* L)  // not Init(Value) [1]
 {
     require (
       Stub* stub = Make_Untracked_Stub(
@@ -162,16 +159,16 @@ INLINE Value* Alloc_Value_Core(Flags flags)  // Value*, not Init(Value) [1]
     Cell* cell = Stub_Cell(stub);
     cell->header.bits = flags;  // can't be corrupt [1]
 
-    Connect_Api_Handle_To_Level(stub, TOP_LEVEL);  // [2]
+    Connect_Api_Handle_To_Level(stub, L);  // [2]
 
     return u_cast(Value*, cell);
 }
 
 #define Alloc_Value() \
-    TRACK(Alloc_Value_Core(CELL_MASK_API_INITABLE))  // not eval target! [3]
+    TRACK(Alloc_Value_Core(CELL_MASK_API_INITABLE, TOP_LEVEL))
 
-#define Alloc_Element() \
-    Init_Quasar(Alloc_Value_Core(CELL_MASK_API_INITABLE))  // same [3]
+#define Alloc_Value_Owned_By(L) \
+    TRACK(Alloc_Value_Core(CELL_MASK_API_INITABLE, L))
 
 INLINE void Free_Value(Value* v)
 {
