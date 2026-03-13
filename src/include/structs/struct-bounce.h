@@ -52,15 +52,14 @@ typedef Byte WildTwo[2];
 //    because it's very easy to say `return Error_Xxx()` instead of writing
 //    `return fail (Error_Xxx())` or `panic (Error_Xxx())`.
 //
-// 2. Ren-C is conservative about accepting arbitrary cells for two reasons.
-//    One is that it's easy to slip and return a local address of a cell
-//    made with something like DECLARE_ELEMENT(), and the warnings which
-//    catch this (like -Wreturn-local-addr) are flaky and don't work at all
-//    unless you're using higher optimization levels.  Another is that the
-//    performance is best if the native itself copies the cell into the
-//    OUT slot, because when the action code calls the dispatcher it checks
-//    for equality to that pointer first.  Use `return COPY_TO_OUT(cell)`.
+// 2. While the API clients use RebolBounce as void* and accept Value* as
+//    a parameter, internal code doesn't let you pass arbitrary cells.  So you
+//    must fill the output cell and return BOUNCE_TOPLEVEL_OUT if it's not an
+//    API value (or use a helper that does that, like BOUNCE_OUT).
 //
+
+INLINE bool Is_Api_Value(const Value* v);
+
 #if (! CPLUSPLUS_11)
     typedef RebolBounce Bounce;
 #else
@@ -69,11 +68,20 @@ typedef Byte WildTwo[2];
 
         Bounce() = default;
 
-        explicit Bounce(const void* p) : b {p} {}
+        Bounce(std::nullptr_t) : b {nullptr} {}
+
+        Bounce(Value* v) : b {v} {
+            assert(
+                v == nullptr  // rebValue() and friends may return nullptr
+                or Is_Api_Value(v)  // use BOUNCE_TOPLEVEL_OUT if not API [2]
+            );
+        }
+
+        Bounce(const char* cstr) : b {cstr} {}  // not-yet-validated UTF-8
+
+        explicit Bounce(const void* p) : b {p} {}  // a.k.a. RebolBounce
 
         explicit Bounce(Level* L) : b {L} {}  // Level* is a continuation
-
-        Bounce(std::nullptr_t) : b {nullptr} {}
 
       #if NEEDFUL_RESULT_USES_WRAPPER
         Bounce(needful::Result0Struct) : b {nullptr} {}  // to accept `fail`
@@ -81,18 +89,14 @@ typedef Byte WildTwo[2];
 
       #if NEEDFUL_CPP_ENHANCEMENTS
         Bounce(needful::Nocast0Struct) : b {nullptr} {}  // Result(T) uses this
-      #endif
-
-        Bounce(const Cell* cell) : b {cell} {}  // either API cell or OUT [2]
-
-        explicit Bounce(WildTwo* wildtwo) : b {wildtwo} {}
-
+      #else
         explicit Bounce(int z) : b {nullptr} {
           assert(z == 0);  // only 0 allowed, for Result(Bounce) from 0
           UNUSED(z);
         }
+      #endif
 
-        Bounce(const char* cstr) : b {cstr} {}  // not-yet-validated UTF-8
+        explicit Bounce(WildTwo* wildtwo) : b {wildtwo} {}
 
         operator const void*() const
           { return b; }
@@ -100,6 +104,25 @@ typedef Byte WildTwo[2];
         explicit operator const char*() const
           { return u_cast(const char*, b); }
     };
+#endif
+
+#if CPLUSPLUS_11  // avoid e.g. legacy comparisons to OUT
+    void operator==(const Bounce& b, const Cell* cell) = delete;
+    void operator==(const Cell* cell, const Bounce& b) = delete;
+    void operator!=(const Bounce& b, const Cell* cell) = delete;
+    void operator!=(const Cell* cell, const Bounce& b) = delete;
+
+    inline bool operator==(const Bounce& b, std::nullptr_t)
+      { return b.b == nullptr; }
+
+    inline bool operator==(std::nullptr_t, const Bounce& b)
+      { return b.b == nullptr; }
+
+    inline bool operator!=(const Bounce& b, std::nullptr_t)
+      { return b.b != nullptr; }
+
+    inline bool operator!=(std::nullptr_t, const Bounce& b)
+      { return b.b != nullptr; }
 #endif
 
 

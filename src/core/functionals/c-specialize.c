@@ -456,12 +456,9 @@ DECLARE_NATIVE(SPECIALIZE)
 
     Tweak_Frame_Infix_Mode(OUT, infix_mode);
     Copy_Vanishability(OUT, specializee);
+    Proxy_Frame_Activation(OUT, specializee);
 
-    if (Is_Action(specializee))
-        return Activate_Frame(OUT);
-
-    assert(Is_Possibly_Unstable_Value_Frame(OUT));
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 

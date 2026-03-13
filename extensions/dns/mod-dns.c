@@ -197,11 +197,11 @@ DECLARE_NATIVE(DNS_ACTOR)
                 require (
                     Init_Tuple_Bytes(OUT, cast(Byte*, *he->h_addr_list), 4)
                 );
-                return OUT;
+                return BOUNCE_OUT;
             }
           #else
             Get_Local_Ip_Via_Google_DNS_May_Panic(OUT);
-            return OUT;
+            return BOUNCE_OUT;
           #endif
         }
         else if (Is_Tuple(host)) {
@@ -218,8 +218,10 @@ DECLARE_NATIVE(DNS_ACTOR)
             char buf[MAX_TUPLE];
             Get_Tuple_Bytes(buf, host, 4);
             HOSTENT *he = gethostbyaddr(buf, 4, AF_INET);
-            if (he != nullptr)
-                return Init_Text(OUT, Make_Strand_UTF8(he->h_name));
+            if (he != nullptr) {
+                Init_Text(OUT, Make_Strand_UTF8(he->h_name));
+                return BOUNCE_OUT;
+            }
 
             // ...else fall through to error handling...
         }
@@ -246,7 +248,7 @@ DECLARE_NATIVE(DNS_ACTOR)
                 require (
                   Init_Tuple_Bytes(OUT, cast(Byte*, *he->h_addr_list), 4)
                 );
-                return OUT;
+                return BOUNCE_OUT;
             }
 
             // ...else fall through to error handling...

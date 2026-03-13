@@ -83,12 +83,13 @@ DECLARE_NATIVE(TEST_LIBREBOL)
   start: {
 
   #if (! INCLUDE_TEST_LIBREBOL_NATIVE)
-    return Init_Text(  // text! vs. failing to distinguish from test failure
+    Init_Text(  // text! vs. failing to distinguish from test failure
         OUT,
         Make_Strand_UTF8(
             "TEST-LIBREBOL only if #define INCLUDE_TEST_LIBREBOL_NATIVE"
         )
     );
+    return BOUNCE_OUT;
   #else
     // !!! NOTICE: We are pushing values to the data stack, but we can't hold
     // a pointer to the stack via PUSH() on the same line as doing an API
@@ -218,7 +219,8 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 
 } finish: {
 
-    return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));
+    Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));
+    return BOUNCE_OUT;
 
   #endif
 }}

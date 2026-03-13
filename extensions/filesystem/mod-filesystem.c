@@ -480,13 +480,15 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
         require (
           Strand* copy = Copy_String_At(path)
         );
-        return Init_File(OUT, copy);  // many callers modify
+        Init_File(OUT, copy);  // many callers modify
+        return BOUNCE_OUT;
     }
 
-    return Init_File(
+    Init_File(
         OUT,
         To_REBOL_Path(path, ARG(DIR) ? PATH_OPT_SRC_IS_DIR : 0)
     );
+    return BOUNCE_OUT;
 }
 
 
@@ -518,10 +520,11 @@ DECLARE_NATIVE(FILE_TO_LOCAL)
         require (
           Strand* copy = Copy_String_At(path)
         );
-        return Init_Text(OUT, copy);  // callers modify
+        Init_Text(OUT, copy);  // callers modify
+        return BOUNCE_OUT;
     }
 
-    return Init_Text(
+    Init_Text(
         OUT,
         To_Local_Path(
             path,
@@ -530,6 +533,7 @@ DECLARE_NATIVE(FILE_TO_LOCAL)
                 | (ARG(NO_TAIL_SLASH) ? REB_FILETOLOCAL_NO_TAIL_SLASH : 0)
         )
     );
+    return BOUNCE_OUT;
 }
 
 

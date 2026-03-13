@@ -416,7 +416,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Varargs)
         UNUSED(CELL_VARARGS_SIGNED_PARAM_INDEX(OUT));  // corrupts in C++11
         Tweak_Cell_Varargs_Origin(OUT, array1);
 
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     // !!! Permit FRAME! ?
@@ -453,7 +453,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
         }
         if (Is_Void(OUT))
             return fail (Error_Nothing_To_Take_Raw());
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     assert(TOP_INDEX == STACK_BASE);
@@ -485,7 +485,8 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
         Move_Cell(PUSH(), As_Element(out));
     }
 
-    return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));  // block? [1]
+    Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));  // block? [1]
+    return BOUNCE_OUT;
 }
 
 
@@ -569,7 +570,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Varargs)
         return THROWN;
     }
     assert(Is_Logic(As_Stable(OUT)));
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 

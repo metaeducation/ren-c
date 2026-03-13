@@ -166,7 +166,7 @@ DECLARE_NATIVE(DIR_ACTOR)
         }
 
         Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));
-        return OUT; }
+        return BOUNCE_OUT; }
 
     //=//// CREATE /////////////////////////////////////////////////////////=//
 

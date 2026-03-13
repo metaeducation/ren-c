@@ -216,7 +216,8 @@ DECLARE_NATIVE(JOIN)
     if (ARG(TAIL) and delimiter)
         Form_Element(mo, unwrap delimiter);
 
-    return Init_Text(OUT, Pop_Molded_Strand(mo));
+    Init_Text(OUT, Pop_Molded_Strand(mo));
+    return BOUNCE_OUT;
 
 } not_initial_entry: { ///////////////////////////////////////////////////////
 
@@ -675,7 +676,7 @@ DECLARE_NATIVE(JOIN)
     if (mo->strand)
         Drop_Mold(mo);
 
-    return OUT;
+    return BOUNCE_OUT;
 
 }} finish_blob_join: { ///////////////////////////////////////////////////////
 
@@ -759,7 +760,8 @@ DECLARE_NATIVE(JOIN)
 
     Set_Flex_Len(buf, 0);
 
-    return Init_Blob(OUT, bin);
+    Init_Blob(OUT, bin);
+    return BOUNCE_OUT;
 
 }}} finish_stack_join: { /////////////////////////////////////////////////////
 
@@ -782,7 +784,7 @@ DECLARE_NATIVE(JOIN)
     if (not joining_datatype)
         Tweak_Cell_Binding(out, Cell_Binding(unwrap base));
 
-    return OUT;
+    return BOUNCE_OUT;
 
 } vetoed: { ////////////////////////////////////////////////////////////
 
@@ -821,7 +823,8 @@ DECLARE_NATIVE(DEBASE)
     if (not decoded)
         panic (Error_Invalid_Data_Raw(ARG(VALUE)));
 
-    return Init_Blob(OUT, decoded);
+    Init_Blob(OUT, decoded);
+    return BOUNCE_OUT;
 }
 
 
@@ -871,7 +874,8 @@ DECLARE_NATIVE(ENBASE)
         panic (PARAM(BASE));
     }
 
-    return Init_Text(OUT, Pop_Molded_Strand(mo));
+    Init_Text(OUT, Pop_Molded_Strand(mo));
+    return BOUNCE_OUT;
 }
 
 
@@ -942,11 +946,12 @@ DECLARE_NATIVE(ENHEX)
         }
     }
 
-    return Init_String(
+    Init_String(
         OUT,
         Heart_Of_Builtin_Fundamental(string),
         Pop_Molded_Strand(mo)
     );
+    return BOUNCE_OUT;
 }
 
 
@@ -1052,11 +1057,12 @@ DECLARE_NATIVE(DEHEX)
         Append_Codepoint(mo->strand, decoded);
     }
 
-    return Init_String(
+    Init_String(
         OUT,
         Heart_Of_Builtin_Fundamental(string),
         Pop_Molded_Strand(mo)
     );
+    return BOUNCE_OUT;
 }
 
 
@@ -1083,7 +1089,7 @@ DECLARE_NATIVE(DELINE)
     if (ARG(LINES)) {
         Init_Block(OUT, Split_Lines(cast(Element*, input)));
         rebRelease(input);
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     Strand* s = Cell_Strand_Ensure_Mutable(input);
@@ -1305,7 +1311,8 @@ DECLARE_NATIVE(ENTAB)
     }
 
     Heart heart = Heart_Of_Builtin_Fundamental(string);
-    return Init_String(OUT, heart, Pop_Molded_Strand(mo));
+    Init_String(OUT, heart, Pop_Molded_Strand(mo));
+    return BOUNCE_OUT;
 }
 
 
@@ -1366,7 +1373,8 @@ DECLARE_NATIVE(DETAB)
     }
 
     Heart heart = Heart_Of_Builtin_Fundamental(string);
-    return Init_String(OUT, heart, Pop_Molded_Strand(mo));
+    Init_String(OUT, heart, Pop_Molded_Strand(mo));
+    return BOUNCE_OUT;
 }
 
 
@@ -1387,7 +1395,7 @@ DECLARE_NATIVE(LOWERCASE)
     INCLUDE_PARAMS_OF_LOWERCASE;
 
     Change_Case(OUT, ARG(STRING), Element_ARG(PART), false);
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1408,7 +1416,7 @@ DECLARE_NATIVE(UPPERCASE)
     INCLUDE_PARAMS_OF_UPPERCASE;
 
     Change_Case(OUT, ARG(STRING), Element_ARG(PART), true);
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1471,7 +1479,7 @@ DECLARE_NATIVE(TO_HEX)
     Move_Cell(OUT, TOP_ELEMENT);
     DROP();
     Drop_Mold(mo);
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1512,7 +1520,7 @@ DECLARE_NATIVE(INVALID_UTF8_Q)
         if (bp + trail > end or not Is_Legal_UTF8(bp, trail)) {
             Copy_Cell(OUT, arg);
             SERIES_INDEX_UNBOUNDED(OUT) = bp - Binary_Head(Cell_Binary(arg));
-            return OUT;
+            return BOUNCE_OUT;
         }
     }
 

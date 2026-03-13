@@ -220,7 +220,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     assume (
       Unlift_Cell_No_Decay(OUT)
     );
-    return OUT;
+    return BOUNCE_OUT;
 
 } resume_body_if_not_reentrant: {  ///////////////////////////////////////////
 
@@ -379,7 +379,7 @@ Bounce Yielder_Dispatcher(Level* const L)
             return THROWN;
         }
         Init_Space(original_frame);
-        return OUT;  // YIELD:FINAL value
+        return BOUNCE_OUT;  // YIELD:FINAL value
     }
 
     Init_Space(original_frame);  // THROW counts as completion [1]
@@ -394,7 +394,8 @@ Bounce Yielder_Dispatcher(Level* const L)
   // states, because other error antiforms passed to YIELD elevate to panic.
 
     assert(Is_Space(original_frame));
-    return Copy_Cell(OUT, Lib_Value(SYM_DONE));
+    Copy_Cell(OUT, Lib_Value(SYM_DONE));
+    return BOUNCE_OUT;
 
 } invoke_yielder_that_abruptly_panicked: {  //////////////////////////////////
 
@@ -467,7 +468,7 @@ DECLARE_NATIVE(YIELDER)
 {
     INCLUDE_PARAMS_OF_YIELDER;
 
-    Bounce bounce = opt Irreducible_Bounce(LEVEL, Make_Interpreted_Action(
+    Bounce bounce = opt Irreducible_Bounce(Make_Interpreted_Action(
         LEVEL,
         SYM_YIELD,  // give it a YIELD, but no RETURN (see YIELD:FINAL)
         &Yielder_Dispatcher,
@@ -484,7 +485,7 @@ DECLARE_NATIVE(YIELDER)
     Init_Null(Details_At(details, IDX_YIELDER_PLUG));
     Init_Null(Details_At(details, IDX_YIELDER_YIELDED_LIFTED));
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -554,7 +555,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
         break;
 
       case ST_YIELD_SUSPENDED:  // see definition for why this state exists
-        return OUT;
+        return BOUNCE_OUT;
 
       default: assert(false);
     }

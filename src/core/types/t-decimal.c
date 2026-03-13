@@ -139,18 +139,20 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         trap (
           Transcode_One(OUT, HEART_DECIMAL, arg)
         );
-        return OUT;
+        return BOUNCE_OUT;
     }
     else switch (opt type) {
       case TYPE_RUNE: {
         trap (
           Codepoint c = Get_Rune_Single_Codepoint(arg)
         );
-        return Init_Decimal(OUT, cast(REBDEC, c)); }
+        Init_Decimal(OUT, cast(REBDEC, c));
+        return BOUNCE_OUT; }
 
       case TYPE_TIME: {
         REBDEC d = VAL_NANO(arg) * NANO;
-        return Init_Decimal(OUT, d); }
+        Init_Decimal(OUT, d);
+        return BOUNCE_OUT; }
 
       case TYPE_PATH: {  // fractions as 1/2 are experimental use for PATH! [1]
         if (Sequence_Len(arg) != 2)
@@ -178,7 +180,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
             panic ("Fraction PATH! didn't maket DECIMAL! or PERCENT!");
         }
         rebRelease(quotient);
-        return Init_Decimal(OUT, d); }
+        Init_Decimal(OUT, d);
+        return BOUNCE_OUT; }
 
       case TYPE_BLOCK: {  // !!! what the heck is this for? [2]
         REBLEN len;
@@ -216,7 +219,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
             ++exp;
             d /= 10.0;
         }
-        return Init_Decimal(OUT, d); }
+        Init_Decimal(OUT, d);
+        return BOUNCE_OUT; }
 
       default:
         break;
@@ -308,7 +312,8 @@ IMPLEMENT_GENERIC(ZEROIFY, Is_Decimal)
     INCLUDE_PARAMS_OF_ZEROIFY;
     UNUSED(ARG(EXAMPLE));  // always gives 0x0
 
-    return Init_Decimal(OUT, 0.0);;
+    Init_Decimal(OUT, 0.0);
+    return BOUNCE_OUT;
 }
 
 
@@ -421,23 +426,27 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
 
             switch (opt id) {
 
-            case SYM_ADD:
+            case SYM_ADD: {
                 d1 += d2;
-                return Init_Decimal_Or_Percent(OUT, heart, d1);
+                Init_Decimal_Or_Percent(OUT, heart, d1);
+                return BOUNCE_OUT;
+            }
 
-            case SYM_SUBTRACT:
+            case SYM_SUBTRACT: {
                 d1 -= d2;
-                return Init_Decimal_Or_Percent(OUT, heart, d1);
+                Init_Decimal_Or_Percent(OUT, heart, d1);
+                return BOUNCE_OUT; }
 
             case SYM_DIVIDE:
-            case SYM_REMAINDER:
+            case SYM_REMAINDER: {
                 if (d2 == 0.0)
                     panic (Error_Zero_Divide_Raw());
                 if (id == SYM_DIVIDE)
                     d1 /= d2;
                 else
                     d1 = fmod(d1, d2);
-                return Init_Decimal_Or_Percent(OUT, heart, d1);
+                Init_Decimal_Or_Percent(OUT, heart, d1);
+                return BOUNCE_OUT; }
 
             case SYM_POWER:
                 if (d2 == 0) {
@@ -448,12 +457,16 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
                     // https://rosettacode.org/wiki/Zero_to_the_zero_power
                     //
                     d1 = 1.0;
-                    return Init_Decimal_Or_Percent(OUT, heart, d1);
+                    Init_Decimal_Or_Percent(OUT, heart, d1);
+                    return BOUNCE_OUT;
                 }
-                if (d1 == 0)
-                    return Init_Decimal_Or_Percent(OUT, heart, d1);
+                if (d1 == 0) {
+                    Init_Decimal_Or_Percent(OUT, heart, d1);
+                    return BOUNCE_OUT;
+                }
                 d1 = pow(d1, d2);
-                return Init_Decimal_Or_Percent(OUT, heart, d1);
+                Init_Decimal_Or_Percent(OUT, heart, d1);
+                return BOUNCE_OUT;
 
             default:
                 panic (Error_Not_Related_Raw(verb, Datatype_Of(val)));
@@ -500,8 +513,10 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
             );
         }
 
-        if (Any_String_Heart(to))
-            return Init_String(OUT, to, Pop_Molded_Strand(mo));
+        if (Any_String_Heart(to)) {
+            Init_String(OUT, to, Pop_Molded_Strand(mo));
+            return BOUNCE_OUT;
+        }
 
         if (Try_Init_Small_Utf8(
             OUT,
@@ -511,16 +526,18 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
             Strand_Size(mo->strand) - mo->base.size
         )){
             Drop_Mold(mo);
-            return OUT;
+            return BOUNCE_OUT;
         }
         const Strand* s = Pop_Molded_Strand(mo);
         Freeze_Flex(s);
-        return Init_String(OUT, to, s);
+        Init_String(OUT, to, s);
+        return BOUNCE_OUT;
     }
 
-    if (to == HEART_DECIMAL or to == HEART_PERCENT)
-        return Init_Decimal_Or_Percent(OUT, to, d);
-
+    if (to == HEART_DECIMAL or to == HEART_PERCENT) {
+        Init_Decimal_Or_Percent(OUT, to, d);
+        return BOUNCE_OUT;
+    }
 
     if (to == HEART_INTEGER) {
         REBDEC leftover = d - cast(REBDEC, cast(REBI64, d));
@@ -528,7 +545,8 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
             panic (
                 "Can't TO INTEGER! a DECIMAL! w/digits after decimal point"
             );
-        return Init_Integer(OUT, cast(REBI64, d));
+        Init_Integer(OUT, cast(REBI64, d));
+        return BOUNCE_OUT;
     }
 
     panic (UNHANDLED);
@@ -544,7 +562,8 @@ IMPLEMENT_GENERIC(NEGATE, Any_Float)
     Heart heart = Heart_Of_Builtin_Fundamental(val);
 
     d = -d;
-    return Init_Decimal_Or_Percent(OUT, heart, d);
+    Init_Decimal_Or_Percent(OUT, heart, d);
+    return BOUNCE_OUT;
 }
 
 
@@ -558,7 +577,8 @@ IMPLEMENT_GENERIC(ABSOLUTE, Any_Float)
 
     if (d < 0)
         d = -d;
-    return Init_Decimal_Or_Percent(OUT, heart, d);
+    Init_Decimal_Or_Percent(OUT, heart, d);
+    return BOUNCE_OUT;
 }
 
 
@@ -588,7 +608,8 @@ IMPLEMENT_GENERIC(RANDOM, Any_Float)
     REBDEC d = VAL_DECIMAL(val);
     REBDEC rand = Random_Dec(d, ARG(SECURE));
 
-    return Init_Decimal_Or_Percent(OUT, heart, rand);
+    Init_Decimal_Or_Percent(OUT, heart, rand);
+    return BOUNCE_OUT;
 }
 
 
@@ -608,7 +629,8 @@ IMPLEMENT_GENERIC(MULTIPLY, Any_Float)
     else
         d2 = VAL_DECIMAL(v2);  // decimal/percent ensured by MULTIPLY [1]
 
-    return Init_Decimal_Or_Percent(OUT, heart, d1 * d2);
+    Init_Decimal_Or_Percent(OUT, heart, d1 * d2);
+    return BOUNCE_OUT;
 }
 
 
@@ -636,13 +658,17 @@ IMPLEMENT_GENERIC(ROUND, Any_Float)
 
     if (Is_Percent(to)) {
         heart = HEART_PERCENT;
-        return Init_Decimal_Or_Percent(OUT, heart, d1);
+        Init_Decimal_Or_Percent(OUT, heart, d1);
+        return BOUNCE_OUT;
     }
 
-    if (Is_Integer(to))
-        return Init_Integer(OUT, cast(REBI64, d1));
+    if (Is_Integer(to)) {
+        Init_Integer(OUT, cast(REBI64, d1));
+        return BOUNCE_OUT;
+    }
 
-    return Init_Decimal_Or_Percent(OUT, heart, d1);
+    Init_Decimal_Or_Percent(OUT, heart, d1);
+    return BOUNCE_OUT;
 }
 
 
@@ -652,5 +678,6 @@ IMPLEMENT_GENERIC(COMPLEMENT, Any_Float)
 
     REBDEC d = VAL_DECIMAL(ARG(VALUE));
 
-    return Init_Integer(OUT, ~cast(REBINT, d));  // !!! What is this good for?
+    Init_Integer(OUT, ~cast(REBINT, d));  // !!! What is this good for?
+    return BOUNCE_OUT;
 }

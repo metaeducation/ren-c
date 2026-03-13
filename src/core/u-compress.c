@@ -446,7 +446,8 @@ DECLARE_NATIVE(CHECKSUM_CORE)
     }
     Term_Binary_Len(bin, 4);
 
-    return Init_Blob(OUT, bin);
+    Init_Blob(OUT, bin);
+    return BOUNCE_OUT;
 }
 
 

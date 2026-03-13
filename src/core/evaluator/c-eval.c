@@ -173,7 +173,7 @@ Bounce Evaluator_Executor(Level* const L)
 
     Bounce bounce = Stepper_Executor(L);
 
-    if (bounce == OUT)  // completed step, possibly reached end of feed [1]
+    if (bounce == BOUNCE_TOPLEVEL_OUT)  // done, maybe end of feed [1]
         goto step_done_with_result_in_out;
 
     return bounce;  // continuation/throw/etc. on behalf of the stepper
@@ -277,7 +277,7 @@ Bounce Evaluator_Executor(Level* const L)
     if (Get_Level_Flag(L, FORCE_HEAVY_BRANCH))
         Force_Cell_Heavy(L->out);
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 

@@ -135,7 +135,8 @@ DECLARE_NATIVE(ENCODE_IEEE_754) {
   #endif
 
     Term_Binary_Len(bin, 8);
-    return Init_Blob(OUT, bin);
+    Init_Blob(OUT, bin);
+    return BOUNCE_OUT;
 }
 
 
@@ -180,7 +181,7 @@ DECLARE_NATIVE(DECODE_IEEE_754)
     #error "Unsupported CPU endian"
   #endif
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -195,8 +196,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
     Element* arg = ARG(DEF);
 
     switch (opt Type_Of(arg)) {
-      case TYPE_INTEGER:  // !!! R3-Alpha nebulously tolerated DECIMAL! :-(
-        return Init_Blob(OUT, Make_Binary(Int32s(arg, 0)));
+      case TYPE_INTEGER: {  // !!! R3-Alpha nebulously tolerated DECIMAL! :-(
+        Init_Blob(OUT, Make_Binary(Int32s(arg, 0)));
+        return BOUNCE_OUT; }
 
       case TYPE_TUPLE: {
         REBLEN len = Sequence_Len(arg);
@@ -204,20 +206,22 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
         Byte* head = Binary_Head(b);
         if (Try_Get_Sequence_Bytes(head, cast(Element*, arg), len)) {
             Term_Binary_Len(b, len);
-            return Init_Blob(OUT, b);
+            Init_Blob(OUT, b);
+            return BOUNCE_OUT;
         }
         panic (
             "TUPLE! did not consist entirely of INTEGER! values 0-255"
         ); }
 
-      case TYPE_BITSET:
-        return Init_Blob(
+      case TYPE_BITSET: {
+        Init_Blob(
             OUT,
             Make_Binary_From_Sized_Bytes(
                 Binary_Head(Cell_Binary(arg)),
                 Series_Len_Head(arg)
             )
         );
+        return BOUNCE_OUT; }
 
       default:
         break;
@@ -374,7 +378,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
             Copy_Lifted_Cell(Array_At(pack, 1), v);
             SERIES_INDEX_UNBOUNDED(Array_At(pack, 1)) = ret + size;
 
-            return Init_Pack(OUT, pack);
+            Init_Pack(OUT, pack);
+            return BOUNCE_OUT;
         }
         else
             assert(id == SYM_SELECT);
@@ -383,7 +388,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         if (ret >= tail)
             return NULL_OUT;
 
-        return Init_Integer(OUT, *Binary_At(Cell_Binary(v), ret)); }
+        Init_Integer(OUT, *Binary_At(Cell_Binary(v), ret));
+        return BOUNCE_OUT; }
 
       case SYM_CLEAR: {
         Binary* b = Cell_Binary_Ensure_Mutable(v);
@@ -462,7 +468,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
             assert(false);  // not reachable
         }
 
-        return Init_Blob(OUT, b); }
+        Init_Blob(OUT, b);
+        return BOUNCE_OUT; }
 
       case SYM_BITWISE_NOT: {
         Size size;
@@ -475,7 +482,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         for (; size > 0; --size, ++bp, ++dp)
             *dp = ~(*bp);
 
-        return Init_Series(OUT, HEART_BLOB, bin); }
+        Init_Series(OUT, HEART_BLOB, bin);
+        return BOUNCE_OUT; }
 
     //-- Special actions:
 
@@ -543,7 +551,7 @@ IMPLEMENT_GENERIC(CHANGE, Is_Blob)
     Element* out = Copy_Cell(OUT, Element_ARG(SERIES));
     SERIES_INDEX_UNBOUNDED(out) = tail;
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -563,11 +571,12 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
     if (Any_String_Heart(to)) {  // (to text! binary) questionable [1]
         Size size;
         const Byte* at = Blob_Size_At(&size, v);
-        return Init_String(
+        Init_String(
             OUT,
             to,
             Append_UTF8_May_Panic(nullptr, s_cast(at), size, STRMODE_NO_CR)
         );
+        return BOUNCE_OUT;
     }
 
     if (to == HEART_BLOB) {
@@ -575,7 +584,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
         require (
           Copy_Blob_Part_At_May_Modify_Index(OUT, v, part)
         );
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     panic (UNHANDLED);
@@ -705,7 +714,7 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
     require (
       Alias_Blob_As(OUT, blob, as)
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -719,7 +728,7 @@ IMPLEMENT_GENERIC(COPY, Is_Blob)
     require (
       Copy_Blob_Part_At_May_Modify_Index(OUT, blob, Element_ARG(PART))
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -736,8 +745,10 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
     REBINT len;
     if (ARG(PART)) {
         len = Part_Len_May_Modify_Index(blob, Element_ARG(PART));
-        if (len == 0)
-            return Init_Blob(OUT, Make_Binary(0));
+        if (len == 0) {
+            Init_Blob(OUT, Make_Binary(0));
+            return BOUNCE_OUT;
+        }
     } else
         len = 1;
 
@@ -758,7 +769,8 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
         if (not ARG(PART))
             return fail (Error_Nothing_To_Take_Raw());
 
-        return Init_Blob(OUT, Make_Binary(0));
+        Init_Blob(OUT, Make_Binary(0));
+        return BOUNCE_OUT;
     }
 
     if (not ARG(PART))  // just return byte value
@@ -771,7 +783,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
     }
 
     Remove_Any_Series_Len(blob, index, len);  // bad UTF-8 alias fails
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -832,7 +844,8 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Is_Blob)
 
     index += Random_Int(ARG(SECURE)) % (tail - index);
     const Binary* bin = Cell_Binary(blob);
-    return Init_Integer(OUT, *Binary_At(bin, index));
+    Init_Integer(OUT, *Binary_At(bin, index));
+    return BOUNCE_OUT;
 }
 
 
@@ -867,7 +880,8 @@ IMPLEMENT_GENERIC(SIZE_OF, Is_Blob)
 
     Size size;
     Blob_Size_At(&size, blob);
-    return Init_Integer(OUT, size);
+    Init_Integer(OUT, size);
+    return BOUNCE_OUT;
 }
 
 
@@ -888,8 +902,10 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Blob)
 
     Size size;
     const Byte* bp = Blob_Size_At(&size, blob);
-    if (size == 1 and *bp == 0)
-        return Init_Integer(OUT, 0);  // codepoint of #{00} -> 0 [2]
+    if (size == 1 and *bp == 0) {
+        Init_Integer(OUT, 0);  // codepoint of #{00} -> 0 [2]
+        return BOUNCE_OUT;
+    }
 
     trap (
       Codepoint c = Back_Scan_Utf8_Char(&bp, nullptr)
@@ -899,7 +915,8 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Blob)
     if (bp != Binary_Tail(Cell_Binary(blob)))
         return fail (Error_Not_One_Codepoint_Raw());
 
-    return Init_Integer(OUT, c);
+    Init_Integer(OUT, c);
+    return BOUNCE_OUT;
 }
 
 
@@ -952,7 +969,7 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
     Byte* data_at = Blob_At_Ensure_Mutable(blob);  // ^ index changes
 
     if (len <= 1)
-        return OUT;
+        return BOUNCE_OUT;
 
     REBLEN skip;
     if (not ARG(SKIP))
@@ -979,7 +996,7 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
         &flags,
         &Qsort_Byte_Callback
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1075,7 +1092,8 @@ DECLARE_NATIVE(ENCODE_INTEGER)
         );
 
     Term_Binary_Len(bin, num_bytes);
-    return Init_Blob(OUT, bin);
+    Init_Blob(OUT, bin);
+    return BOUNCE_OUT;
 }
 
 
@@ -1147,8 +1165,10 @@ DECLARE_NATIVE(DECODE_INTEGER)
 
     REBINT n = num_bytes;
 
-    if (n == 0)
-        return Init_Integer(OUT, 0);  // !!! Only if we let num_bytes = 0
+    if (n == 0) {
+        Init_Integer(OUT, 0);  // !!! Only if we let num_bytes = 0
+        return BOUNCE_OUT;
+    }
 
     // default signedness interpretation to high-bit of first byte, but
     // override if the function was called with `no_sign`
@@ -1177,9 +1197,11 @@ DECLARE_NATIVE(DECODE_INTEGER)
     if (n == 0) {
         if (negative) {
             assert(not no_sign);
-            return Init_Integer(OUT, -1);
+            Init_Integer(OUT, -1);
+            return BOUNCE_OUT;
         }
-        return Init_Integer(OUT, 0);
+        Init_Integer(OUT, 0);
+        return BOUNCE_OUT;
     }
 
     // Not using BigNums (yet) so max representation is 8 bytes after
@@ -1209,7 +1231,8 @@ DECLARE_NATIVE(DECODE_INTEGER)
     if (no_sign and i < 0)  // may become signed via shift due to 63-bit limit
         panic (Error_Out_Of_Range(ARG(BINARY)));
 
-    return Init_Integer(OUT, i);
+    Init_Integer(OUT, i);
+    return BOUNCE_OUT;
 }
 
 

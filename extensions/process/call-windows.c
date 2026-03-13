@@ -731,14 +731,18 @@ Bounce Call_Core(Level* level_) {
         if (ARG(WAIT))
             Init_Integer(Append_Context(info, CANON(EXIT_CODE)), exit_code);
 
-        return Init_Object(OUT, info);
+        Init_Object(OUT, info);
+        return BOUNCE_OUT;
     }
 
     // We may have waited even if they didn't ask us to explicitly, but
     // we only return a process ID if /WAIT was not explicitly used
     //
-    if (ARG(WAIT))
-        return Init_Integer(OUT, exit_code);
+    if (ARG(WAIT)) {
+        Init_Integer(OUT, exit_code);
+        return BOUNCE_OUT;
+    }
 
-    return Init_Integer(OUT, pid);
+    Init_Integer(OUT, pid);
+    return BOUNCE_OUT;
 }

@@ -274,7 +274,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
   //=//// HANDLE FINISHED RESULTS ////////////////////////////////////////=//
 
-    if (bounce == TOP_LEVEL->out) {
+    if (bounce == BOUNCE_TOPLEVEL_OUT) {
       result_in_out:
         UNUSED(bounce);
 
@@ -282,7 +282,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         if (Get_Level_Flag(TOP_LEVEL, ROOT_LEVEL)) {
             CLEANUP_BEFORE_EXITING_RECOVER_SCOPE;
-            return TOP_LEVEL->out;
+            return BOUNCE_TOPLEVEL_OUT;
         }
 
         L = TOP_LEVEL->prior;
@@ -342,7 +342,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     // running when they were raised.  This means they get a chance to do
     // cleanup (just as they have for the longjmp() and C++ exception cases).
 
-    bounce = opt Irreducible_Bounce(TOP_LEVEL, bounce);
+    bounce = opt Irreducible_Bounce(bounce);
 
     if (bounce == BOUNCE_THROWN) {
         assert(Is_Throwing_Panic(TOP_LEVEL));
@@ -410,7 +410,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
   #if DEBUG_FANCY_CRASH
     const char* name = "<<UNKNOWN>>";
     if (
-        (r != BOUNCE_THROWN) and (r != root->out) and (
+        (r != BOUNCE_THROWN) and (r != BOUNCE_TOPLEVEL_OUT) and (
             (Is_Bounce_A_Level(r) and (name = "CONTINUE"))
             or (r == BOUNCE_REDO_CHECKED and (name = "REDO_CHECKED"))
             or (r == BOUNCE_REDO_UNCHECKED and (name = "REDO_UNCHECKED"))
@@ -435,7 +435,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
     if (r == BOUNCE_THROWN)
         return true;
 
-    assert(r == root->out);
+    assert(r == BOUNCE_TOPLEVEL_OUT);
     return false;
 }
 

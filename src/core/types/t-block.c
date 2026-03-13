@@ -141,7 +141,8 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
         //
         // `make block! 10` => creates array with certain initial capacity
         //
-        return Init_List(OUT, heart, Make_Source_Managed(Int32s(arg, 0)));
+        Init_List(OUT, heart, Make_Source_Managed(Int32s(arg, 0)));
+        return BOUNCE_OUT;
     }
     else if (Is_Text(arg)) {
         //
@@ -156,7 +157,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
             heart,
             Scan_UTF8_Managed(file, utf8, size)
         );
-        return OUT;
+        return BOUNCE_OUT;
     }
     else if (Is_Frame(arg)) {
         //
@@ -171,7 +172,8 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
             Copy_Cell(PUSH(), generated);
             rebRelease(generated);
         }
-        return Init_List(OUT, heart, Pop_Source_From_Stack(base));
+        Init_List(OUT, heart, Pop_Source_From_Stack(base));
+        return BOUNCE_OUT;
     }
     else if (Is_Varargs(arg)) {
         //
@@ -239,7 +241,8 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
             Move_Cell(PUSH(), As_Element(out));
         } while (true);
 
-        return Init_List(OUT, heart, Pop_Source_From_Stack(base));
+        Init_List(OUT, heart, Pop_Source_From_Stack(base));
+        return BOUNCE_OUT;
     }
 
     return fail (Error_Bad_Make(heart, arg));
@@ -651,7 +654,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
             Copy_Lifted_Cell(Array_At(pack, 1), list);
             SERIES_INDEX_UNBOUNDED(Array_At(pack, 1)) = ret + len;
 
-            return Init_Pack(OUT, pack);
+            Init_Pack(OUT, pack);
+            return BOUNCE_OUT;
         }
         else
             assert(id == SYM_SELECT);
@@ -661,7 +665,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
             return NULL_OUT;
 
         Element* out = Copy_Cell_May_Bind(OUT, Array_At(arr, ret), binding);
-        return Inherit_Const(out, list); }
+        Inherit_Const(out, list);
+        return BOUNCE_OUT; }
 
       case SYM_CLEAR: {
         Array* arr = Cell_Array_Ensure_Mutable(list);
@@ -778,7 +783,7 @@ IMPLEMENT_GENERIC(CHANGE, Any_List)
     Element* out = Copy_Cell(OUT, Element_ARG(SERIES));
     SERIES_INDEX_UNBOUNDED(out) = tail;
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -805,9 +810,10 @@ IMPLEMENT_GENERIC(TO, Any_List)
     if (Any_List_Heart(to)) {
         Length len;
         const Element* at = List_Len_At(&len, list);
-        return Init_List(
+        Init_List(
             OUT, to, Copy_Values_Len_Shallow(at, len)  // !!! binding? [1]
         );
+        return BOUNCE_OUT;
     }
 
     if (Any_Sequence_Heart(to)) {  // (to path! [a/b/c]) -> a/b/c
@@ -822,7 +828,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
             or (Is_Tuple(item) and to == HEART_TUPLE)
         ){
             Copy_Cell(OUT, item);
-            return OUT;
+            return BOUNCE_OUT;
         }
 
         return fail ("TO ANY-SEQUENCE? needs list with a sequence in it");
@@ -836,7 +842,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         if (not Is_Word(item))
             return fail ("TO ANY-WORD? needs list with one word in it");
         Copy_Cell(OUT, item);
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     if (Any_Utf8_Heart(to)) {  // to tag! [1 a #b] => <1 a #b>
@@ -847,8 +853,10 @@ IMPLEMENT_GENERIC(TO, Any_List)
         Push_Mold(mo);
 
         Mold_Or_Form_Element(mo, list, false);
-        if (Any_String_Heart(to))
-            return Init_String(OUT, to, Pop_Molded_Strand(mo));
+        if (Any_String_Heart(to)) {
+            Init_String(OUT, to, Pop_Molded_Strand(mo));
+            return BOUNCE_OUT;
+        }
 
         Init_Utf8_Non_String(
             OUT,
@@ -858,7 +866,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
             Strand_Size(mo->strand) - mo->base.size
         );
         Drop_Mold(mo);
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     if (to == HEART_INTEGER) {
@@ -882,7 +890,8 @@ IMPLEMENT_GENERIC(TO, Any_List)
         );
         Append_Map(map, at, tail, len);
         Rehash_Map(map);
-        return Init_Map(OUT, map);
+        Init_Map(OUT, map);
+        return BOUNCE_OUT;
     }
 
     if (to == HEART_PAIR) {
@@ -893,7 +902,8 @@ IMPLEMENT_GENERIC(TO, Any_List)
             Is_Integer(item) and Is_Integer(item + 1)
             and (tail == item + 2)
         ){
-            return Init_Pair(OUT, VAL_INT64(item), VAL_INT64(item + 1));
+            Init_Pair(OUT, VAL_INT64(item), VAL_INT64(item + 1));
+            return BOUNCE_OUT;
         }
         panic ("TO PAIR! only works on lists with two integers");
     }
@@ -954,7 +964,7 @@ IMPLEMENT_GENERIC(AS, Any_List)
       Alias_Any_List_As(OUT, list, as)
     );
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -990,7 +1000,7 @@ IMPLEMENT_GENERIC(COPY, Any_List)
     Element* out = Init_List(OUT, Heart_Of_Builtin_Fundamental(list), copy);
     Tweak_Cell_Binding(out, List_Binding(list));
     assert(Not_Cell_Flag(out, CONST));
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1144,8 +1154,10 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
     REBLEN len;
     if (ARG(PART)) {
         len = Part_Len_May_Modify_Index(list, Element_ARG(PART));
-        if (len == 0)
-            return Init_List(OUT, heart, Make_Source_Managed(0));
+        if (len == 0) {
+            Init_List(OUT, heart, Make_Source_Managed(0));
+            return BOUNCE_OUT;
+        }
     }
     else
         len = 1;
@@ -1159,7 +1171,8 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
         if (not ARG(PART))
             return fail (Error_Nothing_To_Take_Raw());
 
-        return Init_List(OUT, heart, Make_Source_Managed(0));
+        Init_List(OUT, heart, Make_Source_Managed(0));
+        return BOUNCE_OUT;
     }
 
     if (ARG(PART)) {
@@ -1170,7 +1183,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
         Copy_Cell_May_Bind(OUT, Array_At(arr, index), List_Binding(list));
 
     Remove_Flex_Units_And_Update_Used(arr, index, len);
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1274,7 +1287,8 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_List)
 
     if (not Try_Pick_Block(OUT, list, spare))
         return NULL_OUT;
-    return Inherit_Const(OUT, list);
+    Inherit_Const(OUT, list);
+    return BOUNCE_OUT;
 }
 
 
@@ -1356,7 +1370,8 @@ IMPLEMENT_GENERIC(FILE_OF, Any_List)
     Option(const Strand*) file = Link_Filename(s);
     if (not file)
         return fail ("No file available for list");
-    return Init_File(OUT, unwrap file);  // !!! or URL! (track with bit...)
+    Init_File(OUT, unwrap file);  // !!! or URL! (track with bit...)
+    return BOUNCE_OUT;
 }
 
 
@@ -1369,7 +1384,8 @@ IMPLEMENT_GENERIC(LINE_OF, Any_List)
 
     if (MISC_SOURCE_LINE(s) == 0)
         return fail ("No line available for list");
-    return Init_Integer(OUT, MISC_SOURCE_LINE(s));
+    Init_Integer(OUT, MISC_SOURCE_LINE(s));
+    return BOUNCE_OUT;
 }
 
 
@@ -1459,7 +1475,7 @@ IMPLEMENT_GENERIC(SORT, Any_List)
 
     REBLEN len = Part_Len_May_Modify_Index(list, Element_ARG(PART));
     if (len <= 1)
-        return OUT;
+        return BOUNCE_OUT;
     Index index = Series_Index(list);  // ^-- may have been modified
 
     // Skip factor:
@@ -1480,7 +1496,7 @@ IMPLEMENT_GENERIC(SORT, Any_List)
         &Qsort_Values_Callback
     );
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 
@@ -1510,7 +1526,8 @@ DECLARE_NATIVE(BLOCKIFY)
         Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), unwrap v);
     }
-    return Init_Block(OUT, Freeze_Source_Shallow(a));
+    Init_Block(OUT, Freeze_Source_Shallow(a));
+    return BOUNCE_OUT;
 }
 
 
@@ -1540,7 +1557,8 @@ DECLARE_NATIVE(GROUPIFY)
         Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), unwrap v);
     }
-    return Init_Group(OUT, Freeze_Source_Shallow(a));
+    Init_Group(OUT, Freeze_Source_Shallow(a));
+    return BOUNCE_OUT;
 }
 
 
@@ -1781,7 +1799,7 @@ DECLARE_NATIVE(GLOM)
         );
     }
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 

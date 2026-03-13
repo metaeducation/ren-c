@@ -67,7 +67,8 @@ IMPLEMENT_GENERIC(ZEROIFY, Is_Integer)
     INCLUDE_PARAMS_OF_ZEROIFY;
     UNUSED(ARG(EXAMPLE));  // always gives 0
 
-    return Init_Integer(OUT, 0);
+    Init_Integer(OUT, 0);
+    return BOUNCE_OUT;
 }
 
 
@@ -115,7 +116,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
           Transcode_One(out, HEART_0, arg)
         );
         if (Is_Integer(out))
-            return OUT;
+            return BOUNCE_OUT;
         if (Is_Decimal(out))
             return rebDelegate(CANON(ROUND), out);  // out is legal ATM [2]
 
@@ -124,14 +125,17 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
 
     dont(Is_Blob(arg));  // [3]
 
-    if (Is_Time(arg))  // !!! (make integer! 1:00) -> 3600 :-( [4]
-        return Init_Integer(OUT, SECS_FROM_NANO(VAL_NANO(arg)));
+    if (Is_Time(arg)) {  // !!! (make integer! 1:00) -> 3600 :-( [4]
+        Init_Integer(OUT, SECS_FROM_NANO(VAL_NANO(arg)));
+        return BOUNCE_OUT;
+    }
 
     if (Is_Decimal(arg) or Is_Percent(arg)) {  // !!! prefer ROUND
         if (VAL_DECIMAL(arg) < MIN_D64 or VAL_DECIMAL(arg) >= MAX_D64)
             panic (Error_Overflow_Raw());
 
-        return Init_Integer(OUT, cast(REBI64, VAL_DECIMAL(arg)));
+        Init_Integer(OUT, cast(REBI64, VAL_DECIMAL(arg)));
+        return BOUNCE_OUT;
     }
 
     panic (Error_Bad_Make(HEART_INTEGER, arg));
@@ -262,21 +266,25 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
         REBI64 anum;
         if (Add_I64_Overflows(&anum, num, arg))
             return fail (Error_Overflow_Raw());
-        return Init_Integer(OUT, anum); }
+        Init_Integer(OUT, anum);
+        return BOUNCE_OUT; }
 
       case SYM_SUBTRACT: {
         REBI64 anum;
         if (Subtract_I64_Overflows(&anum, num, arg))
             return fail (Error_Overflow_Raw());
-        return Init_Integer(OUT, anum); }
+        Init_Integer(OUT, anum);
+        return BOUNCE_OUT; }
 
       case SYM_DIVIDE:
         if (arg == 0)
             return fail (Error_Zero_Divide_Raw());
         if (num == INT64_MIN && arg == -1)
             return fail (Error_Overflow_Raw());
-        if (num % arg == 0)
-            return Init_Integer(OUT, num / arg);
+        if (num % arg == 0) {
+            Init_Integer(OUT, num / arg);
+            return BOUNCE_OUT;
+        }
         // Fall thru
       case SYM_POWER:
         Init_Decimal(ARG_N(1), cast(REBDEC, num));
@@ -286,22 +294,28 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
       case SYM_REMAINDER:
         if (arg == 0)
             return fail (Error_Zero_Divide_Raw());
-        return Init_Integer(OUT, (arg != -1) ? (num % arg) : 0);
+        Init_Integer(OUT, (arg != -1) ? (num % arg) : 0);
+        return BOUNCE_OUT;
 
       case SYM_BITWISE_AND:
-        return Init_Integer(OUT, num & arg);
+        Init_Integer(OUT, num & arg);
+        return BOUNCE_OUT;
 
       case SYM_BITWISE_OR:
-        return Init_Integer(OUT, num | arg);
+        Init_Integer(OUT, num | arg);
+        return BOUNCE_OUT;
 
       case SYM_BITWISE_XOR:
-        return Init_Integer(OUT, num ^ arg);
+        Init_Integer(OUT, num ^ arg);
+        return BOUNCE_OUT;
 
       case SYM_BITWISE_AND_NOT:
-        return Init_Integer(OUT, num & ~arg);
+        Init_Integer(OUT, num & ~arg);
+        return BOUNCE_OUT;
 
       case SYM_BITWISE_NOT:
-        return Init_Integer(OUT, ~num);
+        Init_Integer(OUT, ~num);
+        return BOUNCE_OUT;
 
       default:
         break;
@@ -336,12 +350,13 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
                 Strand_Size(mo->strand) - mo->base.size
             )){
                 Drop_Mold(mo);
-                return OUT;
+                return BOUNCE_OUT;
             }
             s = Pop_Molded_Strand(mo);
             Freeze_Flex(s);
         }
-        return Init_String(OUT, to, s);
+        Init_String(OUT, to, s);
+        return BOUNCE_OUT;
     }
 
     if (Any_List_Heart(to))
@@ -349,7 +364,8 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
 
     if (to == HEART_DECIMAL or to == HEART_PERCENT) {
         REBDEC d = cast(REBDEC, VAL_INT64(val));
-        return Init_Decimal_Or_Percent(OUT, to, d);
+        Init_Decimal_Or_Percent(OUT, to, d);
+        return BOUNCE_OUT;
     }
 
 
@@ -368,7 +384,8 @@ IMPLEMENT_GENERIC(NEGATE, Is_Integer)
 
     if (num == INT64_MIN)
         return fail (Error_Overflow_Raw());
-    return Init_Integer(OUT, -num);
+    Init_Integer(OUT, -num);
+    return BOUNCE_OUT;
 }
 
 
@@ -380,7 +397,8 @@ IMPLEMENT_GENERIC(ABSOLUTE, Is_Integer)
 
     if (num == INT64_MIN)
         return fail (Error_Overflow_Raw());
-    return Init_Integer(OUT, num < 0 ? -num : num);
+    Init_Integer(OUT, num < 0 ? -num : num);
+    return BOUNCE_OUT;
 }
 
 
@@ -416,7 +434,8 @@ IMPLEMENT_GENERIC(RANDOM, Is_Integer)
     if (max == 0)
         panic (PARAM(MAX));  // range is 1 to max, inclusive
 
-    return Init_Integer(OUT, Random_Range(max, ARG(SECURE)));
+    Init_Integer(OUT, Random_Range(max, ARG(SECURE)));
+    return BOUNCE_OUT;
 }
 
 
@@ -432,7 +451,8 @@ IMPLEMENT_GENERIC(RANDOM_BETWEEN, Is_Integer)
 
     REBI64 rand = Random_Range(1 + max - min, ARG(SECURE));  // 1-based
 
-    return Init_Integer(OUT, rand + min - 1);
+    Init_Integer(OUT, rand + min - 1);
+    return BOUNCE_OUT;
 }
 
 
@@ -449,7 +469,8 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Integer)
     REBI64 result;
     if (Multipy_I64_Overflows(&result, num1, num2))
         return fail (Error_Overflow_Raw());
-    return Init_Integer(OUT, result);
+    Init_Integer(OUT, result);
+    return BOUNCE_OUT;
 }
 
 
@@ -462,8 +483,10 @@ IMPLEMENT_GENERIC(ROUND, Is_Integer)
     USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
     USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
 
-    if (not ARG(TO))
-        return Init_Integer(OUT, Round_Int(num, level_, 0L));
+    if (not ARG(TO)) {
+        Init_Integer(OUT, Round_Int(num, level_, 0L));
+        return BOUNCE_OUT;
+    }
 
     Stable* to = opt ARG(TO);
     if (not to)
@@ -481,11 +504,12 @@ IMPLEMENT_GENERIC(ROUND, Is_Integer)
                 | CELL_MASK_NO_MARKING
         );
         VAL_DECIMAL(out) = dec;
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     if (Is_Time(to))
         panic (PARAM(TO));
 
-    return Init_Integer(OUT, Round_Int(num, level_, VAL_INT64(to)));
+    Init_Integer(OUT, Round_Int(num, level_, VAL_INT64(to)));
+    return BOUNCE_OUT;
 }

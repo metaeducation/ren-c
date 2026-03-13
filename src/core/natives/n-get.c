@@ -736,8 +736,13 @@ DECLARE_NATIVE(GET)
             return NULL_OUT;
     }
 
-    if (Any_Lifted(target))
-        return UNLIFT_TO_OUT(target);
+    if (Any_Lifted(target)) {
+        Copy_Cell(OUT, target);
+        require (
+          Unlift_Cell_No_Decay(OUT)
+        );
+        return BOUNCE_OUT;
+    }
 
     if (Is_Block(target)) {
         Source* a = Make_Source(Series_Len_At(target));
@@ -750,7 +755,7 @@ DECLARE_NATIVE(GET)
         for (; at != tail; ++at) {
             Copy_Cell_May_Bind(target, at, binding);
             Bounce b = Apply_Cfunc(NATIVE_CFUNC(GET), LEVEL);
-            assert (b == OUT);
+            assert (b == BOUNCE_TOPLEVEL_OUT);
             UNUSED(b);
             require (
               Sink(Element) elem = Alloc_Tail_Array(a)
@@ -758,24 +763,24 @@ DECLARE_NATIVE(GET)
             Copy_Cell(elem, Lift_Cell(OUT));
         }
 
-        return Init_Pack(OUT, a);
+        Init_Pack(OUT, a);
+        return BOUNCE_OUT;
     }
 
     STATE = ARG(DUAL) ? ST_TWEAK_TWEAKING : ST_TWEAK_GETTING;
 
     Option(Bounce) b = Irreducible_Bounce(
-        LEVEL,
         Apply_Cfunc(NATIVE_CFUNC(TWEAK), LEVEL)
     );
     if (b)
         return unwrap b;  // keep bouncing while we couldn't get OUT as answer
 
     if (Is_Failure(OUT))
-        return OUT;  // weird can't pick case, see [A]
+        return BOUNCE_OUT;  // weird can't pick case, see [A]
 
     if (ARG(DUAL)) {
         assert(not Is_Antiform(OUT));
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     assert(Any_Lifted(OUT));  // should not give back BEDROCK states.
@@ -783,7 +788,7 @@ DECLARE_NATIVE(GET)
     require (
       Unlift_Cell_No_Decay(OUT)  // decay or not was guided by ^VAR marker
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 

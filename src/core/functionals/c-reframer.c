@@ -459,10 +459,7 @@ DECLARE_NATIVE(REFRAMER)
     Init_Integer(Details_At(details, IDX_REFRAMER_PARAM_INDEX), param_index);
 
     Init_Frame(OUT, details, label, UNCOUPLED);
+    Proxy_Frame_Activation(OUT, shim);
 
-    if (Is_Action(shim))
-        return Activate_Frame(OUT);
-
-    assert(Is_Possibly_Unstable_Value_Frame(OUT));
-    return OUT;
+    return BOUNCE_OUT;
 }}

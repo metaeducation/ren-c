@@ -46,7 +46,7 @@ DECLARE_NATIVE(BIND1)
     Element* v = ARG(VALUE);
 
     Copy_Cell_May_Bind(OUT, v, Level_Binding(level_));
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -219,7 +219,7 @@ DECLARE_NATIVE(INSIDE)
     }
 
     Copy_Cell_May_Bind(OUT, element, context);
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -285,13 +285,13 @@ DECLARE_NATIVE(HAS)
         VarList* varlist = Cell_Varlist(context);
         Element* out = Init_Word_Bound(OUT, symbol, varlist);
         Tweak_Word_Index(out, unwrap n);
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     SeaOfVars* sea = Cell_Module_Sea(context);
     Element* out = Init_Word(OUT, symbol);
     Tweak_Cell_Binding(out, sea);
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -332,7 +332,7 @@ DECLARE_NATIVE(WITHOUT)
             ctx
         );
         Tweak_Word_Index(OUT, unwrap n);
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     require (
@@ -381,7 +381,7 @@ DECLARE_NATIVE(USE)
     if (Eval_Any_List_At_Throws(OUT, body, SPECIFIED))
         return THROWN;
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1049,7 +1049,7 @@ DECLARE_NATIVE(INFIX)
     else
         Tweak_Frame_Infix_Mode(OUT, INFIX_TIGHT);
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1074,7 +1074,7 @@ DECLARE_NATIVE(VANISHABLE)
     else
         Set_Cell_Flag(OUT, WEIRD_VANISHABLE);
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1129,7 +1129,7 @@ DECLARE_NATIVE(PURE)
     else
         Set_Stub_Flag(phase, PHASE_PURE);
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 
@@ -1158,7 +1158,7 @@ DECLARE_NATIVE(IMPURE)
     else
         Set_Stub_Flag(phase, PHASE_IMPURE);
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1519,11 +1519,15 @@ DECLARE_NATIVE(HEAVY)
 
     Value* v = ARG(VALUE);
 
-    if (Is_Light_Null(v))
-        return Init_Heavy_Null(OUT);
+    if (Is_Light_Null(v)) {
+        Init_Heavy_Null(OUT);
+        return BOUNCE_OUT;
+    }
 
-    if (Is_Void(v))
-        return Init_Heavy_Void(OUT);
+    if (Is_Void(v)) {
+        Init_Heavy_Void(OUT);
+        return BOUNCE_OUT;
+    }
 
     return COPY_TO_OUT(v);
 }
@@ -1651,7 +1655,8 @@ DECLARE_NATIVE(REIFY)
     }
 
     Copy_Cell(OUT, v);
-    return Reify_If_Antiform(OUT);
+    Reify_If_Antiform(OUT);
+    return BOUNCE_OUT;
 }
 
 
@@ -1677,7 +1682,7 @@ DECLARE_NATIVE(NOQUASI)
     Copy_Cell(OUT, v);
     if (Type_Of_Raw(OUT) == TYPE_QUASIFORM)
         Normalize_Cell(OUT);
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1703,7 +1708,7 @@ DECLARE_NATIVE(DEGRADE)
     require (
       Coerce_To_Antiform(OUT)
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 

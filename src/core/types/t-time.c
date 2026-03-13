@@ -274,7 +274,8 @@ IMPLEMENT_GENERIC(ZEROIFY, Is_Time)
     INCLUDE_PARAMS_OF_ZEROIFY;
     UNUSED(ARG(EXAMPLE));  // always gives 0:00
 
-    return Init_Time_Nanoseconds(OUT, 0);
+    Init_Time_Nanoseconds(OUT, 0);
+    return BOUNCE_OUT;
 }
 
 
@@ -291,7 +292,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
         if (VAL_INT64(arg) < -MAX_SECONDS or VAL_INT64(arg) > MAX_SECONDS)
             panic (Error_Out_Of_Range(arg));
 
-        return Init_Time_Nanoseconds(OUT, VAL_INT64(arg) * SEC_SEC);
+        Init_Time_Nanoseconds(OUT, VAL_INT64(arg) * SEC_SEC);
+        return BOUNCE_OUT;
 
       case TYPE_DECIMAL:
         if (
@@ -300,13 +302,14 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
         ){
             panic (Error_Out_Of_Range(arg));
         }
-        return Init_Time_Nanoseconds(OUT, DEC_TO_SECS(VAL_DECIMAL(arg)));
+        Init_Time_Nanoseconds(OUT, DEC_TO_SECS(VAL_DECIMAL(arg)));
+        return BOUNCE_OUT;
 
       case TYPE_TEXT: { // "hh:mm:ss"
         trap (
           Transcode_One(OUT, HEART_TIME, arg)
         );
-        return OUT; }
+        return BOUNCE_OUT; }
 
       case TYPE_BLOCK: { // [hh mm ss]
         const Element* tail;
@@ -381,7 +384,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
         if (neg)
             nano = -nano;
 
-        return Init_Time_Nanoseconds(OUT, nano); }
+        Init_Time_Nanoseconds(OUT, nano);
+        return BOUNCE_OUT; }
 
       default:
         goto bad_make;
@@ -418,25 +422,29 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
             switch (opt id) {
               case SYM_ADD:
                 secs = Add_Max(HEART_TIME, secs, secs2, MAX_TIME);
-                return Init_Time_Nanoseconds(OUT, secs);
+                Init_Time_Nanoseconds(OUT, secs);
+                return BOUNCE_OUT;
 
               case SYM_SUBTRACT:
                 secs = Add_Max(HEART_TIME, secs, -secs2, MAX_TIME);
-                return Init_Time_Nanoseconds(OUT, secs);
+                Init_Time_Nanoseconds(OUT, secs);
+                return BOUNCE_OUT;
 
               case SYM_DIVIDE:
                 if (secs2 == 0)
                     panic (Error_Zero_Divide_Raw());
-                return Init_Decimal(
+                Init_Decimal(
                     OUT,
                     cast(REBDEC, secs) / cast(REBDEC, secs2)
                 );
+                return BOUNCE_OUT;
 
               case SYM_REMAINDER:
                 if (secs2 == 0)
                     panic (Error_Zero_Divide_Raw());
                 secs %= secs2;
-                return Init_Time_Nanoseconds(OUT, secs);
+                Init_Time_Nanoseconds(OUT, secs);
+                return BOUNCE_OUT;
 
               default:
                 panic (Error_Math_Args(TYPE_TIME, verb));
@@ -448,24 +456,27 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
             switch (opt id) {
               case SYM_ADD:
                 secs = Add_Max(HEART_TIME, secs, num * SEC_SEC, MAX_TIME);
-                return Init_Time_Nanoseconds(OUT, secs);
+                Init_Time_Nanoseconds(OUT, secs);
+                return BOUNCE_OUT;
 
               case SYM_SUBTRACT:
                 secs = Add_Max(HEART_TIME, secs, num * -SEC_SEC, MAX_TIME);
-                return Init_Time_Nanoseconds(OUT, secs);
+                Init_Time_Nanoseconds(OUT, secs);
+                return BOUNCE_OUT;
 
               case SYM_DIVIDE:
                 if (num == 0)
                     panic (Error_Zero_Divide_Raw());
                 secs /= num;
                 Init_Integer(OUT, secs);
-                return Init_Time_Nanoseconds(OUT, secs);
+                return BOUNCE_OUT;
 
               case SYM_REMAINDER:
                 if (num == 0)
                     panic (Error_Zero_Divide_Raw());
                 secs %= num;
-                return Init_Time_Nanoseconds(OUT, secs);
+                Init_Time_Nanoseconds(OUT, secs);
+                return BOUNCE_OUT;
 
               default:
                 panic (Error_Math_Args(TYPE_TIME, verb));
@@ -482,7 +493,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                     u_cast(int64_t, dec * SEC_SEC),
                     MAX_TIME
                 );
-                return Init_Time_Nanoseconds(OUT, secs);
+                Init_Time_Nanoseconds(OUT, secs);
+                return BOUNCE_OUT;
 
               case SYM_SUBTRACT:
                 secs = Add_Max(
@@ -491,13 +503,15 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                     u_cast(int64_t, dec * -SEC_SEC),
                     MAX_TIME
                 );
-                return Init_Time_Nanoseconds(OUT, secs);
+                Init_Time_Nanoseconds(OUT, secs);
+                return BOUNCE_OUT;
 
               case SYM_DIVIDE:
                 if (dec == 0.0)
                     panic (Error_Zero_Divide_Raw());
                 secs = u_cast(int64_t, secs / dec);
-                return Init_Time_Nanoseconds(OUT, secs);
+                Init_Time_Nanoseconds(OUT, secs);
+                return BOUNCE_OUT;
 
               /*  // !!! Was commented out, why?
              case SYM_REMAINDER:
@@ -644,7 +658,8 @@ IMPLEMENT_GENERIC(NEGATE, Is_Time)
     REBI64 secs = VAL_NANO(Element_ARG(VALUE));
 
     secs = -secs;
-    return Init_Time_Nanoseconds(OUT, secs);
+    Init_Time_Nanoseconds(OUT, secs);
+    return BOUNCE_OUT;
 }
 
 
@@ -656,7 +671,8 @@ IMPLEMENT_GENERIC(ABSOLUTE, Is_Time)
 
     if (secs < 0)
         secs = -secs;
-    return Init_Time_Nanoseconds(OUT, secs);
+    Init_Time_Nanoseconds(OUT, secs);
+    return BOUNCE_OUT;
 }
 
 
@@ -690,7 +706,8 @@ IMPLEMENT_GENERIC(RANDOM, Is_Time)
     REBI64 secs = VAL_NANO(time);
 
     REBI64 rand_secs = Random_Range(secs / SEC_SEC, ARG(SECURE)) * SEC_SEC;
-    return Init_Time_Nanoseconds(OUT, rand_secs);
+    Init_Time_Nanoseconds(OUT, rand_secs);
+    return BOUNCE_OUT;
 }
 
 
@@ -713,7 +730,8 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Time)
     else
         panic (PARAM(VALUE2));
 
-    return Init_Time_Nanoseconds(OUT, secs);
+    Init_Time_Nanoseconds(OUT, secs);
+    return BOUNCE_OUT;
 }
 
 
@@ -730,12 +748,14 @@ IMPLEMENT_GENERIC(ROUND, Is_Time)
     if (not to) {
         to = Init_True(LOCAL(TO));  // by default make it :TO seconds
         secs = Round_Int(secs, level_, SEC_SEC);
-        return Init_Time_Nanoseconds(OUT, secs);
+        Init_Time_Nanoseconds(OUT, secs);
+        return BOUNCE_OUT;
     }
 
     if (Is_Time(to)) {
         secs = Round_Int(secs, level_, VAL_NANO(to));
-        return Init_Time_Nanoseconds(OUT, secs);
+        Init_Time_Nanoseconds(OUT, secs);
+        return BOUNCE_OUT;
     }
     else if (Is_Decimal(to)) {
         VAL_DECIMAL(to) = Round_Dec(

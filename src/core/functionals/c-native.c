@@ -251,7 +251,7 @@ DECLARE_NATIVE(NATIVE)
         Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     }
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 

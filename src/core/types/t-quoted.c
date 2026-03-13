@@ -70,12 +70,12 @@ DECLARE_NATIVE(THE)
     if (ARG(SOFT) and Is_Soft_Escapable_Group(v)) {
         if (Eval_Any_List_At_Throws(OUT, v, SPECIFIED))
             return THROWN;
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     Copy_Cell(OUT, v);
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -182,7 +182,7 @@ DECLARE_NATIVE(UNQUOTE)
     Noquotify_Cell(v);
     Quotify_Depth(v, quotes - depth);  // panics if too deep
 
-    return Copy_Cell(OUT, v);
+    return COPY_TO_OUT(v);
 }
 
 
@@ -218,7 +218,7 @@ DECLARE_NATIVE(QUASI)
     trap (  // use TRAP vs. PANIC, such that (try quasi ':foo:) is null
       Coerce_To_Quasiform(out)
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -255,7 +255,8 @@ DECLARE_NATIVE(LIFT)
 
     Value* v = ARG(VALUE);
 
-    return Copy_Lifted_Cell(OUT, v);
+    Copy_Lifted_Cell(OUT, v);
+    return BOUNCE_OUT;
 }
 
 
@@ -286,7 +287,8 @@ DECLARE_NATIVE(LIFT_P)
     if (Is_Light_Null(v))
         return NULL_OUT;
 
-    return Copy_Lifted_Cell(OUT, v);
+    Copy_Lifted_Cell(OUT, v);
+    return BOUNCE_OUT;
 }
 
 
@@ -308,7 +310,13 @@ DECLARE_NATIVE(UNLIFT)
     if (not Any_Lifted(v))
         panic (Error_Bad_Intrinsic_Arg_1(LEVEL));
 
-    return UNLIFT_TO_OUT(As_Element(v));  // quoted or quasi
+    Copy_Cell(OUT, As_Element(v));  // quoted or quasi
+
+    require (
+      Unlift_Cell_No_Decay(OUT)
+    );
+
+    return BOUNCE_OUT;
 }
 
 
@@ -402,7 +410,7 @@ DECLARE_NATIVE(ANTI)
     require (
       Coerce_To_Antiform(OUT)
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -448,8 +456,10 @@ DECLARE_NATIVE(SPREAD)
 {
     INCLUDE_PARAMS_OF_SPREAD;
 
-    if (not ARG(VALUE))
-        return Init_None(OUT);
+    if (not ARG(VALUE)) {
+        Init_None(OUT);
+        return BOUNCE_OUT;
+    }
 
     Stable* v = unwrap ARG(VALUE);
 
@@ -519,7 +529,8 @@ DECLARE_NATIVE(ALIAS)
     Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
     Copy_Cell(Array_Head(a), var);
 
-    return Init_Pack(OUT, a);
+    Init_Pack(OUT, a);
+    return BOUNCE_OUT;
 }
 
 
@@ -539,9 +550,10 @@ DECLARE_NATIVE(RUNS)
     Copy_Cell(OUT, ARG(VALUE));
 
     if (Is_Action(OUT))
-        return OUT;
+        return BOUNCE_OUT;
 
-    return Activate_Frame(OUT);
+    Activate_Frame(OUT);
+    return BOUNCE_OUT;
 }
 
 
@@ -579,7 +591,8 @@ DECLARE_NATIVE(DISARM)
     Value* v = ARG(ERROR);
 
     Copy_Cell(OUT, v);
-    return Disarm_Failure(OUT);
+    Disarm_Failure(OUT);
+    return BOUNCE_OUT;
 }
 
 
@@ -621,5 +634,6 @@ DECLARE_NATIVE(NOQUOTE)
     if (not v)
         return NULL_OUT;
 
-    return Copy_Plain_Cell(OUT, v);;
+    Copy_Plain_Cell(OUT, v);
+    return BOUNCE_OUT;
 }

@@ -427,7 +427,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
         require (
           Map* map = Make_Map(Int32s(arg, 0))
         );
-        return Init_Map(OUT, map);
+        Init_Map(OUT, map);
+        return BOUNCE_OUT;
     }
 
     Executor* executor;
@@ -531,7 +532,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
     Drop_Level(SUBLEVEL);
 
     Rehash_Map(map);  // !!! Rehash calls evaluator for equality testing!
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 
@@ -762,7 +763,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         if (Is_Zombie(val))
             return NULL_OUT;
 
-        return Copy_Cell(OUT, val); }
+        return COPY_TO_OUT(val); }
 
       case SYM_INSERT:
       case SYM_APPEND: {
@@ -790,7 +791,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 
         Append_Map(m, at, tail, len);
 
-        return Init_Map(OUT, m); }
+        Init_Map(OUT, m);
+        return BOUNCE_OUT; }
 
       case SYM_CLEAR: {
         Map* m = VAL_MAP_Ensure_Mutable(map);
@@ -802,7 +804,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         //
         Clear_Flex(MAP_HASHLIST(m));
 
-        return Init_Map(OUT, m); }
+        Init_Map(OUT, m);
+        return BOUNCE_OUT; }
 
       default:
         break;
@@ -822,15 +825,18 @@ IMPLEMENT_GENERIC(TO, Is_Map) {
     Element* map = Element_ARG(VALUE);
     Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
-    if (Any_List_Heart(to))  // !!! not ordered! [1]
-        return Init_List(OUT, to, Map_To_Array(VAL_MAP(map), 0));
+    if (Any_List_Heart(to)) {  // !!! not ordered! [1]
+        Init_List(OUT, to, Map_To_Array(VAL_MAP(map), 0));
+        return BOUNCE_OUT;
+    }
 
     if (to == HEART_MAP) {
         bool deep = false;
         require (
           Map* copy = Copy_Map(VAL_MAP(map), deep)
         );
-        return Init_Map(OUT, copy);
+        Init_Map(OUT, copy);
+        return BOUNCE_OUT;
     }
 
     panic (UNHANDLED);
@@ -849,7 +855,8 @@ IMPLEMENT_GENERIC(COPY, Is_Map)
     require (
       Map* copy = Copy_Map(VAL_MAP(map), ARG(DEEP))
     );
-    return Init_Map(OUT, copy);
+    Init_Map(OUT, copy);
+    return BOUNCE_OUT;
 }
 
 
@@ -947,7 +954,8 @@ IMPLEMENT_GENERIC(LENGTH_OF, Is_Map)
     Element* map = Element_ARG(VALUE);
     const Map* m = VAL_MAP(map);
 
-    return Init_Integer(OUT, Num_Map_Entries_Used(m));
+    Init_Integer(OUT, Num_Map_Entries_Used(m));
+    return BOUNCE_OUT;
 }
 
 
@@ -958,7 +966,8 @@ IMPLEMENT_GENERIC(WORDS_OF, Is_Map)
     Element* map = Element_ARG(VALUE);
     const Map* m = VAL_MAP(map);
 
-    return Init_Block(OUT, Map_To_Array(m, -1));
+    Init_Block(OUT, Map_To_Array(m, -1));
+    return BOUNCE_OUT;
 }
 
 
@@ -969,7 +978,8 @@ IMPLEMENT_GENERIC(VALUES_OF, Is_Map)
     Element* map = Element_ARG(VALUE);
     const Map* m = VAL_MAP(map);
 
-    return Init_Block(OUT, Map_To_Array(m, 1));
+    Init_Block(OUT, Map_To_Array(m, 1));
+    return BOUNCE_OUT;
 }
 
 

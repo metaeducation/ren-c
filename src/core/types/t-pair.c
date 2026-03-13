@@ -42,7 +42,8 @@ DECLARE_NATIVE(AS_PAIR)
 {
     INCLUDE_PARAMS_OF_AS_PAIR;
 
-    return Init_Pair(OUT, VAL_INT64(ARG(X)), VAL_INT64(ARG(Y)));
+    Init_Pair(OUT, VAL_INT64(ARG(X)), VAL_INT64(ARG(Y)));
+    return BOUNCE_OUT;
 }
 
 
@@ -78,7 +79,8 @@ IMPLEMENT_GENERIC(ZEROIFY, Is_Pair)
     INCLUDE_PARAMS_OF_ZEROIFY;
     UNUSED(ARG(EXAMPLE));  // always gives 0x0
 
-    return Init_Pair(OUT, 0, 0);
+    Init_Pair(OUT, 0, 0);
+    return BOUNCE_OUT;
 }
 
 
@@ -94,14 +96,17 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
         trap (
           Transcode_One(OUT, HEART_PAIR, arg)
         );
-        return OUT;
+        return BOUNCE_OUT;
     }
 
-    if (Is_Integer(arg))
-        return Init_Pair(OUT, VAL_INT64(arg), VAL_INT64(arg));
+    if (Is_Integer(arg)) {
+        Init_Pair(OUT, VAL_INT64(arg), VAL_INT64(arg));
+        return BOUNCE_OUT;
+    }
 
-    if (Is_Block(arg))
+    if (Is_Block(arg)) {
         return rebValue(CANON(TO), CANON(PAIR_X), CANON(REDUCE), arg);
+    }
 
     return fail (Error_Bad_Make(HEART_PAIR, arg));
 }
@@ -260,7 +265,8 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
         Set_Flex_Len(a, 2);
         Copy_Cell(Array_At(a, 0), Cell_Pair_First(v));
         Copy_Cell(Array_At(a, 1), Cell_Pair_Second(v));
-        return Init_List(OUT, to, a);
+        Init_List(OUT, to, a);
+        return BOUNCE_OUT;
     }
 
     if (Any_String_Heart(to) or to == HEART_RUNE) {
@@ -269,8 +275,10 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
         Mold_Element(mo, Cell_Pair_First(v));
         Append_Codepoint(mo->strand, ' ');
         Mold_Element(mo, Cell_Pair_Second(v));
-        if (Any_String_Heart(to))
-            return Init_String(OUT, to, Pop_Molded_Strand(mo));
+        if (Any_String_Heart(to)) {
+            Init_String(OUT, to, Pop_Molded_Strand(mo));
+            return BOUNCE_OUT;
+        }
 
         if (Try_Init_Small_Utf8_Untracked(
             OUT,
@@ -279,11 +287,12 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
             Strand_Len(mo->strand) - mo->base.index,
             Strand_Size(mo->strand) - mo->base.size
         )){
-            return OUT;
+            return BOUNCE_OUT;
         }
         Strand* s = Pop_Molded_Strand(mo);
         Freeze_Flex(s);
-        return Init_String(OUT, to, s);
+        Init_String(OUT, to, s);
+        return BOUNCE_OUT;
     }
 
     panic (UNHANDLED);
@@ -346,7 +355,8 @@ IMPLEMENT_GENERIC(REVERSE, Is_Pair)
 
     const Element* pair = Element_ARG(SERIES);
 
-    return Init_Pair(OUT, Cell_Pair_Y(pair), Cell_Pair_X(pair));
+    Init_Pair(OUT, Cell_Pair_Y(pair), Cell_Pair_X(pair));
+    return BOUNCE_OUT;
 }
 
 

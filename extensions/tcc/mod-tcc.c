@@ -401,7 +401,8 @@ DECLARE_NATIVE(MAKE_NATIVE)
 
     Init_Space(Details_At(details, IDX_TCC_PRENATIVE_STATE));  // no state, yet
 
-    return Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
+    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
+    return BOUNCE_OUT;
 }
 
 
@@ -623,7 +624,8 @@ DECLARE_NATIVE(COMPILE_P)
         if (ARG(INSPECT)) {
             Drop_Lifeguard(handle);
             Drop_Data_Stack_To(STACK_BASE);  // don't modify collected natives
-            return Init_Text(OUT, Pop_Molded_Strand(mo));
+            Init_Text(OUT, Pop_Molded_Strand(mo));
+            return BOUNCE_OUT;
         }
 
         if (

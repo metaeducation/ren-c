@@ -479,7 +479,7 @@ Bounce Make_Interpreted_Action(
 
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 
@@ -499,7 +499,7 @@ DECLARE_NATIVE(FUNCTION)
 
     possibly(STATE != STATE_0);
 
-    Bounce bounce = opt Irreducible_Bounce(LEVEL, Make_Interpreted_Action(
+    Bounce bounce = opt Irreducible_Bounce(Make_Interpreted_Action(
         LEVEL,
         SYM_RETURN,  // has a RETURN: in the paramlist
         &Func_Dispatcher,
@@ -509,7 +509,7 @@ DECLARE_NATIVE(FUNCTION)
     if (bounce)
         return bounce;
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -529,7 +529,7 @@ DECLARE_NATIVE(PROCEDURE)
 
     possibly(STATE != STATE_0);
 
-    Bounce bounce = opt Irreducible_Bounce(LEVEL, Make_Interpreted_Action(
+    Bounce bounce = opt Irreducible_Bounce(Make_Interpreted_Action(
         LEVEL,
         SYM_RETURN,
         &Func_Dispatcher,
@@ -565,7 +565,7 @@ DECLARE_NATIVE(PROCEDURE)
     else if (Not_Parameter_Flag(param, AUTO_TRASH))
         panic ("If PROCEDURE has RETURN:, it must be [return: ~]");
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 

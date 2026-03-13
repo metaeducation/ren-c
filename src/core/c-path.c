@@ -277,7 +277,7 @@ DECLARE_NATIVE(POKE)
     if (e)
         return fail (unwrap e);
 
-    return Copy_Cell(OUT, v);
+    return COPY_TO_OUT(v);
 }
 
 
@@ -384,5 +384,5 @@ IMPLEMENT_GENERIC(ZEROIFY, Any_Sequence)
     assume (
       Pop_Sequence(OUT, heart, STACK_BASE)
     );
-    return OUT;
+    return BOUNCE_OUT;
 }

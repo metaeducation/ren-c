@@ -157,7 +157,8 @@ DECLARE_NATIVE(RECYCLE)
       #endif
     }
 
-    return Init_Integer(OUT, count);
+    Init_Integer(OUT, count);
+    return BOUNCE_OUT;
 }
 
 
@@ -280,10 +281,12 @@ DECLARE_NATIVE(C_DEBUG_TICK)
     INCLUDE_PARAMS_OF_C_DEBUG_TICK;
 
   #if TRAMPOLINE_COUNTS_TICKS
-    return Init_Integer(OUT, g_tick);
+    Init_Integer(OUT, g_tick);
   #else
-    return NULL_OUT;
+    Init_Null(OUT);
   #endif
+
+    return BOUNCE_OUT;
 }
 
 

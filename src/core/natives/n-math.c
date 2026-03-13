@@ -94,7 +94,7 @@ DECLARE_NATIVE(ADD)
         trap (
           Init_Single_Codepoint_Rune(OUT, i)
         );
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     if (Is_Blob_And_Is_Zero(e2)) {  // localize NUL to ADD native [1]
@@ -106,7 +106,7 @@ DECLARE_NATIVE(ADD)
         trap (
           Init_Single_Codepoint_Rune(OUT, i)
         );
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     return Run_Generic_Dispatch(e1, LEVEL, CANON(ADD));
@@ -134,11 +134,14 @@ DECLARE_NATIVE(SUBTRACT)
     Element* e2 = Element_ARG(VALUE2);
 
     if (Is_Blob_And_Is_Zero(e1)) {  // localize NUL to SUBTRACT native [1]
-        if (Is_Blob_And_Is_Zero(e2))
-            return Init_Integer(OUT, 0);
+        if (Is_Blob_And_Is_Zero(e2)) {
+            Init_Integer(OUT, 0);
+            return BOUNCE_OUT;
+        }
         if (Is_Rune_And_Is_Char(e2)) {
             Codepoint c2 = Rune_Known_Single_Codepoint(e2);
-            return Init_Integer(OUT, i_cast(REBINT, 0) - c2);
+            Init_Integer(OUT, i_cast(REBINT, 0) - c2);
+            return BOUNCE_OUT;
         }
         return fail (Error_Codepoint_Negative_Raw());
     }
@@ -146,7 +149,8 @@ DECLARE_NATIVE(SUBTRACT)
     if (Is_Blob_And_Is_Zero(e2)) {  // localize NUL to SUBTRACT native [1]
         if (Is_Rune_And_Is_Char(e1)) {
             Codepoint c1 = Rune_Known_Single_Codepoint(e1);
-            return Init_Integer(OUT, c1);
+            Init_Integer(OUT, c1);
+            return BOUNCE_OUT;
         }
         panic ("Only CHAR? can have NUL? #{00} state subtracted");
     }
@@ -608,7 +612,8 @@ DECLARE_NATIVE(COSINE)
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
-    return Init_Decimal(OUT, dval);
+    Init_Decimal(OUT, dval);
+    return BOUNCE_OUT;
 }
 
 
@@ -630,7 +635,8 @@ DECLARE_NATIVE(SINE)
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
-    return Init_Decimal(OUT, dval);
+    Init_Decimal(OUT, dval);
+    return BOUNCE_OUT;
 }
 
 
@@ -652,7 +658,8 @@ DECLARE_NATIVE(TANGENT)
     if (Eq_Decimal(fabs(dval), PI / 2.0))
         panic (Error_Overflow_Raw());
 
-    return Init_Decimal(OUT, tan(dval));
+    Init_Decimal(OUT, tan(dval));
+    return BOUNCE_OUT;
 }
 
 
@@ -673,7 +680,7 @@ DECLARE_NATIVE(ARCCOSINE)
     require (
       Arc_Trans(OUT, ARG(COSINE), ARG(RADIANS), SYM_COSINE)
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -694,7 +701,7 @@ DECLARE_NATIVE(ARCSINE)
     require (
       Arc_Trans(OUT, ARG(SINE), ARG(RADIANS), SYM_SINE)
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -715,7 +722,7 @@ DECLARE_NATIVE(ARCTANGENT)
     require (
         Arc_Trans(OUT, ARG(TANGENT), ARG(RADIANS), SYM_TANGENT)
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -737,7 +744,8 @@ DECLARE_NATIVE(EXP)
 
     // !!! Check_Overflow(dval);
 
-    return Init_Decimal(OUT, dval);
+    Init_Decimal(OUT, dval);
+    return BOUNCE_OUT;
 }
 
 
@@ -758,7 +766,8 @@ DECLARE_NATIVE(LOG_10)
     if (dval <= 0)
         panic (Error_Positive_Raw());
 
-    return Init_Decimal(OUT, log10(dval));
+    Init_Decimal(OUT, log10(dval));
+    return BOUNCE_OUT;
 }
 
 
@@ -779,7 +788,8 @@ DECLARE_NATIVE(LOG_2)
     if (dval <= 0)
         panic (Error_Positive_Raw());
 
-    return Init_Decimal(OUT, log(dval) / LOG2);
+    Init_Decimal(OUT, log(dval) / LOG2);
+    return BOUNCE_OUT;
 }
 
 
@@ -800,7 +810,8 @@ DECLARE_NATIVE(LOG_E)
     if (dval <= 0)
         panic (Error_Positive_Raw());
 
-    return Init_Decimal(OUT, log(dval));
+    Init_Decimal(OUT, log(dval));
+    return BOUNCE_OUT;
 }
 
 
@@ -821,7 +832,8 @@ DECLARE_NATIVE(SQUARE_ROOT)
     if (dval < 0)
         panic (Error_Positive_Raw());
 
-    return Init_Decimal(OUT, sqrt(dval));
+    Init_Decimal(OUT, sqrt(dval));
+    return BOUNCE_OUT;
 }
 
 

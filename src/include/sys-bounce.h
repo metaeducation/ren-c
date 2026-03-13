@@ -107,8 +107,8 @@ INLINE Value* Value_From_Bounce(Bounce b) {
 #define C_REDO_CHECKED  'R'
 #define BOUNCE_REDO_CHECKED  x_cast(Bounce, &g_bounce_redo_checked)
 
-#define C_DOWNSHIFTED  'd'
-#define BOUNCE_DOWNSHIFTED  x_cast(Bounce, &g_bounce_downshifted)
+#define C_TOPLEVEL_OUT  'T'
+#define BOUNCE_TOPLEVEL_OUT  x_cast(Bounce, &g_bounce_toplevel_out)
 
 
 // Continuations are used to mitigate the problems that occur when the C stack
@@ -147,10 +147,8 @@ INLINE Value* Value_From_Bounce(Bounce b) {
 // We don't make this a Wild so it's out of band from "irreducible" bounces,
 // e.g. those that can't just resolve to a state in the output cell.
 //
-// (A direct address is used, so it can signal "Okay" even if the code that
-// assigns `okay: ~okay~` hasn't even run yet)
-//
-#define BOUNCE_OKAY  Stub_Cell(&g_lib_patches[SYM_OKAY])
+#define C_OKAY  'k'
+#define BOUNCE_OKAY  x_cast(Bounce, &g_bounce_okay)
 
 
 // This signals that the evaluator is in a "thrown state".

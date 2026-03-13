@@ -111,7 +111,7 @@ DECLARE_NATIVE(CONDITIONAL)  // usually used via its alias of COND
     if (return_out)
         return OUT_BRANCHED;
 
-    return Copy_Cell(OUT, Lib_Value(SYM_VETO));
+    return COPY_TO_OUT(Lib_Value(SYM_VETO));
 }
 
 
@@ -132,7 +132,7 @@ DECLARE_NATIVE(OPTIONAL)
       bool return_out = Return_Out_For_Conditional_Or_Optional(LEVEL)
     );
     if (return_out)
-        return OUT;
+        return BOUNCE_OUT;
 
     return VOID_OUT_UNBRANCHED;
 }
@@ -184,7 +184,7 @@ Bounce Group_Branch_Executor(Level* const L)
     switch (STATE) {
       case ST_GROUP_BRANCH_INITIAL_ENTRY: goto initial_entry;
       case ST_GROUP_BRANCH_RUNNING_GROUP: goto group_result_in_scratch;
-      case ST_GROUP_BRANCH_RUNNING_BRANCH: return OUT;
+      case ST_GROUP_BRANCH_RUNNING_BRANCH: return BOUNCE_OUT;
       default: assert(false);
     }
 
@@ -229,12 +229,12 @@ Bounce Group_Branch_Executor(Level* const L)
   // 2. The `return DELEGATE(...)` pattern is a feature provied by the
   //    Action_Executor().  But since this is its own executor, it the service
   //    isn't available and so we must handle the result callback...even
-  //    though all we do is `return OUT;`
+  //    though all we do is `return BOUNCE_OUT;`
 
     assert(Is_Level_At_End(L));
 
     if (Any_Void(SCRATCH))  // void branches giving their input is useful  [1]
-        return Copy_Cell(OUT, spare_with);
+        return COPY_TO_OUT(spare_with);
 
     require (
       Stable* scratch_branch = Decay_If_Unstable(SCRATCH)
@@ -656,8 +656,9 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
       case NATIVE_IS_ANY:
         return NULL_OUT;  // non-vanishing expressions, but none of them passed
 
-      case NATIVE_IS_ALL:  // successful ALL returns the last value
-        return Force_Cell_Heavy(OUT);  // didn't CONTINUE_BRANCH(), saw voids
+      case NATIVE_IS_ALL: {  // successful ALL returns the last value
+        Force_Cell_Heavy(OUT);  // didn't CONTINUE_BRANCH(), saw voids
+        return BOUNCE_OUT; }
 
       case NATIVE_IS_NONE_OF:
         return BOUNCE_OKAY;  // successful NONE-OF has no value to return
@@ -669,7 +670,8 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 } return_out: { //////////////////////////////////////////////////////////////
 
     Drop_Level(SUBLEVEL);
-    return Force_Cell_Heavy(OUT);  // see LEVEL_FLAG_FORCE_HEAVY_BRANCH notes
+    Force_Cell_Heavy(OUT);  // see LEVEL_FLAG_FORCE_HEAVY_BRANCH notes
+    return BOUNCE_OUT;
 
 } return_null: { /////////////////////////////////////////////////////////////
 
@@ -1268,7 +1270,7 @@ DECLARE_NATIVE(DEFAULT)
         assert(false);  // shouldn't be able to happen (steps is pinned)
         panic (e);
     }
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 
@@ -1384,7 +1386,7 @@ DECLARE_NATIVE(CATCH_P)  // specialized to plain CATCH w/ NAME="THROW" in boot
 
     CATCH_THROWN(OUT, level_); // thrown value
     dont(Force_Cell_Heavy(OUT));  // we don't tamper with thrown value
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 

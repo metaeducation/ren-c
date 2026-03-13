@@ -109,10 +109,13 @@ DECLARE_NATIVE(ENRECOVER)
 } eval_result_in_out: {  /////////////////////////////////////////////////////
 
     if (not THROWING) {  // successful result
-        if (Is_Failure(OUT))
-            return Disarm_Failure(OUT);
+        if (Is_Failure(OUT)) {
+            Disarm_Failure(OUT);
+            return BOUNCE_OUT;
+        }
 
-        return Lift_Cell(OUT);
+        Lift_Cell(OUT);
+        return BOUNCE_OUT;
     }
 
     if (not Is_Throwing_Panic(LEVEL)) {  // non-ERROR! throws
@@ -126,7 +129,7 @@ DECLARE_NATIVE(ENRECOVER)
     CATCH_THROWN(SPARE, LEVEL);
     assert(Is_Light_Null(SPARE));  // all error throws are null-valued
 
-    return OUT;
+    return BOUNCE_OUT;
   }
 }
 
@@ -232,7 +235,8 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 } finished: {  ///////////////////////////////////////////////////////////////
 
     Drop_Level(SUBLEVEL);
-    return Lift_Cell(OUT);  // ^META result, may be initial void state
+    Lift_Cell(OUT);  // ^META result, may be initial void state
+    return BOUNCE_OUT;
 }}
 
 

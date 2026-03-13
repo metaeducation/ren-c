@@ -319,6 +319,14 @@ INLINE Element* Deactivate_Action(Exact(Value*) v) {
     return As_Element(v);
 }
 
+INLINE void Proxy_Frame_Activation(Value* v, const Value* original) {
+    assert(Is_Possibly_Unstable_Value_Frame(v));
+    if (Is_Action(original))
+        Activate_Frame(v);
+    else
+        assert(Is_Possibly_Unstable_Value_Frame(original));
+}
+
 
 //=//// CELL INFIX MODE ///////////////////////////////////////////////////=//
 //

@@ -217,10 +217,7 @@ DECLARE_NATIVE(ADAPT)
 
     Init_Frame(OUT, details, Frame_Label_Deep(adaptee), UNCOUPLED);
     Copy_Vanishability(OUT, adaptee);
+    Proxy_Frame_Activation(OUT, adaptee);
 
-    if (Is_Action(adaptee))
-        return Activate_Frame(OUT);
-
-    assert(Is_Possibly_Unstable_Value_Frame(OUT));
-    return OUT;
+    return BOUNCE_OUT;
 }

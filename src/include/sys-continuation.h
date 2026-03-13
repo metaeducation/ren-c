@@ -88,7 +88,7 @@
         (sub_flags), \
         __VA_ARGS__  /* binding, branch, and "with" argument */ \
     ) ? Bounce_Continue(TOP_LEVEL) \
-        : level_->out)  // no need to give callback to delegator
+        : BOUNCE_OUT)  // no need to give callback to delegator
 
 #define DELEGATE_CORE_2(out,sub_flags,...) \
     DELEGATE_CORE_3((out), (sub_flags), __VA_ARGS__, nullptr)

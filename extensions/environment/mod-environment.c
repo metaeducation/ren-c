@@ -84,7 +84,8 @@ DECLARE_NATIVE(MAKE_ENVIRONMENT)
 {
     INCLUDE_PARAMS_OF_MAKE_ENVIRONMENT;
 
-    return Init_Environment(OUT);
+    Init_Environment(OUT);
+    return BOUNCE_OUT;
 }
 
 

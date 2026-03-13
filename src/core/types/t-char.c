@@ -265,7 +265,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         trap (
           Init_Single_Codepoint_Rune(OUT, n)
         );
-        return OUT; }
+        return BOUNCE_OUT; }
 
       case TYPE_BLOB: {
         if (heart != HEART_RUNE)
@@ -298,7 +298,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         trap (
           Init_Single_Codepoint_Rune(OUT, c)
         );
-        return OUT; }
+        return BOUNCE_OUT; }
 
       default:
         break;
@@ -341,7 +341,7 @@ DECLARE_NATIVE(MAKE_CHAR)  // Note: currently synonym for (NUL + codepoint)
     trap (
       Init_Single_Codepoint_Rune(OUT, c)
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -383,7 +383,7 @@ DECLARE_NATIVE(TO_CHAR)
         trap (
           Init_Single_Codepoint_Rune(OUT, c)
         );
-        return OUT;
+        return BOUNCE_OUT;
     }
     if (Is_Rune_And_Is_Char(e))
         return COPY_TO_OUT(e);
@@ -413,7 +413,8 @@ DECLARE_NATIVE(TO_CHAR)
     if (bp != at + size)
         return fail (Error_Not_One_Codepoint_Raw());
 
-    return Init_Char_Unchecked(OUT, c);  // scan checked it
+    Init_Char_Unchecked(OUT, c);  // scan checked it
+    return BOUNCE_OUT;
 }
 
 
@@ -620,7 +621,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     trap (
       Init_Single_Codepoint_Rune(OUT, cast(Codepoint, chr))
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -666,7 +667,8 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         );
         memcpy(cast(Byte*, Strand_Head(s)), cast(Byte*, utf8), size);
         Term_Strand_Len_Size(s, len, size);
-        return Init_String(OUT, to, s);
+        Init_String(OUT, to, s);
+        return BOUNCE_OUT;
     }
 
     if (to == HEART_WORD) {
@@ -679,7 +681,8 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         require (
           const Symbol* sym = Intern_Symbol(at, size)
         );
-        return Init_Word(OUT, sym);
+        Init_Word(OUT, sym);
+        return BOUNCE_OUT;
     }
 
     if (to == HEART_RUNE) {  // may make node if mutable
@@ -691,9 +694,10 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         Length len;
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
-        return Init_Utf8_Non_String(  // may fit utf8 in cell if small
+        Init_Utf8_Non_String(  // may fit utf8 in cell if small
             OUT, to, utf8, size, len
         );
+        return BOUNCE_OUT;
     }
 
     if (to == HEART_EMAIL or to == HEART_URL) {
@@ -710,7 +714,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
 
             Move_Cell(OUT, TOP_ELEMENT);
             DROP();
-            return OUT;
+            return BOUNCE_OUT;
         }
 
         if (
@@ -721,7 +725,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         }
         Move_Cell(OUT, TOP_ELEMENT);
         DROP();
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     if (
@@ -735,14 +739,14 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         trap (
           Transcode_One(OUT, to, v)
         );
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     if (Any_Sequence_Heart(to)) {  // to tuple! "a.b.c" -> a.b.c
         trap (
           Transcode_One(OUT, to, v)
         );
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     if (Any_List_Heart(to)) {  // limited TRANSCODE (how limited?...) [1]
@@ -911,7 +915,7 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
     require (
       Alias_Any_Utf8_As(OUT, any_utf8, as)
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1025,7 +1029,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Rune)
         }
     }
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 
@@ -1077,7 +1081,8 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Rune)
     if (not c)
         return fail (Error_Not_One_Codepoint_Raw());
 
-    return Init_Integer(OUT, unwrap c);
+    Init_Integer(OUT, unwrap c);
+    return BOUNCE_OUT;
 }
 
 
@@ -1090,7 +1095,8 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Utf8)
 
     REBLEN len;
     Cell_Utf8_Len_Size_At(&len, nullptr, v);
-    return Init_Integer(OUT, len);
+    Init_Integer(OUT, len);
+    return BOUNCE_OUT;
 }
 
 
@@ -1104,7 +1110,8 @@ IMPLEMENT_GENERIC(SIZE_OF, Any_Utf8)
 
     Size size;
     Cell_Utf8_Size_At(&size, v);
-    return Init_Integer(OUT, size);
+    Init_Integer(OUT, size);
+    return BOUNCE_OUT;
 }
 
 
@@ -1137,5 +1144,6 @@ DECLARE_NATIVE(TRAILING_BYTES_FOR_UTF8)
         );
     }
 
-    return Init_Integer(OUT, trail);
+    Init_Integer(OUT, trail);
+    return BOUNCE_OUT;
 }

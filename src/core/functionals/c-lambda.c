@@ -176,7 +176,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     if (not check)  // do it now [2]
         panic (Error_Bad_Return_Type(L, OUT, unwrap result_param));
 
-    return OUT;
+    return BOUNCE_OUT;
 
 } diverger_finished: { ///////////////////////////////////////////////////////
 
@@ -253,7 +253,7 @@ DECLARE_NATIVE(LAMBDA)
 
     possibly(STATE != STATE_0);
 
-    Bounce bounce = opt Irreducible_Bounce(LEVEL, Make_Interpreted_Action(
+    Bounce bounce = opt Irreducible_Bounce(Make_Interpreted_Action(
         LEVEL,
         SYM_DUMMY1,  // cue look for []: in the paramlist for return spec [1]
         &Lambda_Dispatcher,
@@ -272,7 +272,7 @@ DECLARE_NATIVE(LAMBDA)
         STACK_BASE
       );
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 
@@ -290,7 +290,7 @@ DECLARE_NATIVE(DIVERGER)
 {
     INCLUDE_PARAMS_OF_DIVERGER;
 
-    Bounce bounce = opt Irreducible_Bounce(LEVEL, Make_Interpreted_Action(
+    Bounce bounce = opt Irreducible_Bounce(Make_Interpreted_Action(
         LEVEL,
         none,  // returner... don't allow []: or RETURN:
         &Lambda_Dispatcher,
@@ -306,5 +306,5 @@ DECLARE_NATIVE(DIVERGER)
 
     Init_Space(Details_At(details, IDX_LAMBDA_RESULT_PARAM));  // panic signal
 
-    return OUT;
+    return BOUNCE_OUT;
 }}

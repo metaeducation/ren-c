@@ -47,7 +47,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         trap (
           Transcode_One(OUT, heart, arg)
         );
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     REBLEN alen;
@@ -73,7 +73,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         require (
           Init_Tuple_Bytes(OUT, buf, size)
         );
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     if (Is_Blob(arg)) {
@@ -84,7 +84,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         require (
           Init_Tuple_Bytes(OUT, at, size)
         );
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     return fail (Error_Bad_Make(HEART_TUPLE, arg));
@@ -138,7 +138,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
         require (
           Init_Tuple_Bytes(OUT, buf, len)
         );
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     Byte abuf[MAX_TUPLE];
@@ -258,7 +258,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
     require (
       Init_Tuple_Bytes(OUT, buf, len)
     );
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 
@@ -285,7 +285,8 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
         Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), seq);
         Clear_Cell_Sigil(Array_Head(a));  // to block! @a.b.c -> [a.b.c]
-        return Init_List(OUT, to, a);
+        Init_List(OUT, to, a);
+        return BOUNCE_OUT;
     }
 
     if (Any_Utf8_Heart(to) and to != HEART_WORD) {
@@ -296,7 +297,8 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
         const Strand* s = Pop_Molded_Strand(mo);
         if (not Any_String_Heart(to))
             Freeze_Flex(s);
-        return Init_String(OUT, to, s);
+        Init_String(OUT, to, s);
+        return BOUNCE_OUT;
     }
 
     panic (UNHANDLED);
@@ -442,7 +444,7 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
     require (
       Alias_Any_Sequence_As(OUT, seq, as)
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -574,11 +576,13 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
 
     if (Is_Cell_Wordlike(seq)) {  // e.g. FOO: or :FOO [1]
         REBI64 one_or_two = Random_Range(2, ARG(SECURE));
-        if (one_or_two == 1)
-            return Init_Space(OUT);
+        if (one_or_two == 1) {
+            Init_Space(OUT);
+            return BOUNCE_OUT;
+        }
         Copy_Cell(OUT, seq);
         Tweak_Cell_Type_Matching_Heart(As_Element(OUT), HEART_WORD);
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     if (Is_Cell_Pairlike(seq)) {  // e.g. A/B
@@ -600,7 +604,8 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
     Byte used = seq->payload.at_least_8[IDX_SEQUENCE_USED];
 
     REBI64 rand = Random_Range(used, ARG(SECURE));  // from 1 to used
-    return Init_Integer(OUT, seq->payload.at_least_8[rand]);
+    Init_Integer(OUT, seq->payload.at_least_8[rand]);
+    return BOUNCE_OUT;
 }
 
 
@@ -630,7 +635,8 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Sequence)
 
     Element* seq = Element_ARG(VALUE);
 
-    return Init_Integer(OUT, Sequence_Len(seq));
+    Init_Integer(OUT, Sequence_Len(seq));
+    return BOUNCE_OUT;
 }
 
 

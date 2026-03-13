@@ -404,7 +404,7 @@ Bounce Composer_Executor(Level* const L)
     }
 
     if (Is_Failure(OUT))
-        return OUT;  // !!! Good idea?  Bad idea?
+        return BOUNCE_OUT;  // !!! Good idea?  Bad idea?
 
     if (Is_Cell_A_Veto_Hot_Potato(OUT)) {
         Init_Null_Signifying_Vetoed(OUT);
@@ -550,7 +550,7 @@ Bounce Composer_Executor(Level* const L)
     if (Is_Light_Null(OUT)) {  // VETO encountered
         Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);  // [1]
         Drop_Level(SUBLEVEL);
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     assert(Is_Okay(As_Stable(OUT)));  // "return values" are on data stack
@@ -599,7 +599,7 @@ Bounce Composer_Executor(Level* const L)
 
     assert(Is_Logic(As_Stable(OUT)));  // null if veto
 
-    return OUT;
+    return BOUNCE_OUT;
 }}}
 
 
@@ -707,7 +707,7 @@ DECLARE_NATIVE(COMPOSE2)
       Finalize_Composer_Level(SUBLEVEL, input, ARG(CONFLATE))
     );
     Drop_Level(SUBLEVEL);
-    return OUT;
+    return BOUNCE_OUT;
 
 } string_initial_entry: {  ///////////////////////////////////////////////////
 
@@ -1081,7 +1081,8 @@ DECLARE_NATIVE(COMPOSE2)
         Freeze_Flex(str);
 
     Heart input_heart = Heart_Of_Builtin_Fundamental(As_Element(input));
-    return Init_Series_At_Core(
+    Init_Series_At_Core(
         OUT, FLAG_HEART_AND_LIFT(input_heart), str, 0, nullptr
     );
+    return BOUNCE_OUT;
 }}

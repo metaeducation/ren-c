@@ -852,7 +852,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
     if (sock->stream == nullptr) {  // Actions for an unopened socket
         switch (opt Symbol_Id(verb)) {
           case SYM_OPEN_Q:
-            return Init_False(OUT);
+            return LOGIC_OUT(false);
 
           case SYM_OPEN: {
             Stable* arg = Stable_Slot_Hack(
@@ -947,19 +947,21 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
 
     switch (opt Symbol_Id(verb)) { // Ordered by frequency
       case SYM_LENGTH_OF: {
-        return Init_Integer(
+        Init_Integer(
             OUT,
             Is_Blob(port_data) ? Series_Len_Head(port_data) : 0
-        ); }
+        );
+        return BOUNCE_OUT; }
 
-      case SYM_OPEN_Q:
+      case SYM_OPEN_Q: {
         //
         // Connect for clients, bind for servers:
         //
-        return Init_Logic(
+        Init_Logic(
             OUT,
             (sock->modes & RSM_BIND) or (sock->stream != nullptr)
         );
+        return BOUNCE_OUT; }
 
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;

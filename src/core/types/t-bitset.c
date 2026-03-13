@@ -108,7 +108,8 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
     Init_Blob(v, bset);
     Init_Null_Signifying_Unspecialized(LOCAL(FORM));  // form = false
     Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Blob)(LEVEL);
-    assert(Is_Trash(Value_From_Bounce(bounce)));
+    assert(bounce == BOUNCE_TOPLEVEL_OUT);
+    assert(Is_Trash(OUT));
     possibly(Is_Bounce_A_Level(bounce));  // !!! generic truth, review
     UNUSED(bounce);
 
@@ -138,16 +139,16 @@ IMPLEMENT_GENERIC(MAKE, Is_Bitset)
     Init_Bitset(OUT, bset);
 
     if (Is_Integer(arg))
-        return OUT; // allocated at a size, no contents.
+        return BOUNCE_OUT; // allocated at a size, no contents.
 
     if (Is_Blob(arg)) {  // size accounted for by Find_Max_Bit()
         const Byte* at = Blob_Size_At(nullptr, arg);
         memcpy(Binary_Head(bset), at, (len / 8) + 1);
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     Set_Bits(bset, arg, true);
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -701,7 +702,8 @@ IMPLEMENT_GENERIC(COPY, Is_Bitset)
     );
     INIT_BITS_NOT(copy, BITS_NOT(bits));
 
-    return Init_Bitset(OUT, copy);
+    Init_Bitset(OUT, copy);
+    return BOUNCE_OUT;
 }
 
 
@@ -711,7 +713,8 @@ IMPLEMENT_GENERIC(LENGTH_OF, Is_Bitset)
 
     Element* bset = Element_ARG(VALUE);
 
-    return Init_Integer(OUT, Binary_Len(VAL_BITSET(bset)) * 8);
+    Init_Integer(OUT, Binary_Len(VAL_BITSET(bset)) * 8);
+    return BOUNCE_OUT;
 }
 
 
@@ -739,7 +742,8 @@ IMPLEMENT_GENERIC(COMPLEMENT, Is_Bitset)
       )
     );
     INIT_BITS_NOT(copy, not BITS_NOT(VAL_BITSET(bset)));
-    return Init_Bitset(OUT, copy);
+    Init_Bitset(OUT, copy);
+    return BOUNCE_OUT;
 }
 
 
@@ -811,7 +815,8 @@ IMPLEMENT_GENERIC(INTERSECT, Is_Bitset)
 
     INIT_BITS_NOT(bits_out, false);
     Trim_Tail_Zeros(bits_out);
-    return Init_Bitset(OUT, bits_out);
+    Init_Bitset(OUT, bits_out);
+    return BOUNCE_OUT;
 }
 
 
@@ -832,7 +837,8 @@ IMPLEMENT_GENERIC(UNION, Is_Bitset)
 
     INIT_BITS_NOT(bits_out, false);
     Trim_Tail_Zeros(bits_out);
-    return Init_Bitset(OUT, bits_out);
+    Init_Bitset(OUT, bits_out);
+    return BOUNCE_OUT;
 }
 
 
@@ -853,7 +859,8 @@ IMPLEMENT_GENERIC(DIFFERENCE, Is_Bitset)
 
     INIT_BITS_NOT(bits_out, false);
     Trim_Tail_Zeros(bits_out);
-    return Init_Bitset(OUT, bits_out);
+    Init_Bitset(OUT, bits_out);
+    return BOUNCE_OUT;
 }
 
 
@@ -883,5 +890,6 @@ IMPLEMENT_GENERIC(EXCLUDE, Is_Bitset)
 
     INIT_BITS_NOT(bits_out, negated_result);
     Trim_Tail_Zeros(bits_out);
-    return Init_Bitset(OUT, bits_out);
+    Init_Bitset(OUT, bits_out);
+    return BOUNCE_OUT;
 }

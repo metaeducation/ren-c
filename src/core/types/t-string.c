@@ -327,7 +327,8 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
         require (
           Strand* strand = Make_Strand(Int32s(def, 0))
         );
-        return Init_String(OUT, heart, strand);
+        Init_String(OUT, heart, strand);
+        return BOUNCE_OUT;
     }
 
     return fail (Error_Bad_Make(heart, def));
@@ -351,7 +352,7 @@ DECLARE_NATIVE(TO_TEXT)
     if (Is_Blob(ARG(VALUE)) and ARG(RELAX)) {
         Size size;
         const Byte* at = Blob_Size_At(&size, ARG(VALUE));
-        return Init_String(
+        Init_String(
             OUT,
             HEART_TEXT,
             Append_UTF8_May_Panic(
@@ -869,7 +870,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             Copy_Lifted_Cell(Array_At(pack, 1), v);
             SERIES_INDEX_UNBOUNDED(Array_At(pack, 1)) = ret + len;
 
-            return Init_Pack(OUT, pack);
+            Init_Pack(OUT, pack);
+            return BOUNCE_OUT;
         }
         else
             assert(id == SYM_SELECT);
@@ -878,10 +880,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         if (ret == tail)
             return NULL_OUT;
 
-        return Init_Char_Unchecked(
+        Init_Char_Unchecked(
             OUT,
             Codepoint_At(Strand_At(Cell_Strand(v), ret))
-        ); }
+        );
+        return BOUNCE_OUT; }
 
       case SYM_CLEAR: {
         Strand* s = Cell_Strand_Ensure_Mutable(v);
@@ -991,7 +994,7 @@ IMPLEMENT_GENERIC(CHANGE, Any_String)
     Element* out = Copy_Cell(OUT, Element_ARG(SERIES));
     SERIES_INDEX_UNBOUNDED(out) = tail;
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1044,7 +1047,7 @@ IMPLEMENT_GENERIC(AS, Any_String)
     require (
       Alias_Any_String_As(OUT, string, as)
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1061,11 +1064,12 @@ IMPLEMENT_GENERIC(COPY, Any_String)
     require (
       Strand* copy = Copy_String_At_Limit(string, &len)
     );
-    return Init_String(
+    Init_String(
         OUT,
         Heart_Of_Builtin_Fundamental(string),
         copy
     );
+    return BOUNCE_OUT;
 }
 
 
@@ -1087,7 +1091,8 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
             require (
               Strand* strand = Make_Strand(0)
             );
-            return Init_String(OUT, heart, strand);
+            Init_String(OUT, heart, strand);
+            return BOUNCE_OUT;
         }
     } else
         len = 1;
@@ -1112,7 +1117,8 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
         require (
           Strand* strand = Make_Strand(0)
         );
-        return Init_String(OUT, heart, strand);
+        Init_String(OUT, heart, strand);
+        return BOUNCE_OUT;
     }
 
     // if no :PART, just return value, else return string
@@ -1128,7 +1134,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
         Init_Char_Unchecked(OUT, Codepoint_At(String_At(v)));
 
     Remove_Any_Series_Len(v, Series_Index(v), len);
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1143,7 +1149,7 @@ IMPLEMENT_GENERIC(REVERSE, Any_String)
     Copy_Cell(OUT, string);  // save before index adjustment
     REBINT len = Part_Len_May_Modify_Index(string, Element_ARG(PART));
     Reverse_Strand(s, Series_Index(string), len);
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1161,10 +1167,11 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_String)
 
     index += Random_Int(ARG(SECURE)) % (tail - index);
 
-    return Init_Char_Unchecked(
+    Init_Char_Unchecked(
         OUT,
         Get_Strand_Char_At(Cell_Strand(v), index)
     );
+    return BOUNCE_OUT;
 }
 
 
@@ -1226,7 +1233,8 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Any_String)
         )
         and *bp == '\0'  // after one scan, must be at tail
     ){
-        return Init_Integer(OUT, c);
+        Init_Integer(OUT, c);
+        return BOUNCE_OUT;
     }
     return fail (Error_Not_One_Codepoint_Raw());
 }
@@ -1286,7 +1294,7 @@ IMPLEMENT_GENERIC(SORT, Any_String)
     Copy_Cell(OUT, v);  // before index modification
     REBLEN limit = Part_Len_May_Modify_Index(v, Element_ARG(PART));
     if (limit <= 1)
-        return OUT;
+        return BOUNCE_OUT;
 
     Length len;
     Size size;
@@ -1327,7 +1335,7 @@ IMPLEMENT_GENERIC(SORT, Any_String)
         &flags,
         &Qsort_Char_Callback
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1355,7 +1363,8 @@ DECLARE_NATIVE(ENCODE_UTF_8) {
     Binary* b = Make_Binary(utf8_size);
     memcpy(Binary_Head(b), cast(Byte*, utf8), utf8_size);
     Term_Binary_Len(b, utf8_size);
-    return Init_Blob(OUT, b);
+    Init_Blob(OUT, b);
+    return BOUNCE_OUT;
 }
 
 
@@ -1387,11 +1396,12 @@ DECLARE_NATIVE(DECODE_UTF_8)
 
     Size size;
     const Byte* at = Blob_Size_At(&size, blob);
-    return Init_String(
+    Init_String(
         OUT,
         heart,
         Append_UTF8_May_Panic(nullptr, s_cast(at), size, STRMODE_NO_CR)
     );
+    return BOUNCE_OUT;
 }
 
 

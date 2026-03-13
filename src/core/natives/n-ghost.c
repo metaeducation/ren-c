@@ -196,8 +196,10 @@ DECLARE_NATIVE(UNVOID)
 
     Value* v = ARG(VALUE);
 
-    if (Is_Void(v))
-        return Init_Heavy_Void(OUT);
+    if (Is_Void(v)) {
+        Init_Heavy_Void(OUT);
+        return BOUNCE_OUT;
+    }
 
     return COPY_TO_OUT(v);
 }

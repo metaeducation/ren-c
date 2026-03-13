@@ -102,7 +102,8 @@ DECLARE_NATIVE(BUILTIN_EXTENSIONS)
         Copy_Cell(cell, block);
         rebRelease(block);
     }
-    return Init_Block(OUT, list);
+    Init_Block(OUT, list);
+    return BOUNCE_OUT;
 }
 
 
@@ -269,7 +270,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     // system will automatically call them on shutdown (yet)
 
     assert(Cell_Module_Sea(OUT) == sea);
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 

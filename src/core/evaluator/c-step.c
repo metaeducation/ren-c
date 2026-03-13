@@ -361,7 +361,7 @@ Bounce Inert_Stepper_Executor(Level* L)
 
     Copy_Cell_May_Bind(OUT, At_Feed(L->feed), L_binding);
     Fetch_Next_In_Feed(L->feed);
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1344,7 +1344,7 @@ Bounce Stepper_Executor(Level* L)
     }
   #endif
 
-    b = opt Irreducible_Bounce(L, b);
+    b = opt Irreducible_Bounce(b);
     if (b)  // can't Bounce_Continue() etc. from an intrinsic dispatch
         panic ("Intrinsic dispatcher returned Irreducible Bounce");
 
@@ -2102,7 +2102,7 @@ Bounce Stepper_Executor(Level* L)
   #endif
 
     possibly(Not_Eval_Executor_Flag(L, OUT_IS_DISCARDABLE));
-    return OUT;
+    return BOUNCE_OUT;
 
 
 } return_thrown: { ///////////////////////////////////////////////////////////

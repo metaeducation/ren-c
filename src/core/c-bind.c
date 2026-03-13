@@ -889,7 +889,7 @@ DECLARE_NATIVE(LET)
     Context* bindings = List_Binding(Element_LOCAL(BINDINGS_HOLDER));
     Tweak_Cell_Binding(Feed_Data(L->feed), bindings);
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 
@@ -1025,7 +1025,7 @@ DECLARE_NATIVE(DEFINITIONAL)
       Get_Var_To_Out_Use_Toplevel(var, GROUP_EVAL_NO)
     );
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 

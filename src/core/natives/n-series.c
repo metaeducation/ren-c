@@ -251,7 +251,7 @@ DECLARE_NATIVE(APPEND)
     STATE = ST_MODIFY_INSERT;  // CHANGE is "MODIFY" [A]
 
     Bounce b = Dispatch_Generic(CHANGE, series, LEVEL);
-    b = opt Irreducible_Bounce(LEVEL, b);
+    b = opt Irreducible_Bounce(b);
     if (b)
         panic ("APPEND is built on INSERT, should not return Bounce");
 
@@ -268,7 +268,7 @@ DECLARE_NATIVE(APPEND)
     dont(SERIES_INDEX_UNBOUNDED(OUT) = 0);  // old behavior, HEAD OF
     SERIES_INDEX_UNBOUNDED(OUT) = index;
 
-    return OUT;  // don't panic on read only if would be a no-op
+    return BOUNCE_OUT;  // don't panic on read only if would be a no-op
 
 }} handle_non_series: { ///////////////////////////////////////////////////////
 
@@ -534,7 +534,8 @@ DECLARE_NATIVE(SKIP)
         Element* offset = Element_ARG(OFFSET);
         if (not Is_Integer(offset) or 0 != VAL_UINT32(offset))
             return fail ("Cannot SKIP a NONE by a non-zero offset");
-        return Init_None(OUT);
+        Init_None(OUT);
+        return BOUNCE_OUT;
     }
 
     if (Is_Okay(ARG(OFFSET)))  // !!! Experiment, preserve *some* logic [1]

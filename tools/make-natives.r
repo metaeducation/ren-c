@@ -39,7 +39,7 @@ Rebol [
                  int i = VAL_INT32(ARG(ARGUMENT));
                  /* etc, etc. */
             }
-            return OUT;
+            return BOUNCE_OUT;
         }
 
      1. In order to have a PARAMETER! where the description can be put, the

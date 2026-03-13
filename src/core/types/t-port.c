@@ -87,7 +87,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
         VarList* context = Copy_Varlist_Shallow_Managed(Cell_Varlist(arg));
         Element* rootvar = Rootvar_Of_Varlist(context);
         Tweak_Cell_Type_Matching_Heart(rootvar, HEART_PORT);
-        return Init_Port(OUT, context);
+        Init_Port(OUT, context);
+        return BOUNCE_OUT;
     }
 
     if (rebRunThrows(
@@ -103,7 +104,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
     if (not Is_Port(out))  // should always create a port
         return fail (Error_Bad_Value(out));
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -151,14 +152,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
         Details* details = Ensure_Frame_Details(SPARE);
         Dispatcher* dispatcher = Details_Dispatcher(details);
         Bounce b = opt Irreducible_Bounce(
-            LEVEL,
             Apply_Cfunc(dispatcher, LEVEL)
         );
         if (b)  // couldn't reduce to being something in OUT
             return b;
 
         if (Is_Failure(OUT))
-            return OUT;
+            return BOUNCE_OUT;
 
         goto post_process_output;
     }
@@ -234,7 +234,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
         }
     }
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 

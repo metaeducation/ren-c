@@ -241,9 +241,7 @@ DECLARE_NATIVE(ENCLOSE)
 
     Init_Frame(OUT, details, Frame_Label(inner), UNCOUPLED);
 
-    if (Is_Action(inner))
-        return Activate_Frame(OUT);
+    Proxy_Frame_Activation(OUT, inner);
 
-    assert(Is_Possibly_Unstable_Value_Frame(OUT));
-    return OUT;
+    return BOUNCE_OUT;
 }

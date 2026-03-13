@@ -44,10 +44,12 @@ DECLARE_NATIVE(FORM)
         require (
           Strand* strand = Make_Strand(0)
         );
-        return Init_Text(OUT, strand);
+        Init_Text(OUT, strand);
+        return BOUNCE_OUT;
     }
 
-    return Init_Text(OUT, Copy_Form_Element(unwrap elem, 0));
+    Init_Text(OUT, Copy_Form_Element(unwrap elem, 0));
+    return BOUNCE_OUT;
 }
 
 
@@ -162,7 +164,8 @@ DECLARE_NATIVE(MOLD)
     else
         Init_Quasi_Null(Array_At(pack, 1));
 
-    return Init_Pack(OUT, pack);
+    Init_Pack(OUT, pack);
+    return BOUNCE_OUT;
 }}
 
 

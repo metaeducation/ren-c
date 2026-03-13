@@ -362,10 +362,10 @@ INLINE bool Is_Bedrock_Dual_An_Accessor(const Dual* dual) {
 //
 
 #define LIFT_OUT_FOR_DUAL_PICK \
-    x_cast(Bounce, Lift_Cell(OUT))
+    (Lift_Cell(OUT), BOUNCE_OUT)
 
 #define LIFT_NULL_OUT_FOR_DUAL_PICK \
-    x_cast(Bounce, Lift_Cell(Init_Null(OUT)))  // lifted null: present + null
+    (Lift_Cell(Init_Null(OUT)), BOUNCE_OUT)  // lifted null: present + null
 
 #define NULL_OUT_SLOT_UNAVAILABLE  NULL_OUT  // non-lifted null: not present [1]
 
@@ -376,7 +376,7 @@ INLINE bool Is_Bedrock_Dual_An_Accessor(const Dual* dual) {
 #define Is_Null_Signifying_Tweak_Is_Pick(cell)  Is_Null(cell)
 
 #define OUT_UNLIFTED_DUAL_INDIRECT_PICK \
-    (assert(not Any_Lifted(OUT)), x_cast(Bounce, OUT))  // e.g. ALIAS, GETTER
+    (assert(not Any_Lifted(OUT)), BOUNCE_OUT)  // e.g. ALIAS, GETTER
 
 
 //=//// DUAL POKING ///////////////////////////////////////////////////////=//
@@ -395,18 +395,18 @@ INLINE bool Is_Bedrock_Dual_An_Accessor(const Dual* dual) {
 //
 
 #define LIFT_OUT_FOR_DUAL_WRITEBACK \
-    x_cast(Bounce, Lift_Cell(OUT))  // commentary
+    (Lift_Cell(OUT), BOUNCE_OUT)  // commentary
 
 #define Init_Okay_Signifying_No_Writeback(dual) \
     Init_Okay(dual)
 
 #define OKAY_OUT_NO_WRITEBACK \
-    x_cast(Bounce, Init_Okay_Signifying_No_Writeback(OUT))
+    (Init_Okay_Signifying_No_Writeback(OUT), BOUNCE_OUT)
 
 #define Is_Okay_Signifying_No_Writeback(cell)  Is_Okay(cell)
 
 #define OUT_UNLIFTED_DUAL_INDIRECT_POKE \
-    (assert(not Any_Lifted(OUT)), x_cast(Bounce, OUT))  // e.g. ALIAS, SETTER
+    (assert(not Any_Lifted(OUT)), BOUNCE_OUT)  // e.g. ALIAS, SETTER
 
 
 // !!! Places that use this should probably be running through the central

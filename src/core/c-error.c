@@ -597,7 +597,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Error)
         }
     }
 
-    return Init_Error_Cell(OUT, varlist);
+    Init_Error_Cell(OUT, varlist);
+    return BOUNCE_OUT;
 }
 
 

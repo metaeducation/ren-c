@@ -241,7 +241,7 @@ DECLARE_NATIVE(TRANSCODE)
             }
         }
         Drop_Level(SUBLEVEL);
-        return OUT;
+        return BOUNCE_OUT;
 
       default:
         assert(false);
@@ -257,7 +257,7 @@ DECLARE_NATIVE(TRANSCODE)
     if (Is_Failure(OUT)) {
         assert(TOP_INDEX == STACK_BASE);
         Drop_Level(SUBLEVEL);
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     assert(Is_Tripwire(OUT));  // TRASH! if it's not a FAILURE!
@@ -324,7 +324,7 @@ DECLARE_NATIVE(TRANSCODE)
 
     if (not ARG(NEXT)) {
         assert(Is_Block(As_Element(OUT)));
-        return OUT;  // single block result
+        return BOUNCE_OUT;  // single block result
     }
 
     if (Is_Light_Null(OUT))  // no more Elements were left to transcode
@@ -370,5 +370,6 @@ DECLARE_NATIVE(TRANSCODE)
     Copy_Lifted_Cell(Array_At(pack, 0), spare_rest);
     Copy_Lifted_Cell(Array_At(pack, 1), OUT);
 
-    return Init_Pack(OUT, pack);
+    Init_Pack(OUT, pack);
+    return BOUNCE_OUT;
 }}}

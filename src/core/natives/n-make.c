@@ -69,7 +69,7 @@ Bounce Copy_Quoter_Executor(Level* level_)
 {
     Tweak_Cell_Lift_Byte(OUT, Type_From_Byte(STATE));
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -316,10 +316,10 @@ DECLARE_NATIVE(CHECK_TO_OR_AS)
 } forward_result_in_out: {  //////////////////////////////////////////////////
 
     if (Is_Datatype(v))  // skip reverse for DATATYPE! (review)
-        return OUT;
+        return BOUNCE_OUT;
 
     if (Is_Failure(OUT))
-        return OUT;  // don't enforce failure both directions (?)
+        return BOUNCE_OUT;  // don't enforce failure both directions (?)
 
     Copy_Cell(SCRATCH, v);  // save original value being TO or AS'd from
 
@@ -341,7 +341,7 @@ DECLARE_NATIVE(CHECK_TO_OR_AS)
     if (to_or_as == TYPE_MAP) {  // doesn't preserve order requirement :-/
         if (not Have_Same_Type(forward, backward))
             panic ("Reverse TO/AS of MAP! didn't produce original type");
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     bool equal_reversal = rebUnboxLogic(
@@ -352,7 +352,7 @@ DECLARE_NATIVE(CHECK_TO_OR_AS)
         panic ("Reverse TO/AS transform didn't produce original result");
 
     if (Frame_Label(archetype) == CANON(AS))
-        return OUT;
+        return BOUNCE_OUT;
 
     assert(Frame_Label(archetype) == CANON(TO));
 
@@ -364,6 +364,6 @@ DECLARE_NATIVE(CHECK_TO_OR_AS)
             panic ("Reverse TO/AS transform not same as COPY");
     }
 
-    return OUT; }
+    return BOUNCE_OUT; }
 #endif
 }

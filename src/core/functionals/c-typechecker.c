@@ -423,7 +423,9 @@ bool Predicate_Check_Spare_Uses_Scratch(
         if (bounce == BOUNCE_OKAY)
             goto test_succeeded;
 
-        assert(bounce == L->out);  // no Bounce_Continue(), API vals, etc
+        assert(
+            bounce == BOUNCE_TOPLEVEL_OUT  // no Bounce_Continue(), API vals...
+        );
         if (Is_Failure(L->out))
             panic (L->out);
         panic (Error_No_Logic_Typecheck(label));
@@ -1228,7 +1230,7 @@ DECLARE_NATIVE(TYPECHECKER)
     require (
       Init_Typechecker(OUT, ARG(TYPES))
     );
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1353,5 +1355,5 @@ DECLARE_NATIVE(MATCHER)
     if (Specialize_Action_Throws(OUT, LIB(MATCH), block_in_spare, STACK_BASE))
         return THROWN;
 
-    return OUT;
+    return BOUNCE_OUT;
 }

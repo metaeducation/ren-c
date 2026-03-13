@@ -136,5 +136,5 @@ DECLARE_NATIVE(NOW)
     if (n > 0)
         Init_Integer(out, n);
 
-    return OUT;
+    return BOUNCE_OUT;
 }

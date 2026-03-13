@@ -80,9 +80,10 @@ PVAR Cell g_cell_aligned_end;  // Feed internals canonize rebENDs to this
 
 PVAR WildTwo g_bounce_redo_unchecked;
 PVAR WildTwo g_bounce_redo_checked;
-PVAR WildTwo g_bounce_downshifted;
+PVAR WildTwo g_bounce_toplevel_out;
 PVAR WildTwo g_bounce_thrown;
 PVAR WildTwo g_bounce_suspend;
+PVAR WildTwo g_bounce_okay;
 
 PVAR Flex* g_dispatcher_table;
 

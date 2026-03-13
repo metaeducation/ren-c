@@ -95,19 +95,18 @@ Bounce Combinator_Dispatcher(Level* L)
         b = Func_Dispatcher(L);
     }
 
-    if (b == BOUNCE_THROWN)
+    b = opt Irreducible_Bounce(b);
+    if (not b)
         return b;
 
-    Value* r = Value_From_Bounce(b);
-
-    if (r == nullptr or Is_Light_Null(r))
-        return r;  // did not advance, don't update furthest
+    if (Is_Failure(L->out))
+        return b;  // did not advance, don't update furthest
 
     // This particular parse succeeded, but did the furthest point exceed the
     // previously measured furthest point?  This only is a question that
     // matters if there was a request to know the furthest point...
 
-    return r;
+    return b;
 }
 
 //
@@ -224,7 +223,7 @@ DECLARE_NATIVE(COMBINATOR)
 
 } make_interpreted_action_frame: {
 
-    Bounce bounce = opt Irreducible_Bounce(LEVEL, Make_Interpreted_Action(
+    Bounce bounce = opt Irreducible_Bounce(Make_Interpreted_Action(
         LEVEL,
         SYM_RETURN,  // want RETURN:
         &Combinator_Dispatcher,
@@ -237,7 +236,7 @@ DECLARE_NATIVE(COMBINATOR)
     assert(Is_Action(OUT));
     Deactivate_Action(OUT);  // now it's known to not be antiform
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 
@@ -344,7 +343,7 @@ DECLARE_NATIVE(OPT_COMBINATOR)
 } parser_result_in_out: {  ///////////////////////////////////////////////////
 
     if (not Is_Failure(OUT))  // parser succeeded...
-        return OUT;  // so return its result
+        return BOUNCE_OUT;  // so return its result
 
     Copy_Cell(remainder, input);  // convey no progress made
     return NULL_OUT;
@@ -389,7 +388,7 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
         Copy_Cell(ARG(REMAINDER), input);
 
         Copy_Cell_May_Bind(OUT, at, List_Binding(input));
-        return OUT;  // Note: returns item in array, not rule, when an array!
+        return BOUNCE_OUT;  // Note: returns item in array, not rule, when an array!
     }
 
     assert(Any_String(input) or Is_Blob(input));
@@ -496,7 +495,7 @@ DECLARE_NATIVE(SOME_COMBINATOR)
     if (Is_Light_Null(SPARE)) {  // first still succeeded, so we're okay.
         Copy_Cell(remainder, input);  // put back [3] and drop loop
         Remove_Flex_Units_And_Update_Used(loops, Array_Len(loops) - 1, 1);
-        return OUT;  // return previous successful parser result
+        return BOUNCE_OUT;  // return previous successful parser result
     }
 
     Move_Cell(OUT, SPARE);  // update last successful result
@@ -555,7 +554,7 @@ DECLARE_NATIVE(FURTHER_COMBINATOR)
     if (Series_Index(SPARE) <= Series_Index(input))
         return NULL_OUT;  // the rule matched but did not advance the input
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 
@@ -800,5 +799,6 @@ DECLARE_NATIVE(COMBINATORIZE)
 
     Copy_Lifted_Cell(Array_At(pack, 1), ARG(RULES));  // advanced by param hook
 
-    return Init_Pack(OUT, pack);
+    Init_Pack(OUT, pack);
+    return BOUNCE_OUT;
 }

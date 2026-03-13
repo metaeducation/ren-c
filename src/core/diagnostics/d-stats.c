@@ -50,8 +50,10 @@ DECLARE_NATIVE(STATS)
         g_ts.total_eval_cycles + g_ts.eval_dose - g_ts.eval_countdown
     );
 
-    if (ARG(EVALS))
-        return Init_Integer(OUT, num_evals);
+    if (ARG(EVALS)) {
+        Init_Integer(OUT, num_evals);
+        return BOUNCE_OUT;
+    }
 
     if (ARG(PROFILE)) {
       #if DEBUG_COLLECT_STATS
@@ -81,7 +83,8 @@ DECLARE_NATIVE(STATS)
     if (ARG(SHOW))
         Dump_Pools();
 
-    return Init_Integer(OUT, Inspect_Flex(ARG(SHOW)));
+    Init_Integer(OUT, Inspect_Flex(ARG(SHOW)));
+    return BOUNCE_OUT;
   #else
     panic (Error_Checked_Build_Only_Raw());
   #endif

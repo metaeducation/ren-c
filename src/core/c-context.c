@@ -631,7 +631,8 @@ DECLARE_NATIVE(WRAP)
     Copy_Lifted_Cell(Array_At(pack, 0), list);
     Lift_Cell(Init_Object(Array_At(pack, 1), varlist));
 
-    return Init_Pack(OUT, pack);
+    Init_Pack(OUT, pack);
+    return BOUNCE_OUT;
 }
 
 
@@ -781,7 +782,8 @@ DECLARE_NATIVE(COLLECT_WORDS)
     Destruct_Collector(cl);  // does removal automatically
 
     Source* array = Pop_Managed_Source_From_Stack(STACK_BASE);
-    return Init_Block(OUT, array);
+    Init_Block(OUT, array);
+    return BOUNCE_OUT;
 }}
 
 

@@ -222,7 +222,7 @@ DECLARE_NATIVE(INLINER)
 {
     INCLUDE_PARAMS_OF_INLINER;
 
-    Bounce bounce = opt Irreducible_Bounce(LEVEL, Make_Interpreted_Action(
+    Bounce bounce = opt Irreducible_Bounce(Make_Interpreted_Action(
         LEVEL,
         none,  // no returner; inliners return code, not eval products
         &Inliner_Dispatcher,
@@ -234,7 +234,7 @@ DECLARE_NATIVE(INLINER)
 
   make_interpreted_action_finished: {  // stopped making eval bounce requests
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 

@@ -89,9 +89,9 @@
 // return `none` (which is a zero-ish state like nullptr is, but here we
 // are interpreting it differently than a typical nullptr Bounce).
 //
-Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
-    if (b == OUT) {  // common case, made fastest
-        assert(Is_Cell_Readable(OUT));  // must write out, even if just void
+Option(Bounce) Irreducible_Bounce(Bounce b) {
+    if (b == BOUNCE_TOPLEVEL_OUT) {  // common case, made fastest
+        assert(Is_Cell_Readable(TOP_LEVEL->out));  // must write out
         return none;
     }
 
@@ -121,28 +121,25 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
 
     if (b == nullptr) {  // could be from a NEEDFUL_RESULT_0 [1]
         if (not g_failure) {
-            Init_Null(OUT);
+            Init_Null(TOP_LEVEL->out);
             return none;
         }
 
-        assert(not Is_Throwing(L));
+        assert(not Is_Throwing(TOP_LEVEL));
 
-        Init_Error_Cell(L->out, g_failure);
+        Init_Error_Cell(TOP_LEVEL->out, g_failure);
         g_failure = nullptr;  // have to do before Force_Location_Of_Error()
-        Failify_Cell_And_Force_Location(L->out);
+        Failify_Cell_And_Force_Location(TOP_LEVEL->out);
 
         return none;
     }
 
-} give_up_on_simplifying_if_bounce_wild_or_continuation: {
+} handle_continuation: {
 
     if (Is_Bounce_A_Level(b))  // continuation
         return b;
 
-    if (Is_Bounce_Wild(b))
-        return b;  // can't simplify, may be a panic, continuation, etc.
-
-} handle_bounce_okay: {
+} handle_bounce_wild_including_okay: {
 
   // BOUNCE_OKAY is just LIB(OKAY) (fixed pointer).  It's important for cases
   // like typecheckers that don't actually want to overwrite their OUT cell,
@@ -151,9 +148,12 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
   // (But if we're receiving it here, we're not a typechecker call, so we
   // go ahead and reify the okay into the output cell.
 
-    if (b == BOUNCE_OKAY) {
-        Init_Okay(OUT);
-        return none;
+    if (Is_Bounce_Wild(b)) {
+        if (b == BOUNCE_OKAY) {
+            Init_Okay(TOP_LEVEL->out);
+            return none;
+        }
+        return b;  // can't simplify, may be a panic, continuation, etc.
     }
 
 } copy_api_cell_to_out_and_release_it: {
@@ -161,7 +161,7 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
     if (Is_Bounce_A_Cell(b)) {  // must be Api Value
         Api(Value*) v = Value_From_Bounce(b);
         assert(Is_Api_Value(v));
-        Copy_Cell(OUT, v);
+        Copy_Cell(TOP_LEVEL->out, v);
         Release_Api_Value_If_Unmanaged(v);
         return none;
     }
@@ -194,29 +194,29 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
     const char* cp = cast(const char*, b);
     if (cp[0] == '~') {
         if (cp[1] == '\0') {
-            Init_Void(L->out);
+            Init_Void(TOP_LEVEL->out);
             return none;  // make return "~" fast!
         }
         if (
             cp[1] == '<' and cp[2] == '?' and cp[3] == '>'
             and cp[4] == '~' and cp[5] == '\0'
         ) {
-            Init_Tripwire(L->out);
+            Init_Tripwire(TOP_LEVEL->out);
             return none;  // make return "~<?>~" fast!
         }
     }
 
-    if (Link_Inherit_Bind(L->varlist) == nullptr) {  // raw native hack [1]
-        assert(Get_Details_Flag(Ensure_Level_Details(L), RAW_NATIVE));
-        possibly(Not_Base_Managed(L->varlist));
+    if (Link_Inherit_Bind(TOP_LEVEL->varlist) == nullptr) {  // raw native [1]
+        assert(Get_Details_Flag(Ensure_Level_Details(TOP_LEVEL), RAW_NATIVE));
+        possibly(Not_Base_Managed(TOP_LEVEL->varlist));
         return u_cast(Bounce,  // v-- RebolBounce is void*, not Bounce
             rebDelegateCore(cast(RebolContext*, g_lib_context), cp)
         );
     }
 
-    assert(Is_Base_Managed(L->varlist));
+    assert(Is_Base_Managed(TOP_LEVEL->varlist));
     return u_cast(Bounce,  // v-- RebolBounce is void*, not Bounce
-        rebDelegateCore(cast(RebolContext*, L->varlist), cp)
+        rebDelegateCore(cast(RebolContext*, TOP_LEVEL->varlist), cp)
     );
 }}
 
@@ -995,7 +995,7 @@ Bounce Action_Executor(Level* L)
     Corrupt_If_Needful(L->u.action.param);
   #endif
 
-    Bounce b = opt Irreducible_Bounce(L, Apply_Cfunc(dispatcher, L));
+    Bounce b = opt Irreducible_Bounce(Apply_Cfunc(dispatcher, L));
     if (not b)
         goto check_output;  // consolidated return result into OUT cell
 
@@ -1082,7 +1082,7 @@ Bounce Action_Executor(Level* L)
     if (Get_Level_Flag(L, FORCE_HEAVY_BRANCH))
         Force_Cell_Heavy(OUT);
 
-    return OUT;  // not thrown
+    return BOUNCE_OUT;  // not thrown
 
 } handle_thrown: {  //////////////////////////////////////////////////////////
 

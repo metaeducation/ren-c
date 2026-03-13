@@ -71,7 +71,7 @@ DECLARE_NATIVE(REEVAL)
     if (threw)
         return THROWN;
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -463,7 +463,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
         Erase_Cell(position); // convention for shared data at endpoint
 
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     Level* L;
@@ -514,7 +514,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         Init_Pack(OUT, pack);
     }
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 
@@ -596,7 +596,7 @@ DECLARE_NATIVE(EVAL_FREE)
 
     Diminish_Stub(Frame_Phase(frame));  // the "FREE" of EVAL-FREE
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 

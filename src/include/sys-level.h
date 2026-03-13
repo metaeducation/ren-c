@@ -788,15 +788,6 @@ INLINE Value* Native_Trash_Result_Untracked(
     return Init_Trash_Named_From_Level(level_->out, level_);
 }
 
-INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
-    assert(not THROWING);
-    Copy_Cell(level_->out, v);
-    require (
-      Value* undecayed = Unlift_Cell_No_Decay(level_->out)
-    );
-    return undecayed;
-}
-
 
 // We *could* allow direct `return v;` of arbitrary cells, with semantics that
 // the dispatch machinery would just copy the cell contents into L->out.
@@ -817,9 +808,10 @@ INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
 // Hence you're only allowed to return API Cells, and they are freed upon
 // the return.  Core natives must `return COPY_TO_OUT(v);` for non-API cells.
 //
-INLINE void Native_Copy_Result_Untracked(Level* L, const Value* v) {
+INLINE Value* Native_Copy_Result_Untracked(Level* L, const Value* v) {
     assert(not Is_Api_Value(v));  // too easy to not release()
     Copy_Cell_Untracked(L->out, v);
+    return L->out;
 }
 
 
@@ -878,31 +870,33 @@ INLINE void Native_Copy_Result_Untracked(Level* L, const Value* v) {
 
     #define OUT  level_->out
 
+    #define BOUNCE_OUT \
+        (assert(TOP_LEVEL == level_), BOUNCE_TOPLEVEL_OUT)
+
     #define COPY_TO_OUT(v) /* not COPY(v)...verbosity is intentional [1] */ \
-        (Native_Copy_Result_Untracked(level_, (v)), x_cast(Bounce, TRACK(OUT)))
+        (TRACK(Native_Copy_Result_Untracked(level_, (v))), BOUNCE_OUT)
 
     #define OUT_BRANCHED /* OUT_BRANCHED vs. BRANCHED_OUT for a reason [2] */ \
         (assert(not Is_Light_Null(OUT) and not Is_Void(OUT)), \
-            x_cast(Bounce, OUT))
+            BOUNCE_OUT)
 
     #define VOID_OUT \
-        x_cast(Bounce, Init_Void(OUT))
+        (Init_Void(OUT), BOUNCE_OUT)
 
     #define VOID_OUT_UNBRANCHED \
-        x_cast(Bounce, Init_Void_Signifying_Unbranched(OUT))
+        (Init_Void_Signifying_Unbranched(OUT), BOUNCE_OUT)
 
     #define NULL_OUT /* `return NULL_OUT` is better than `return nullptr` */ \
-        x_cast(Bounce, Init_Null(OUT))  // ...see [3] for why it's better!
+        (Init_Null(OUT), BOUNCE_OUT)  // ...see [3] for why it's better!
 
     #define NULL_OUT_VETOING /* Note that BREAK is implemented via VETO */ \
-        x_cast(Bounce, Init_Null_Signifying_Vetoed(OUT))  // [3]
+        (Init_Null_Signifying_Vetoed(OUT), BOUNCE_OUT)  // [3]
 
     #define LOGIC_OUT(b) /* no Init_Okay/Null()! [4] */ \
         (exactly(bool, (b)) ? BOUNCE_OKAY : nullptr)
 
-    #define TRASH_OUT  TRACK(Native_Trash_Result_Untracked(level_))
-
-    #define UNLIFT_TO_OUT(v)  Native_Unlift_Result(level_, (v))
+    #define TRASH_OUT \
+        (TRACK(Native_Trash_Result_Untracked(level_)), BOUNCE_OUT)
 
     #define THROWN  Native_Thrown_Result(level_)
 

@@ -137,10 +137,7 @@ DECLARE_NATIVE(AUGMENT)
 
     Init_Frame(OUT, paramlist, label, coupling);
     Copy_Vanishability(OUT, original);
+    Proxy_Frame_Activation(OUT, original);
 
-    if (Is_Action(original))
-        return Activate_Frame(OUT);
-
-    assert(Is_Possibly_Unstable_Value_Frame(OUT));
-    return OUT;
+    return BOUNCE_OUT;
 }}

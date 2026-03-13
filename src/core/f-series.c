@@ -125,7 +125,8 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Series)
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
     Element* ser = Element_ARG(VALUE);
-    return Init_Integer(OUT, Series_Len_At(ser));
+    Init_Integer(OUT, Series_Len_At(ser));
+    return BOUNCE_OUT;
 }
 
 
@@ -134,7 +135,8 @@ IMPLEMENT_GENERIC(INDEX_OF, Any_Series)  // 1-based
     INCLUDE_PARAMS_OF_INDEX_OF;
 
     Element* ser = Element_ARG(VALUE);
-    return Init_Integer(OUT, SERIES_INDEX_UNBOUNDED(ser) + 1);
+    Init_Integer(OUT, SERIES_INDEX_UNBOUNDED(ser) + 1);
+    return BOUNCE_OUT;
 }
 
 
@@ -143,7 +145,8 @@ IMPLEMENT_GENERIC(OFFSET_OF, Any_Series)  // 0-based
     INCLUDE_PARAMS_OF_OFFSET_OF;
 
     Element* ser = Element_ARG(VALUE);
-    return Init_Integer(OUT, SERIES_INDEX_UNBOUNDED(ser));
+    Init_Integer(OUT, SERIES_INDEX_UNBOUNDED(ser));
+    return BOUNCE_OUT;
 }
 
 
@@ -249,7 +252,8 @@ IMPLEMENT_GENERIC(HEAD_OF, Any_Series)
 
     Copy_Cell(OUT, ser);
     SERIES_INDEX_UNBOUNDED(OUT) = 0;
-    return Trust_Const(OUT);
+    USED(Trust_Const(OUT));
+    return BOUNCE_OUT;
 }
 
 
@@ -261,7 +265,8 @@ IMPLEMENT_GENERIC(TAIL_OF, Any_Series)
 
     Copy_Cell(OUT, ser);
     SERIES_INDEX_UNBOUNDED(OUT) = Series_Len_Head(ser);
-    return Trust_Const(OUT);
+    USED(Trust_Const(OUT));
+    return BOUNCE_OUT;
 }
 
 
@@ -281,8 +286,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Any_Series)
 
     Element* ser = Element_ARG(VALUE);
 
-    return Init_Logic(
-        OUT,
+    return LOGIC_OUT(
         SERIES_INDEX_UNBOUNDED(ser) == Series_Len_Head(ser)
     );
 }
@@ -294,8 +298,7 @@ IMPLEMENT_GENERIC(PAST_Q, Any_Series)
 
     Element* ser = Element_ARG(VALUE);
 
-    return Init_Logic(
-        OUT,
+    return LOGIC_OUT(
         SERIES_INDEX_UNBOUNDED(ser) > Series_Len_Head(ser)
     );
 }
@@ -315,7 +318,8 @@ IMPLEMENT_GENERIC(UNIQUE, Any_Series)  // single-arity set operation
         ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 
-    return Init_Series(OUT, heart, flex);
+    Init_Series(OUT, heart, flex);
+    return BOUNCE_OUT;
 }
 
 
@@ -353,7 +357,8 @@ IMPLEMENT_GENERIC(INTERSECT, Any_Series)
         ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 
-    return Init_Series(OUT, heart, flex);
+    Init_Series(OUT, heart, flex);
+    return BOUNCE_OUT;
 }
 
 
@@ -376,7 +381,8 @@ IMPLEMENT_GENERIC(UNION, Any_Series)
         ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 
-    return Init_Series(OUT, heart, flex);
+    Init_Series(OUT, heart, flex);
+    return BOUNCE_OUT;
 }
 
 
@@ -399,7 +405,8 @@ IMPLEMENT_GENERIC(DIFFERENCE, Any_Series)
         ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 
-    return Init_Series(OUT, heart, flex);
+    Init_Series(OUT, heart, flex);
+    return BOUNCE_OUT;
 }
 
 
@@ -422,7 +429,8 @@ IMPLEMENT_GENERIC(EXCLUDE, Any_Series)
         ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 
-    return Init_Series(OUT, heart, flex);
+    Init_Series(OUT, heart, flex);
+    return BOUNCE_OUT;
 }
 
 

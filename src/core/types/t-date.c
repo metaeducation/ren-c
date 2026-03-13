@@ -186,7 +186,8 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
     if (Does_Date_Have_Time(v)) {
         Append_Codepoint(mo->strand, '/');
         Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Time)(LEVEL);  // ARG(FORM)?
-        assert(Is_Trash(Value_From_Bounce(bounce)));
+        assert(bounce == BOUNCE_TOPLEVEL_OUT);
+        assert(Is_Trash(OUT));
         possibly(Is_Bounce_A_Level(bounce));  // !!! generic truth, review
         UNUSED(bounce);
 
@@ -583,7 +584,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
         }
         Move_Cell(OUT, TOP_ELEMENT);
         DROP();
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     goto bad_make;
@@ -671,7 +672,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
     Tweak_Cell_Nanoseconds(OUT, secs);
 
     Adjust_Date_UTC(OUT);
-    return OUT;
+    return BOUNCE_OUT;
 
 } bad_make: {  ///////////////////////////////////////////////////////////////
 
@@ -709,8 +710,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
         Heart heart = Heart_Of_Builtin_Fundamental(arg);
 
         if (heart == HEART_DATE) {
-            if (id == SYM_SUBTRACT)
-                return Init_Integer(OUT, Days_Between_Dates(v, arg));
+            if (id == SYM_SUBTRACT) {
+                Init_Integer(OUT, Days_Between_Dates(v, arg));
+                return BOUNCE_OUT;
+            }
         }
         else if (heart == HEART_TIME) {
             if (id == SYM_ADD) {
@@ -771,7 +774,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
     Tweak_Cell_Nanoseconds(OUT, secs); // may be NO_DATE_TIME
     if (secs == NO_DATE_TIME)
         VAL_ZONE(OUT) = NO_DATE_ZONE;
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1174,7 +1177,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Date)
     Tweak_Cell_Nanoseconds(OUT, rand_nano);  // may be NO_DATE_TIME
     if (rand_nano == NO_DATE_TIME)
         VAL_ZONE(OUT) = NO_DATE_ZONE;
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1203,7 +1206,8 @@ IMPLEMENT_GENERIC(DIFFERENCE, Is_Date)
             Error_Unexpected_Type(TYPE_DATE, Datatype_Of(val2))
         );
 
-    return Time_Between_Dates(OUT, val1, val2);
+    Time_Between_Dates(OUT, val1, val2);
+    return BOUNCE_OUT;
 }
 
 
@@ -1249,7 +1253,7 @@ DECLARE_NATIVE(MAKE_DATE_YMDSNZ)
     Tweak_Cell_Nanoseconds(OUT, SECS_TO_NANO(VAL_INT64(ARG(SECONDS))) + nano);
 
     assert(Does_Date_Have_Time(OUT));
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1284,5 +1288,5 @@ DECLARE_NATIVE(MAKE_TIME_SN)
     REBI64 nano = not ARG(NANO) ? 0 : VAL_INT64(unwrap ARG(NANO));
     Tweak_Cell_Nanoseconds(OUT, SECS_TO_NANO(VAL_INT64(ARG(SECONDS))) + nano);
 
-    return OUT;
+    return BOUNCE_OUT;
 }

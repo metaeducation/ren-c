@@ -87,7 +87,8 @@ DECLARE_NATIVE(QUOTES_OF)
 {
     INCLUDE_PARAMS_OF_QUOTES_OF;
 
-    return Init_Integer(OUT, Quotes_Of(ARG(VALUE)));
+    Init_Integer(OUT, Quotes_Of(ARG(VALUE)));
+    return BOUNCE_OUT;
 }
 
 
@@ -109,7 +110,9 @@ DECLARE_NATIVE(SIGIL_OF)
     Option(Sigil) sigil = Sigil_Of(elem);
     if (not sigil)
         return NULL_OUT;
-    return Init_Sigiled_Blank(OUT, unwrap sigil);
+
+    Init_Sigiled_Blank(OUT, unwrap sigil);
+    return BOUNCE_OUT;
 }
 
 
@@ -300,7 +303,7 @@ IMPLEMENT_GENERIC(ADDRESS_OF, Is_Frame)
             "Frame Details does not offer ADDRESS-OF, use TRY for NULL"
         );
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1267,5 +1270,6 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
         Init_Text(val, strand);
     }
 
-    return Init_Block(OUT, result);
+    Init_Block(OUT, result);
+    return BOUNCE_OUT;
 }

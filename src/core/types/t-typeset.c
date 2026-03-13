@@ -855,7 +855,7 @@ DECLARE_NATIVE(DECORATION_OF)
     if (quotes)
         Quotify_Depth(out, unwrap quotes);
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 

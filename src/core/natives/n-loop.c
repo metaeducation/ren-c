@@ -349,7 +349,7 @@ static Bounce Loop_Series_Common(
         require (
           Ensure_No_Failures_Including_In_Packs(OUT)
         );
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -680,8 +680,10 @@ DECLARE_NATIVE(FOR_SKIP)
 {
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
-    if (not ARG(SERIES))
-        return Init_Heavy_Void(OUT);
+    if (not ARG(SERIES)) {
+        Init_Heavy_Void(OUT);
+        return BOUNCE_OUT;
+    }
 
     Element* series = unwrap Element_ARG(SERIES);
 
@@ -901,9 +903,9 @@ DECLARE_NATIVE(CYCLE)
             CATCH_THROWN(OUT, LEVEL);  // Unlike BREAK, STOP takes an arg--[1]
 
             if (Is_Light_Null(OUT))
-                return Init_Heavy_Null(OUT);  // NULL usually for BREAK [2]
+                Init_Heavy_Null(OUT);  // NULL usually for BREAK [2]
 
-            return OUT;
+            return BOUNCE_OUT;
         }
     }
 
@@ -1403,8 +1405,10 @@ DECLARE_NATIVE(FOR_EACH)
     //    even in the code of this dispatcher, we need to clean up the
     //    iterator state.
 
-    if (not data)  // same response as to empty series
-        return Init_Heavy_Void(OUT);
+    if (not data) {  // same response as to empty series
+        Init_Heavy_Void(OUT);
+        return BOUNCE_OUT;
+    }
 
     require (
       VarList* varlist = Create_Loop_Context_May_Bind_Body(body, vars)
@@ -1528,8 +1532,10 @@ DECLARE_NATIVE(EVERY)
 
   initial_entry: {
 
-    if (not data)  // same response as to empty series
-        return Init_Heavy_Void(OUT);
+    if (not data) {  // same response as to empty series
+        Init_Heavy_Void(OUT);
+        return BOUNCE_OUT;
+    }
 
     require (
       VarList* varlist = Create_Loop_Context_May_Bind_Body(body, vars)
@@ -1627,7 +1633,7 @@ DECLARE_NATIVE(EVERY)
     if (Is_Cell_Erased(OUT))
         return VOID_OUT_UNBRANCHED;
 
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 
@@ -1994,7 +2000,8 @@ DECLARE_NATIVE(REMOVE_EACH)
     Copy_Lifted_Cell(Array_At(pack, 0), OUT);
     Lift_Cell(Init_Integer(Array_At(pack, 1), removals));
 
-    return Init_Pack(OUT, pack);
+    Init_Pack(OUT, pack);
+    return BOUNCE_OUT;
 }}
 
 
@@ -2030,8 +2037,10 @@ DECLARE_NATIVE(MAP_EACH)
 {
     INCLUDE_PARAMS_OF_MAP_EACH;
 
-    if (not ARG(DATA))  // same as empty list
-        return Init_Block(OUT, Make_Source_Managed(0));
+    if (not ARG(DATA)) {  // same as empty list
+        Init_Block(OUT, Make_Source_Managed(0));
+        return BOUNCE_OUT;
+    }
 
     Value* data = unwrap ARG(DATA);
     if (not Is_Action(data))
@@ -2088,8 +2097,10 @@ DECLARE_NATIVE(MAP)
 
     assert(Is_Cell_Erased(OUT));  // output only written in MAP if BREAK hit
 
-    if (not data_arg)  // same response as empty
-        return Init_Block(OUT, Make_Source(0));
+    if (not data_arg) {  // same response as empty
+        Init_Block(OUT, Make_Source(0));
+        return BOUNCE_OUT;
+    }
 
     Add_Definitional_Continue(body, level_);
 
@@ -2221,10 +2232,11 @@ DECLARE_NATIVE(MAP)
         return NULL_OUT_VETOING;
     }
 
-    return Init_Block(  // always returns block unless break [1]
+    Init_Block(  // always returns block unless break [1]
         OUT,
         Pop_Source_From_Stack(STACK_BASE)
     );
+    return BOUNCE_OUT;
 }}
 
 

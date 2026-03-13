@@ -455,7 +455,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
 
         Release_Feed(feed);
 
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     StackIndex lowest_stackindex = TOP_INDEX;  // for refinements
@@ -476,7 +476,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
 
     Copy_Vanishability(OUT, arg);
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -493,7 +493,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Module)
 
     SeaOfVars* sea = Alloc_Sea_Core(BASE_FLAG_MANAGED);
     Tweak_Link_Inherit_Bind(sea, Cell_Binding(arg));
-    return Init_Module(OUT, sea);
+    Init_Module(OUT, sea);
+    return BOUNCE_OUT;
 }
 
 
@@ -533,7 +534,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
             if (Eval_Any_List_At_Throws(dummy, arg, SPECIFIED))
                 return BOUNCE_THROWN;
 
-            return Init_Object(OUT, derived);
+            Init_Object(OUT, derived);
+            return BOUNCE_OUT;
         }
 
         return fail (Error_Bad_Make(HEART_OBJECT, arg));
@@ -568,7 +570,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
         if (Is_Failure(SPARE))  // e.g. `make object! [1 / 0]`
             panic (SPARE);
 
-        return Init_Object(OUT, ctx);
+        Init_Object(OUT, ctx);
+        return BOUNCE_OUT;
     }
 
     // `make object! 10` - currently not prohibited for any context type
@@ -582,13 +585,15 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
             nullptr  // no parent
         );
 
-        return Init_Object(OUT, context);
+        Init_Object(OUT, context);
+        return BOUNCE_OUT;
     }
 
     // make object! map!
     if (Is_Map(arg)) {
         VarList* c = Alloc_Varlist_From_Map(VAL_MAP(arg));
-        return Init_Object(OUT, c);
+        Init_Object(OUT, c);
+        return BOUNCE_OUT;
     }
 
     return fail (Error_Bad_Make(HEART_OBJECT, arg));
@@ -625,7 +630,8 @@ DECLARE_NATIVE(ADJUNCT_OF)
     if (not adjunct)
         return NULL_OUT;
 
-    return Init_Context_Cell(OUT, unwrap adjunct);
+    Init_Context_Cell(OUT, unwrap adjunct);
+    return BOUNCE_OUT;
 }
 
 
@@ -1168,7 +1174,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         require (
           Read_Slot(OUT, slot)
         );
-        return OUT; }
+        return BOUNCE_OUT; }
 
       default:
         break;
@@ -1203,12 +1209,14 @@ IMPLEMENT_GENERIC(TO, Any_Context)
         VarList* copy = Copy_Varlist_Shallow_Managed(v);  // !!! copy [1]
         Element* rootvar = Rootvar_Of_Varlist(copy);
         Tweak_Cell_Type_Matching_Heart(rootvar, HEART_PORT);
-        return Init_Port(OUT, copy);
+        Init_Port(OUT, copy);
+        return BOUNCE_OUT;
     }
 
     if (to == heart) {  // can't TO FRAME! an ERROR!, etc.
         bool deep = false;
-        return Copy_Any_Context(OUT, context, deep);
+        Copy_Any_Context(OUT, context, deep);
+        return BOUNCE_OUT;
     }
 
     panic (UNHANDLED);
@@ -1226,7 +1234,8 @@ IMPLEMENT_GENERIC(COPY, Any_Context)
     if (ARG(PART))
         panic (Error_Bad_Refines_Raw());
 
-    return Copy_Any_Context(OUT, context, ARG(DEEP));
+    Copy_Any_Context(OUT, context, ARG(DEEP));
+    return BOUNCE_OUT;
 }
 
 
@@ -1331,7 +1340,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     Inherit_Const(OUT, context);
 
     possibly(Get_Cell_Flag(OUT, FINAL));  // TWEAK checks, but clears
-    return OUT;
+    return BOUNCE_OUT;
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 
@@ -1408,7 +1417,8 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Context)
 
     if (Is_Stub_Sea(c))
         panic ("SeaOfVars length counting code not done yet");
-    return Init_Integer(OUT, Varlist_Len(cast(VarList*, c)));
+    Init_Integer(OUT, Varlist_Len(cast(VarList*, c)));
+    return BOUNCE_OUT;
 }
 
 
@@ -1445,7 +1455,7 @@ IMPLEMENT_GENERIC(WORDS_OF, Any_Context)
     assert(Cell_Binding(block_out) == UNBOUND);  // tip bind words [1]
     Tweak_Cell_Binding(block_out, Cell_Context(v));
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1482,7 +1492,8 @@ IMPLEMENT_GENERIC(VALUES_OF, Any_Context)
 
     Source* array = Pop_Source_From_Stack(STACK_BASE);
 
-    return Init_Block(OUT, array);
+    Init_Block(OUT, array);
+    return BOUNCE_OUT;
 }
 
 
@@ -1537,12 +1548,13 @@ IMPLEMENT_GENERIC(COPY, Is_Frame)
         nullptr  // no binder
     );
 
-    return Init_Frame_Core(
+    Init_Frame_Core(
         OUT,
         copy,
         Frame_Lens_Or_Label(frame),
         Frame_Coupling(frame)
     );
+    return BOUNCE_OUT;
 }
 
 
@@ -1563,12 +1575,13 @@ DECLARE_NATIVE(PARAMETERS_OF)
 
     Element* frame = ARG(FRAME);
 
-    return Init_Frame(
+    Init_Frame(
         OUT,
         Frame_Phase(frame),
         ANONYMOUS,
         Frame_Coupling(frame)
     );
+    return BOUNCE_OUT;
 }
 
 
@@ -1598,7 +1611,7 @@ DECLARE_NATIVE(RETURN_OF)
     if (not (*querier)(OUT, details, SYM_RETURN_OF))
         panic ("Frame Details does not offer RETURN (shouldn't happen)");
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1628,7 +1641,7 @@ DECLARE_NATIVE(BODY_OF)  // !!! should this be SOURCE-OF ?
     if (not (*querier)(OUT, details, SYM_BODY_OF))
         return fail ("Frame Details does not offer BODY, use TRY for NULL");
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -1660,7 +1673,8 @@ DECLARE_NATIVE(COUPLING_OF)
     if (not coupling)  // UNCOUPLED
         return NULL_OUT;
 
-    return Init_Context_Cell(OUT, unwrap coupling);
+    Init_Context_Cell(OUT, unwrap coupling);
+    return BOUNCE_OUT;
 }
 
 
@@ -1684,8 +1698,10 @@ DECLARE_NATIVE(LABEL_OF)
     Element* frame = ARG(FRAME);
 
     Option(const Symbol*) label = Frame_Label_Deep(frame);
-    if (label)
-        return Init_Word(OUT, unwrap label);
+    if (label) {
+        Init_Word(OUT, unwrap label);
+        return BOUNCE_OUT;
+    }
 
     if (Is_Frame_Details(frame))
         return NULL_OUT;  // not handled by Level lookup
@@ -1697,8 +1713,10 @@ DECLARE_NATIVE(LABEL_OF)
     Level* L = Level_Of_Varlist_May_Panic(cast(ParamList*, phase));
 
     label = Try_Get_Action_Level_Label(L);
-    if (label)
-        return Init_Word(OUT, unwrap label);
+    if (label) {
+        Init_Word(OUT, unwrap label);
+        return BOUNCE_OUT;
+    }
 
     return NULL_OUT;
 }
@@ -1754,14 +1772,18 @@ IMPLEMENT_GENERIC(FILE_OF, Is_Frame)
 
     if (a) {
         Option(const Strand*) filename = Link_Filename(a);
-        if (filename)
-            return Init_File(OUT, unwrap filename);  // !!! URL! vs. FILE! ?
+        if (filename) {
+            Init_File(OUT, unwrap filename);  // !!! URL! vs. FILE! ?
+            return BOUNCE_OUT;
+        }
     }
 
     if (L) {
         Option(const Strand*) file = File_Of_Level(L);
-        if (file)
-            return Init_File(OUT, unwrap file);
+        if (file) {
+            Init_File(OUT, unwrap file);
+            return BOUNCE_OUT;
+        }
     }
 
     return fail ("File not available for frame");
@@ -1778,14 +1800,18 @@ IMPLEMENT_GENERIC(LINE_OF, Is_Frame)
     File_Line_Frame_Heuristic(&L, &a, frame);
 
     if (a) {
-        if (MISC_SOURCE_LINE(a) != 0)
-            return Init_Integer(OUT, MISC_SOURCE_LINE(a));
+        if (MISC_SOURCE_LINE(a) != 0) {
+            Init_Integer(OUT, MISC_SOURCE_LINE(a));
+            return BOUNCE_OUT;
+        }
     }
 
     if (L) {
         Option(LineNumber) line = Line_Number_Of_Level(L);
-        if (line)
-            return Init_Integer(OUT, unwrap line);
+        if (line) {
+            Init_Integer(OUT, unwrap line);
+            return BOUNCE_OUT;
+        }
     }
 
     return fail ("Line not available for frame");
@@ -1812,7 +1838,8 @@ DECLARE_NATIVE(NEAR_OF)
         panic ("Phase is details, can't get NEAR-OF");
 
     Level* L = Level_Of_Varlist_May_Panic(cast(ParamList*, phase));
-    return Init_Near_For_Level(OUT, L);
+    Init_Near_For_Level(OUT, L);
+    return BOUNCE_OUT;
 }
 
 
@@ -1843,7 +1870,8 @@ DECLARE_NATIVE(PARENT_OF)
             continue;
 
         VarList* varlist = Varlist_Of_Level_Force_Managed(parent);
-        return Init_Context_Cell(OUT, varlist);
+        Init_Context_Cell(OUT, varlist);
+        return BOUNCE_OUT;
     }
     return NULL_OUT;
 }
@@ -2031,7 +2059,7 @@ DECLARE_NATIVE(CONSTRUCT)
     attempt {  // skip BLANK! items, if present
         if (Is_Level_At_End(SUBLEVEL)) {
             Drop_Level(SUBLEVEL);
-            return OUT;
+            return BOUNCE_OUT;
         }
         at = At_Level(SUBLEVEL);
         if (Is_Blank(at)) {  // ","

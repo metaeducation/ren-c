@@ -373,9 +373,7 @@ DECLARE_NATIVE(HIJACK)
         );
     }
 
-    if (Is_Action(ARG(VICTIM)))
-        return Activate_Frame(OUT);
+    Proxy_Frame_Activation(OUT, ARG(VICTIM));
 
-    assert(Is_Possibly_Unstable_Value_Frame(OUT));
-    return OUT;
+    return BOUNCE_OUT;
 }}

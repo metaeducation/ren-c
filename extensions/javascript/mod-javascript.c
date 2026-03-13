@@ -616,10 +616,9 @@ EXTERN_C void API_rebResolveNative_internal(
     TRACE("reb.ResolveNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
 
     Bounce b = opt Irreducible_Bounce(  // proxies API handles, etc
-        L,
         Bounce_From_Bounce_Id(bounce_id)
     );
-    if (b) {
+    if (not b) {
         Assert_Cell_Stable(OUT);  // nullptr b means OUT holds the cell
     }
     else { // others "irreducible"
@@ -841,7 +840,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     if (not check)
         panic (Error_Bad_Return_Type(L, OUT, param));
 
-    return OUT;
+    return BOUNCE_OUT;
 
 } handle_rejected: {  ////////////////////////////////////////////////////////
 
@@ -1100,7 +1099,8 @@ DECLARE_NATIVE(JS_NATIVE)
         &Js_Object_Handle_Cleaner
     );
 
-    return Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
+    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
+    return BOUNCE_OUT;
 }
 
 

@@ -97,5 +97,6 @@ DECLARE_NATIVE(DOES)
 
     const Symbol* label = CANON(EVALUATE);  // !!! Better answer?
 
-    return Init_Action(OUT, exemplar, label, UNCOUPLED);
+    Init_Action(OUT, exemplar, label, UNCOUPLED);
+    return BOUNCE_OUT;
 }

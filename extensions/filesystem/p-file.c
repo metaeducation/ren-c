@@ -170,15 +170,17 @@ DECLARE_NATIVE(FILE_ACTOR)
 
     switch (opt Symbol_Id(verb)) {
 
-      case SYM_OFFSET_OF:
-        return Init_Integer(OUT, file->offset);
+      case SYM_OFFSET_OF: {
+        Init_Integer(OUT, file->offset);
+        return BOUNCE_OUT; }
 
       case SYM_LENGTH_OF: {
         //
         // Comment said "clip at zero"
         //
         uint64_t size = File_Size_Cacheable_May_Panic(port);
-        return Init_Integer(OUT, size - file->offset); }
+        Init_Integer(OUT, size - file->offset);
+        return BOUNCE_OUT; }
 
       case SYM_HEAD_OF:
         file->offset = 0;
@@ -666,7 +668,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             return nullptr;
         }
 
-        return info ; }
+        return info; }
 
     //=//// SKIP ///////////////////////////////////////////////////////////=//
     //

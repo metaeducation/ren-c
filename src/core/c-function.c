@@ -1014,7 +1014,7 @@ DECLARE_NATIVE(COUPLE)
         Tweak_Frame_Coupling(OUT, Cell_Varlist(unwrap coupling));
     }
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 

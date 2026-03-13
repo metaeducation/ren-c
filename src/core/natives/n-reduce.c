@@ -324,7 +324,7 @@ DECLARE_NATIVE(REDUCE)
     dont(Tweak_Cell_Binding(out, Cell_Binding(v)));  // [1]
     UNUSED(out);
 
-    return OUT;
+    return BOUNCE_OUT;
 
 } vetoed: {  ///////////////////////////////////////////////////////////////
 
@@ -377,7 +377,8 @@ DECLARE_NATIVE(PACK)
             for (; at != tail; ++at, ++dest)
                 Copy_Lifted_Cell(dest, at);
 
-            return Init_Pack(OUT, a);
+            Init_Pack(OUT, a);
+            return BOUNCE_OUT;
         }
 
         assert(Is_Block(block));
@@ -387,7 +388,6 @@ DECLARE_NATIVE(PACK)
     }
 
     Bounce bounce = opt Irreducible_Bounce(
-        LEVEL,
         Apply_Cfunc(NATIVE_CFUNC(REDUCE), LEVEL)
     );
     if (bounce)  // REDUCE wants more EVALs...final value not in OUT yet
@@ -397,12 +397,12 @@ DECLARE_NATIVE(PACK)
         return NULL_OUT_VETOING;
 
     if (Is_Failure(OUT))
-        return OUT;  // definitional error (what choices would these be?)
+        return BOUNCE_OUT;  // definitional error (what choices would these be?)
 
     assert(Is_Possibly_Unstable_Value_Block(OUT));
     Tweak_Cell_Type_Matching_Heart(As_Element(OUT), HEART_GROUP);
     Tweak_Cell_Lift_Byte(OUT, TYPE_PACK);
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 

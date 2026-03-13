@@ -3282,7 +3282,8 @@ DECLARE_NATIVE(API_TRANSIENT)
     Stub* stub = Compact_Stub_From_Cell(v);
     Set_Flavor_Flag(VALUE_HOLDER, stub, RELEASE);
 
-    return Init_Integer(level_->out, p_cast(intptr_t, stub));  // intptr_t [1]
+    Init_Integer(level_->out, p_cast(intptr_t, stub));  // intptr_t [1]
+    return BOUNCE_TOPLEVEL_OUT;
 }
 
 
@@ -3361,7 +3362,6 @@ Bounce Api_Function_Dispatcher(Level* const L)
     );
 
     Bounce b = opt Irreducible_Bounce(
-        L,
         x_cast(Bounce, Apply_Cfunc(*cfunc, context))
     );
     if (not b)  // not irreducible, so final value in OUT cell
@@ -3394,7 +3394,9 @@ Bounce Api_Function_Dispatcher(Level* const L)
     if (not check)
         panic (Error_Bad_Return_Type(L, L->out, param));
 
-    return L->out;
+    assert(L == TOP_LEVEL);
+
+    return BOUNCE_TOPLEVEL_OUT;
 }}
 
 

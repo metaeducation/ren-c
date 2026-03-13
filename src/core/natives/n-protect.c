@@ -544,7 +544,7 @@ DECLARE_NATIVE(FINAL)
     Force_Value_Frozen_Core(lifted, deep, locker);
 
     Set_Cell_Flag(OUT, FINAL);
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -565,5 +565,5 @@ DECLARE_NATIVE(NONFINAL)  // "VARIES" was considered, but this is clearer
     Copy_Cell(OUT, v);
     Clear_Cell_Flag(OUT, FINAL);  // still immutable, but variable can change
 
-    return OUT;
+    return BOUNCE_OUT;
 }

@@ -2748,7 +2748,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
     if (Is_Failure(OUT)) {
         Drop_Level(sub);
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     goto construct_scan_to_stack_finished;
@@ -2884,7 +2884,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     if (Is_Failure(OUT)) {
         Drop_Level(SUBLEVEL);
         Drop_Data_Stack_To(STACK_BASE);
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     Heart heart;
@@ -3001,7 +3001,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
     if (Is_Failure(OUT)) {  // no auto-drop without `return fail ()`
         Drop_Data_Stack_To(STACK_BASE);
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     if (sub_mode != ST_SCANNER_TUPLE_MODE)
@@ -3210,7 +3210,8 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
     possibly(Get_Scan_Executor_Flag(L, NEWLINE_PENDING));  // may be true [1]
 
-    return Init_Tripwire(OUT);
+    Init_Tripwire(OUT);
+    return BOUNCE_OUT;
 
 }}
 
@@ -3235,7 +3236,7 @@ Bounce Scanner_Executor(Level* level_)
 
     Bounce b = Scanner_Executor_Core(level_);
     if (u_cast(const void*, b) != nullptr) {
-        if (u_cast(const void*, b) == level_->out) {
+        if (b == BOUNCE_TOPLEVEL_OUT) {
             if (Is_Failure(level_->out))
                 assert(TOP_INDEX == STACK_BASE);
             else

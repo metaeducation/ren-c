@@ -331,7 +331,7 @@ static bool Subparse_Throws(
         return true;
     }
 
-    b = opt Irreducible_Bounce(L, b);
+    b = opt Irreducible_Bounce(b);
 
     Drop_Level(L);
 
@@ -1362,8 +1362,10 @@ DECLARE_NATIVE(SUBPARSE)
     //
     // Note: First test, so `[| ...anything...]` is a "no-op" match
 
-    if (Is_Bar(rule))  // reached BAR! without a match failure, good!
-        return Init_Integer(OUT, P_POS);  // indicate match @ current pos
+    if (Is_Bar(rule)) {  // reached BAR! without a match failure, good!
+        Init_Integer(OUT, P_POS);  // indicate match @ current pos
+        return BOUNCE_OUT;
+    }
 
     //=//// HANDLE BLANK! (e.g. commas) (BEFORE GROUP...?) ////////////////=//
 
@@ -2463,11 +2465,12 @@ DECLARE_NATIVE(SUBPARSE)
 
 }} return_position: {
 
-    return Init_Integer(OUT, P_POS);  // !!! return switched input series??
+    Init_Integer(OUT, P_POS);  // !!! return switched input series??
+    return BOUNCE_OUT;
 
 } return_null: {
 
-    return Init_Null(OUT);
+    return NULL_OUT;
 
 } return_thrown: {
 
@@ -2558,7 +2561,7 @@ DECLARE_NATIVE(PARSE3)
         if (Is_Frame(label)) {
             if (Frame_Phase(label) == Frame_Phase(LIB(PARSE_ACCEPT))) {
                 CATCH_THROWN(OUT, LEVEL);
-                return OUT;
+                return BOUNCE_OUT;
             }
         }
 
@@ -2587,7 +2590,7 @@ DECLARE_NATIVE(PARSE3)
         return COPY_TO_OUT(scratch_original_input);
 
     Copy_Cell(OUT, g_trash_parse3_success);  // trash result unless ACCEPT
-    return OUT;
+    return BOUNCE_OUT;
 }}
 
 

@@ -222,7 +222,7 @@ IMPLEMENT_GENERIC(AS, Is_Word)
         Datatype_Builtin_Heart(ARG(TYPE))
     ));
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -237,5 +237,5 @@ IMPLEMENT_GENERIC(BINDING_OF, Is_Word)
 
     Clear_Cell_Flag(OUT, BINDING_MUST_BE_FINAL);
 
-    return OUT;
+    return BOUNCE_OUT;
 }

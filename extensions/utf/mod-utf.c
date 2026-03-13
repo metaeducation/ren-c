@@ -311,7 +311,7 @@ DECLARE_NATIVE(DECODE_UTF16LE)
         "take", OUT,
     "]");
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -341,7 +341,7 @@ DECLARE_NATIVE(ENCODE_UTF16LE)
     // !!! Should probably by default add a byte order mark, but given this
     // is weird "userspace" encoding it should be an option to the codec.
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -401,7 +401,7 @@ DECLARE_NATIVE(DECODE_UTF16BE)
         "if #\"^(FEFF)\" = first", OUT, "[take", OUT, "]"
     );
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 
@@ -431,5 +431,5 @@ DECLARE_NATIVE(ENCODE_UTF16BE)
     // !!! Should probably by default add a byte order mark, but given this
     // is weird "userspace" encoding it should be an option to the codec.
 
-    return OUT;
+    return BOUNCE_OUT;
 }

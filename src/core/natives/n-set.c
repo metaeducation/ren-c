@@ -685,7 +685,7 @@ DECLARE_NATIVE(SET)
 
         Drop_Level(sub);
 
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     if (Is_Space(target)) {
@@ -727,22 +727,24 @@ DECLARE_NATIVE(SET)
     }
 
     Option(Bounce) b = Irreducible_Bounce(
-        LEVEL,
         Apply_Cfunc(NATIVE_CFUNC(TWEAK), LEVEL)
     );
     if (b)
         return unwrap b;  // keep bouncing while we couldn't get OUT as answer
 
     if (Is_Failure(OUT))
-        return OUT;  // out-of-band failures (e.g. field unavailable)
+        return BOUNCE_OUT;  // out-of-band failures (e.g. field unavailable)
 
     if (ARG(DUAL)) {
         assert(not Is_Antiform(dual));
-        return OUT;
+        return BOUNCE_OUT;
     }
 
-    Element* lifted = As_Element(dual);
-    assert(Any_Lifted(lifted));
+    Copy_Cell(OUT, dual);
 
-    return UNLIFT_TO_OUT(lifted);  // unlift TWEAK dual result to normal [2]
+    require (
+      Unlift_Cell_No_Decay(OUT)  // unlift TWEAK dual result to normal [2]
+    );
+
+    return BOUNCE_OUT;
 }}

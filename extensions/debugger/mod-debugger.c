@@ -162,7 +162,7 @@ DECLARE_NATIVE(PAUSE)
         return THROWN;
     }
 
-    return OUT;
+    return BOUNCE_OUT;
 }
 
 

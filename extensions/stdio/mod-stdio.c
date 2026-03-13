@@ -200,7 +200,8 @@ DECLARE_NATIVE(READ_STDIN)
     }
     Term_Binary_Len(b, i);
 
-    return Init_Blob(OUT, b);
+    Init_Blob(OUT, b);
+    return BOUNCE_OUT;
 }}
 
 

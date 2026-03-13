@@ -233,7 +233,8 @@ DECLARE_NATIVE(BOOLEAN)
 
     bool logic = Logical_Test(ARG(VALUE));
 
-    return Init_Word(OUT, logic ? CANON(TRUE) : CANON(FALSE));
+    Init_Word(OUT, logic ? CANON(TRUE) : CANON(FALSE));
+    return BOUNCE_OUT;
 }
 
 
@@ -286,7 +287,8 @@ DECLARE_NATIVE(TO_YESNO)
 
     bool logic = Logical_Test(ARG(CONDITION));
 
-    return Init_Word(OUT, logic ? CANON(YES) : CANON(NO));
+    Init_Word(OUT, logic ? CANON(YES) : CANON(NO));
+    return BOUNCE_OUT;
 }
 
 
@@ -339,7 +341,8 @@ DECLARE_NATIVE(TO_ONOFF)
 
     bool logic = Logical_Test(ARG(CONDITION));
 
-    return Init_Word(OUT, logic ? CANON(ON) : CANON(OFF));
+    Init_Word(OUT, logic ? CANON(ON) : CANON(OFF));
+    return BOUNCE_OUT;
 }
 
 
