@@ -147,6 +147,9 @@ Bounce Yielder_Dispatcher(Level* const L)
         goto invoke_yielder_that_abruptly_panicked; }
 
       case ST_YIELDER_RUNNING_BODY: {
+        UNUSED(SUBOUT);  // body result discarded
+        Drop_Level(SUBLEVEL);
+
         if (not Is_Null(yielded_lifted))  // YIELD is suspending us
             goto yielding;
 
@@ -192,7 +195,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     STATE = ST_YIELDER_RUNNING_BODY;
 
     Enable_Dispatcher_Catching_Of_Throws(L);  // need to finalize on throws [2]
-    return CONTINUE(SPARE, body);  // need finalize, body result discarded [3]
+    return CONTINUE(body);  // need finalize, body result discarded [3]
 
 } yielding: {  ///////////////////////////////////////////////////////////////
 

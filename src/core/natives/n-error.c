@@ -195,7 +195,6 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
     }
 
     bool pushed = Pushed_Continuation(
-        SPARE,
         flags,
         SPECIFIED,
         code,
@@ -280,7 +279,7 @@ DECLARE_NATIVE(EXCEPT)
     else
         return COPY_TO_OUT(left);  // pass through non-error/non-hot-potato
 
-    return DELEGATE_BRANCH(OUT, branch, left);
+    return DELEGATE_BRANCH(branch, left);
 }
 
 

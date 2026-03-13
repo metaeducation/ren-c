@@ -454,24 +454,6 @@ INLINE void Free_Level_Internal(Level* L) {
     Raw_Pooled_Free(LEVEL_POOL, L);
 }
 
-// 1. Push_Level() takes an Value* for the output.  It is a Contra() and not a
-//    Sink() because we may not want to corrupt the cell we are given (e.g.
-//    if we're pushing a level to do infix processing on an already calculated
-//    result).
-//
-//    Taking a Value* is important: we don't want to evaluate antiforms into
-//    array Element* cells, and also they might move (which object Slots
-///   might also move as well).
-//
-//    We want the cell to be easy to cheaply erase with Erase_Cell() for
-//    performance reasons.  But also, if we allowed API cells as evaluation
-//    targets that would create some confusion with wanting API cells to
-//    be freed when they are return targets (there might be some way to say
-//    that cells in L->out don't count for the rule, but this would confuse
-//    some invariants...and it's better to just say that evaluations into
-//    API cells must leave those cells erased until the eval is complete,
-//    and put BASE_FLAG_ROOT on afterward).
-//
 // 2. The commitment of an Intrinsic is that if it runs without a Level, then
 //    it won't perform evaluations or use continuations.  Those mechanics are
 //    not available when being called directly from the Stepper_Executor.
@@ -485,7 +467,7 @@ INLINE void Free_Level_Internal(Level* L) {
 //    interruptibility is not.
 //
 INLINE void Push_Level_Dont_Inherit_Interruptibility(
-    Exact(Value*) out,  // prohibit passing Element/Stable/Slot as output [1]
+    Value* target,  // prohibit passing Element/Stable/Slot [1]
     Level* L
 ){
     assert(
@@ -498,28 +480,30 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
   #endif
 
   #if RUNTIME_CHECKS
-    assert(out != &L->spare and out != &L->scratch);
-    assert(
-        Is_Cell_Erased(out)
-        or Not_Cell_Readable(out)
-        or not Is_Api_Value(out)
-    );
-    assert(
-        not (out->header.bits &
-            (BASE_FLAG_ROOT | BASE_FLAG_MARKED | BASE_FLAG_MANAGED)
-        )
-    );
+    if (target) {
+        assert(target != &L->spare and target != &L->scratch);
+        assert(
+            not (target->header.bits &
+                (BASE_FLAG_ROOT | BASE_FLAG_MARKED | BASE_FLAG_MANAGED)
+            )
+        );
+    }
   #endif
 
-    Assert_Cell_Eval_Targetable_If_Tracking(out);
-
     dont(  // flags too scarce for DEBUG_STATE_0_OUT_NOT_ERASED_OK right now
-        assert(LEVEL_STATE_BYTE(L) != STATE_0 or Is_Cell_Erased(out))
+      assert(LEVEL_STATE_BYTE(L) != STATE_0 or Is_Cell_Erased(target))
     );
 
-    L->target = out;  // must be a valid cell for GC [3]
-    if (out and not Is_Cell_Erased(out) and LEVEL_STATE_BYTE(L) != STATE_0)
-        Copy_Cell(Level_Out(L), out);
+    L->target = target;  // must be a valid cell for GC [3]
+    if (
+        target
+        and not Is_Cell_Erased(target)
+        and LEVEL_STATE_BYTE(L) != STATE_0
+    ){
+        if (g_tick == 100622)
+            debug_break();
+        Copy_Cell(Level_Out(L), target);
+    }
 
   #if RUNTIME_CHECKS
     //
@@ -535,20 +519,17 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
     assert(L->alloc_value_list == L);
 }
 
-INLINE void Push_Level_Core(  // inherit interrupt and purity [4]
-    Contra(Value) out,  // prohibit passing Element/Stable/Slot as output [1]
+INLINE void Push_Level(  // inherit interrupt and purity [4]
+    Value* target,
     Level* L
 ){
-    Push_Level_Dont_Inherit_Interruptibility(out, L);
+    Push_Level_Dont_Inherit_Interruptibility(target, L);
     L->flags.bits |= (
         L->prior->flags.bits & (  // [4]
             LEVEL_FLAG_UNINTERRUPTIBLE | LEVEL_FLAG_PURE
         )
     );
 }
-
-#define Push_Level(out,L) \
-    Push_Level_Core(Possibly_Unstable(out), (L))
 
 INLINE void Update_Expression_Start(Level* L) {
     assert(
@@ -865,6 +846,9 @@ INLINE Value* Native_Copy_Result_Untracked(Level* L, const Value* v) {
 
     #define SUBLEVEL    (assert(TOP_LEVEL->prior == level_), TOP_LEVEL)
 
+    #define SUBOUT \
+        (assert(TOP_LEVEL->prior == level_), Level_Out(TOP_LEVEL))
+
     #define SPARE       Level_Spare(level_)
     #define SCRATCH     Level_Scratch(level_)
 
@@ -959,7 +943,7 @@ INLINE void Disable_Dispatcher_Catching_Of_Throws(Level* L)
 // enough thing to be doing that we capture it into an inline function.
 
 INLINE void Retarget_Level_Feed(Level* L, Feed* new_feed) {
-    assert(Is_Action_Level(L) or L->executor == &Just_Use_Out_Executor);
+    assert(Is_Action_Level(L) or L->executor == &Skip_Me_Executor);
     assert(L->feed != new_feed);  // caller should assure not same before call
     Release_Feed(L->feed);
     L->feed = new_feed;

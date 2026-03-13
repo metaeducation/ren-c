@@ -157,7 +157,7 @@ void Push_Redo_Action_Level(Value* out, Level* L1, const Value* run)
     );
     L2->baseline.stack_base = base;
 
-    Push_Level(Erase_Cell(out), L2);
+    Push_Level(out, L2);
     require (
       Push_Action(L2, run, PREFIX_0)
     );

@@ -122,18 +122,16 @@ Bounce Adapter_Dispatcher(Level* const L)
     Element* spare = Copy_Cell(SPARE, prelude);
     Tweak_Cell_Binding(spare, use);  // must USE [1]
 
-    return CONTINUE_CORE(  // Note: we won't catch throws or errors
-        OUT,  // note: result is discarded
-        LEVEL_MASK_NONE,  // plain result (warning if it was an error)
-        SPECIFIED,
-        spare
-    );
+    return CONTINUE(spare);  // Note: we won't catch throws or errors
 
 } run_adaptee_in_same_frame: {  //////////////////////////////////////////////
 
     // 1. We want to run the adapted function in the same frame, but prelude
     //    may have put invalid types in parameter slots.  So it needs to be
     //    typechecked before executing.
+
+    UNUSED(SUBOUT);
+    Drop_Level(SUBLEVEL);
 
     Stable* adaptee = Phase_Archetype(details);
 

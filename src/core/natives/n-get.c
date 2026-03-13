@@ -166,7 +166,7 @@ Result(None) Get_Var_To_Out_Use_Toplevel(
 Result(None) Get_Word_Or_Tuple(Sink(Value) out, const Element* var)
 {
     require (
-      Level* sub = Make_End_Level(&Just_Use_Out_Executor, LEVEL_MASK_NONE)
+      Level* sub = Make_End_Level(&Skip_Me_Executor, LEVEL_MASK_NONE)
     );
     DECLARE_VALUE (temp);  // !!! out may not be TRACK_FLAG_VALID_EVAL_TARGET
     Push_Level(temp, sub);

@@ -185,7 +185,7 @@ INLINE bool Eval_Any_List_At_Core_Throws(
         flags
     ));
 
-    Push_Level(Erase_Cell(out), L);
+    Push_Level(out, L);
     bool threw = Trampoline_With_Top_As_Root_Throws();
     Drop_Level(L);
     return threw;
@@ -224,7 +224,7 @@ INLINE bool Eval_Element_Core_Throws(
       Level* L = Make_Level(&Stepper_Executor, feed, flags)
     );
 
-    Push_Level(Erase_Cell(out), L);
+    Push_Level(out, L);
     bool threw = Trampoline_With_Top_As_Root_Throws();
     Drop_Level(L);
 
@@ -244,8 +244,7 @@ INLINE bool Eval_Branch_Throws(
     const Element* branch
 ){
     if (not Pushed_Continuation(
-        out,
-        LEVEL_FLAG_FORCE_HEAVY_BRANCH,
+        LEVEL_FLAG_FORCE_HEAVY_BRANCH | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE,
         SPECIFIED, branch,
         nullptr
     )){
@@ -253,6 +252,9 @@ INLINE bool Eval_Branch_Throws(
     }
 
     bool threw = Trampoline_With_Top_As_Root_Throws();
+    if (not threw)
+        Copy_Cell(out, Level_Out(TOP_LEVEL));
+
     Drop_Level(TOP_LEVEL);
     return threw;
 }

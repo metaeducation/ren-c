@@ -95,7 +95,6 @@ Result(None) Prep_Action_Level(
 //  Push_Frame_Continuation: C
 //
 void Push_Frame_Continuation(
-    Contra(Value) out,  // !!! Should this be Init(Value)?  Review.
     Flags flags,
     const Stable* frame,  // may be antiform
     Option(const Value*) with
@@ -107,8 +106,7 @@ void Push_Frame_Continuation(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
     ));
-    dont(Erase_Cell(out));  // LEVEL_STATE_BYTE is not STATE_0
-    Push_Level(out, L);
+    Push_Level(nullptr, L);
     require (
       Prep_Action_Level(L, frame, with)
     );
@@ -126,16 +124,13 @@ void Push_Frame_Continuation(
 //    kinds of types branching permits.
 //
 bool Pushed_Continuation(
-    Contra(Value) out,  // not Sink (would corrupt, but `with` can = `out`)
     Flags flags,  // FORCE_HEAVY_BRANCH, etc. for pushed levels
     Context* binding,  // before branch forces non-empty variadic call
     const Element* branch,  // *cannot* be the same as out
     Option(const Value*) with  // can be same as out or not GC-safe, may copy
 ){
-    assert(u_cast(const Value*, branch) != out);
     assert(
         not with
-        or (unwrap with) == out
         or not Is_Api_Value(unwrap with)
     );
 
@@ -155,7 +150,7 @@ bool Pushed_Continuation(
             assert(Is_Cell_Erased(Level_Spare(grouper)));
         else
             Copy_Cell(Level_Spare(grouper), unwrap with);
-        Push_Level(Erase_Cell(out), grouper);
+        Push_Level(nullptr, grouper);
         goto pushed_continuation;
     }
 
@@ -208,18 +203,26 @@ bool Pushed_Continuation(
           Level* L = Make_Level(
             &Evaluator_Executor, feed, flags
         ));
-        Push_Level(Erase_Cell(out), L);
+        Push_Level(nullptr, L);
 
         goto pushed_continuation; }
 
-      case TYPE_QUASIFORM:
-        Copy_Cell(out, branch);
+      case TYPE_QUASIFORM: {
         require (
-          Unlift_Cell_No_Decay(out)
+          Level* dummy = Make_End_Level(
+            &Just_Use_Out_Executor,
+            FLAG_STATE_BYTE(1)
+          )
+        );
+        Push_Level(nullptr, dummy);
+
+        Copy_Cell(Level_Out(dummy), branch);
+        require (
+          Unlift_Cell_No_Decay(Level_Out(dummy))
         );
         if (flags & LEVEL_FLAG_FORCE_HEAVY_BRANCH)
-            Force_Cell_Heavy(out);
-        goto just_use_out;
+            Force_Cell_Heavy(Level_Out(dummy));
+        goto pushed_continuation; }  /* should be "just use out" */
 
       case TYPE_METAFORM:
         break;  // define behavior!
@@ -227,11 +230,19 @@ bool Pushed_Continuation(
       case TYPE_PINNED:
         break;
 
-      case TYPE_TIED:  // note: bound (use 'quoted to avoid binding)
-        Clear_Cell_Sigil(
-            Copy_Cell_May_Bind(out, branch, binding)
+      case TYPE_TIED: {  // note: bound (use 'quoted to avoid binding)
+        require (
+          Level* dummy = Make_End_Level(
+            &Just_Use_Out_Executor,
+            FLAG_STATE_BYTE(1)
+          )
         );
-        goto just_use_out;
+        Push_Level(nullptr, dummy);
+
+        Clear_Cell_Sigil(
+          Copy_Cell_May_Bind(Level_Out(dummy), branch, binding)
+        );
+        goto pushed_continuation; }  /* should be "just use out" */
 
       case TYPE_FENCE: {  // WRAP, then execute
         const Element* tail;
@@ -281,17 +292,18 @@ bool Pushed_Continuation(
         Copy_Cell_May_Bind(arg, branch, binding);
         Tweak_Cell_Type_Matching_Heart(arg, HEART_BLOCK);  // :[1 + 2] => [3], not :[3]
 
-        Push_Level(Erase_Cell(out), L);
+        Push_Level(nullptr, L);
         goto pushed_continuation; }}
 
       case TYPE_PATH: {
+        DECLARE_VALUE (temp);
         Length len = Sequence_Len(branch);
-        Element *last = Copy_Sequence_At(out, branch, len - 1);
+        Element *last = Copy_Sequence_At(temp, branch, len - 1);
         if (not Is_Space(last))
             panic ("Only terminal-slash PATH! can act as BRANCH!");
 
         require (
-          Stable* got = Get_Var(out, NO_STEPS, branch, binding)
+          Stable* got = Get_Var(temp, NO_STEPS, branch, binding)
         );
         if (not Is_Frame(got))
             panic ("Only FRAME! result from PATH! BRANCH allowed");
@@ -304,22 +316,33 @@ bool Pushed_Continuation(
     }
 
     if (Is_Quoted_Type(type)) {  // not bound (use $tied to get a binding)
-        Unquote_Quoted_Cell(Copy_Cell(out, branch));
-        goto just_use_out;
+        require (
+          Level* dummy = Make_End_Level(
+            &Just_Use_Out_Executor, FLAG_STATE_BYTE(1)
+          )
+        );
+        Push_Level(nullptr, dummy);
+
+        Unquote_Quoted_Cell(Copy_Cell(Level_Out(dummy), branch));
+        goto pushed_continuation;  /* should be "just use out" */
     }
 
     panic (Error_Bad_Branch_Type_Raw());  // narrow input types? [3]
 
 } handle_frame: { ///////////////////////////////////////////////////////////
 
-    Push_Frame_Continuation(out, flags, branch, with);
+    Push_Frame_Continuation(flags, branch, with);
     goto pushed_continuation;
 
 } pushed_continuation: { /////////////////////////////////////////////////////
 
     return true;
 
-} just_use_out: { ////////////////////////////////////////////////////////////
+/*} just_use_out_disabled: { //////////////////////////////////////////////////
 
-    return false;
+  // !!! Temporarily disabled; it should always be possible to disable in
+  // order to get notification in the Trampoline.
+
+    assert(!"Temporarily disabled");
+    return false;*/
 }}

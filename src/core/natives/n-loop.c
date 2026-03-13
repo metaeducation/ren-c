@@ -875,7 +875,7 @@ DECLARE_NATIVE(CYCLE)
 
     STATE = ST_CYCLE_EVALUATING_BODY;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);
-    return CONTINUE(OUT, body);
+    return CONTINUE(body);
 
 } body_result_or_thrown_in_out: {  ///////////////////////////////////////////
 
@@ -908,6 +908,10 @@ DECLARE_NATIVE(CYCLE)
             return BOUNCE_OUT;
         }
     }
+    else {
+        Copy_Cell(OUT, SUBOUT);
+        Drop_Level(SUBLEVEL);
+    }
 
     if (Loop_Body_Threw_And_Cant_Catch_Continue(OUT, LEVEL))
         return THROWN;
@@ -928,7 +932,7 @@ DECLARE_NATIVE(CYCLE)
 
 } continue_cycling: { ////////////////////////////////////////////////////////
 
-    return CONTINUE(OUT, body);
+    return CONTINUE(body);
 }}
 
 
@@ -1434,7 +1438,7 @@ DECLARE_NATIVE(FOR_EACH)
         goto finalize_for_each;
 
       case ST_FOR_EACH_RUNNING_BODY:
-        goto body_result_in_spare_or_threw;
+        goto body_result_in_out_or_threw;
 
       default: assert(false);
     }
@@ -1453,9 +1457,14 @@ DECLARE_NATIVE(FOR_EACH)
 } invoke_body: {
 
     STATE = ST_FOR_EACH_RUNNING_BODY;
-    return CONTINUE_BRANCH(OUT, body);
+    return CONTINUE_BRANCH(body);
 
-} body_result_in_spare_or_threw: {  //////////////////////////////////////////
+} body_result_in_out_or_threw: {  ////////////////////////////////////////////
+
+    if (not THROWING) {
+        Copy_Cell(OUT, SUBOUT);
+        Drop_Level(SUBLEVEL);
+    }
 
     if (Loop_Body_Threw_And_Cant_Catch_Continue(OUT, LEVEL))
         goto finalize_for_each;
@@ -1579,7 +1588,7 @@ DECLARE_NATIVE(EVERY)
 } invoke_body: {
 
     STATE = ST_EVERY_RUNNING_BODY;
-    return CONTINUE(SPARE, body);
+    return CONTINUE(body);
 
 } body_result_in_spare: {  ///////////////////////////////////////////////////
 
@@ -1592,6 +1601,11 @@ DECLARE_NATIVE(EVERY)
     //
     //    It returns trash on skipped bodies, as loop composition breaks
     //    down if we try to keep old values, or return void.
+
+    if (not THROWING) {
+        Copy_Cell(SPARE, SUBOUT);
+        Drop_Level(SUBLEVEL);
+    }
 
     if (Loop_Body_Threw_And_Cant_Catch_Continue(SPARE, LEVEL))
         goto finalize_every;
@@ -2166,7 +2180,7 @@ DECLARE_NATIVE(MAP)
 } invoke_loop_body: {
 
     STATE = ST_MAP_RUNNING_BODY;
-    return CONTINUE(SPARE, body);  // body may be ^BLOCK!
+    return CONTINUE(body);  // body may be ^BLOCK!
 
 } body_result_in_spare: {  ///////////////////////////////////////////////////
 
@@ -2176,6 +2190,11 @@ DECLARE_NATIVE(MAP)
     // e.g. void is allowed for skipping map elements:
     //
     //        map-each 'x [1 2 3] [opt if even? x [x * 10]] => [20]
+
+    if (not THROWING) {
+        Copy_Cell(SPARE, SUBOUT);
+        Drop_Level(SUBLEVEL);
+    }
 
     if (Loop_Body_Threw_And_Cant_Catch_Continue(SPARE, LEVEL))
         goto finalize_map;
@@ -2302,9 +2321,14 @@ DECLARE_NATIVE(REPEAT)
 
     STATE = ST_REPEAT_EVALUATING_BODY;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // catch break/continue
-    return CONTINUE_BRANCH(OUT, body, index);
+    return CONTINUE_BRANCH(body, index);
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
+
+    if (not THROWING) {
+        Copy_Cell(OUT, SUBOUT);
+        Drop_Level(SUBLEVEL);
+    }
 
     if (Loop_Body_Threw_And_Cant_Catch_Continue(OUT, LEVEL))
         return THROWN;
@@ -2323,7 +2347,7 @@ DECLARE_NATIVE(REPEAT)
 
     if (Is_Logic(count)) {
         assert(Cell_Logic(count) == true);  // false already returned
-        return CONTINUE_BRANCH(OUT, body);  // true infinite loops
+        return CONTINUE_BRANCH(body);  // true infinite loops
     }
 
     if (VAL_INT64(count) == VAL_INT64(index))  // reached the desired count
@@ -2335,7 +2359,7 @@ DECLARE_NATIVE(REPEAT)
 
     assert(STATE == ST_REPEAT_EVALUATING_BODY);
     assert(Get_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));
-    return CONTINUE_BRANCH(OUT, body, index);  // keep looping
+    return CONTINUE_BRANCH(body, index);  // keep looping
 }}
 
 
@@ -2423,9 +2447,14 @@ DECLARE_NATIVE(FOR)
 
     STATE = ST_FOR_RUNNING_BODY;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for break/continue
-    return CONTINUE_BRANCH(OUT, body, Slot_Hack(slot));
+    return CONTINUE_BRANCH(body, Slot_Hack(slot));
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
+
+    if (not THROWING) {
+        Copy_Cell(OUT, SUBOUT);
+        Drop_Level(SUBLEVEL);
+    }
 
     if (Loop_Body_Threw_And_Cant_Catch_Continue(OUT, LEVEL))
         return THROWN;
@@ -2468,7 +2497,7 @@ DECLARE_NATIVE(FOR)
 
     assert(STATE == ST_FOR_RUNNING_BODY);
     assert(Get_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));
-    return CONTINUE_BRANCH(OUT, body, SPARE);
+    return CONTINUE_BRANCH(body, SPARE);
 }}
 
 
@@ -2510,7 +2539,7 @@ DECLARE_NATIVE(INSIST)
 
     assert(Get_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));
     assert(STATE == ST_INSIST_EVALUATING_BODY);
-    return CONTINUE(OUT, body);
+    return CONTINUE(body);
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
@@ -2528,6 +2557,11 @@ DECLARE_NATIVE(INSIST)
   //    Hence INSIST cannot return something like a pack...it must be META'd
   //    and the result UNMETA'd.  That would mean all pack quasiforms would
   //    be considered truthy.
+
+    if (not THROWING) {
+        Copy_Cell(OUT, SUBOUT);
+        Drop_Level(SUBLEVEL);
+    }
 
     if (Loop_Body_Threw_And_Cant_Catch_Continue(OUT, LEVEL))
         return THROWN;
@@ -2604,9 +2638,12 @@ DECLARE_NATIVE(WHILE)  // note: UNTIL shares this implementation
     STATE = ST_WHILE_EVALUATING_CONDITION;
 
     assert(Not_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));
-    return CONTINUE(SPARE, condition);
+    return CONTINUE(condition);
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
+
+    Copy_Cell(SPARE, SUBOUT);
+    Drop_Level(SUBLEVEL);
 
     if (Is_Hot_Potato(SPARE)) {
         if (Is_Cell_A_Done_Hot_Potato(SPARE))
@@ -2638,9 +2675,14 @@ DECLARE_NATIVE(WHILE)  // note: UNTIL shares this implementation
     STATE = ST_WHILE_EVALUATING_BODY;  // body result => OUT
 
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for break/continue
-    return CONTINUE_BRANCH(OUT, body, SPARE);
+    return CONTINUE_BRANCH(body, SPARE);
 
 } body_result_in_out_or_thrown: { ////////////////////////////////////////////
+
+    if (not THROWING) {
+        Copy_Cell(OUT, SUBOUT);
+        Drop_Level(SUBLEVEL);
+    }
 
     if (Loop_Body_Threw_And_Cant_Catch_Continue(OUT, LEVEL))
         return THROWN;

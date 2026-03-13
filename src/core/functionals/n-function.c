@@ -160,7 +160,7 @@ Bounce Func_Dispatcher(Level* const L)
 
     Enable_Dispatcher_Catching_Of_Throws(L);  // for RETURN:RUN, not RETURN [1]
 
-    return CONTINUE(OUT, spare);  // body result is discarded
+    return CONTINUE(spare);  // body result is discarded
 
 } redo_with_current_frame_values: { //////////////////////////////////////////
 
@@ -234,6 +234,9 @@ Bounce Func_Dispatcher(Level* const L)
   //    function is there with no arguments.  If it's not a function, then
   //    that's considered a panic.
 
+    UNUSED(SUBOUT);  // body result discarded
+    Drop_Level(SUBLEVEL);
+
     Index slot_num = Get_Details_Flag(details, METHODIZED) ? 2 : 1;
 
     assert(Key_Id(Varlist_Key(L->varlist, slot_num)) == SYM_RETURN_P);
@@ -256,9 +259,12 @@ Bounce Func_Dispatcher(Level* const L)
 
     Disable_Dispatcher_Catching_Of_Throws(L);  // want RETURN* to take over
     STATE = ST_FUNC_RUNNING_RETURN_P;
-    return CONTINUE(OUT, return_p);
+    return CONTINUE(return_p);
 
 } return_p_finished_without_returning: {  ////////////////////////////////////
+
+    UNUSED(SUBOUT);  // return_p result discarded
+    Drop_Level(SUBLEVEL);
 
     Option(const Symbol*) label = Level_Label(L);
     panic (Error_Return_Undivergent_Raw(label));

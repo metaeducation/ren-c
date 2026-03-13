@@ -414,7 +414,8 @@ DECLARE_NATIVE(OF)
     Copy_Plain_Cell(Evaluator_Level_Current(sub), OUT);
     assert(Is_Frame(Evaluator_Level_Current(sub)));
 
-    Push_Level(Erase_Cell(OUT), sub);
+    Erase_Cell(OUT);  // !!! rethink the STATE_0 logic
+    Push_Level(OUT, sub);
 
     return DELEGATE_SUBLEVEL;  // !!! could/should we replace this level?
 }}

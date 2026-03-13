@@ -33,28 +33,28 @@
 // a branch continuation if it is a function.
 //
 
-#define CONTINUE_CORE_5(...) ( \
+#define CONTINUE_CORE_4(...) ( \
     Pushed_Continuation(__VA_ARGS__), /* <-- don't heed result... */ \
         Bounce_Continue(TOP_LEVEL))  /* ...always want callback! */
 
-#define CONTINUE_CORE_4(...) ( \
+#define CONTINUE_CORE_3(...) ( \
     Pushed_Continuation(__VA_ARGS__, nullptr), /* <-- don't heed result... */ \
         Bounce_Continue(TOP_LEVEL))  /* ...always want callback! */
 
 #define CONTINUE_CORE(...) \
     PP_CONCAT(CONTINUE_CORE_, PP_NARGS(__VA_ARGS__))(__VA_ARGS__)
 
-#define CONTINUE(out,...) \
+#define CONTINUE(...) \
     CONTINUE_CORE( \
-        (out), LEVEL_FLAG_VANISHABLE_VOIDS_ONLY, SPECIFIED, __VA_ARGS__)
+        LEVEL_FLAG_VANISHABLE_VOIDS_ONLY | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE, SPECIFIED, __VA_ARGS__)
 
-#define CONTINUE(out,...) \
+#define CONTINUE(...) \
     CONTINUE_CORE( \
-        (out), LEVEL_FLAG_VANISHABLE_VOIDS_ONLY, SPECIFIED, __VA_ARGS__)
+        LEVEL_FLAG_VANISHABLE_VOIDS_ONLY | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE, SPECIFIED, __VA_ARGS__)
 
-#define CONTINUE_BRANCH(out,...) \
-    CONTINUE_CORE((out), \
-        LEVEL_FLAG_FORCE_HEAVY_BRANCH | LEVEL_FLAG_VANISHABLE_VOIDS_ONLY, \
+#define CONTINUE_BRANCH(...) \
+    CONTINUE_CORE( \
+        LEVEL_FLAG_FORCE_HEAVY_BRANCH | LEVEL_FLAG_VANISHABLE_VOIDS_ONLY | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE, \
         SPECIFIED, __VA_ARGS__)
 
 
@@ -78,30 +78,27 @@
 // if the delegating level were freed before running what's underneath it...
 // at least it could be collapsed into a more primordial state.  Review.
 
-#define DELEGATE_CORE_3(o,sub_flags,...) \
+#define DELEGATE_CORE_3(sub_flags,...) \
     (assert(Not_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES)), \
-    assert((o) == Level_Out(level_)), \
     Set_Executor_Flag(ACTION, level_, DELEGATE_CONTROL), \
     LEVEL_STATE_BYTE(level_) = 127, \
     Pushed_Continuation( \
-        Level_Out(level_), \
         (sub_flags), \
         __VA_ARGS__  /* binding, branch, and "with" argument */ \
-    ) ? Bounce_Continue(TOP_LEVEL) \
-        : BOUNCE_OUT)  // no need to give callback to delegator
+    ), TOP_LEVEL->target = Level_Out(level_), Bounce_Continue(TOP_LEVEL))
 
-#define DELEGATE_CORE_2(out,sub_flags,...) \
-    DELEGATE_CORE_3((out), (sub_flags), __VA_ARGS__, nullptr)
+#define DELEGATE_CORE_2(sub_flags,...) \
+    DELEGATE_CORE_3((sub_flags), __VA_ARGS__, nullptr)
 
-#define DELEGATE_CORE(out,sub_flags,...) \
+#define DELEGATE_CORE(sub_flags,...) \
     PP_CONCAT(DELEGATE_CORE_, PP_NARGS(__VA_ARGS__))( \
-        (out), (sub_flags), __VA_ARGS__)
+        (sub_flags), __VA_ARGS__)
 
-#define DELEGATE(out,...) \
-    DELEGATE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__)
+#define DELEGATE(...) \
+    DELEGATE_CORE(LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__)
 
-#define DELEGATE_BRANCH(out,...) \
-    DELEGATE_CORE((out), \
+#define DELEGATE_BRANCH(...) \
+    DELEGATE_CORE( \
         LEVEL_FLAG_FORCE_HEAVY_BRANCH, \
         SPECIFIED, __VA_ARGS__)
 

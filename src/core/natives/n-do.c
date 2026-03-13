@@ -428,11 +428,11 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
     Option(const Value*) with = nullptr;
     Push_Frame_Continuation(
-        OUT,
         LEVEL_MASK_NONE,
         source,
         with
     );
+    TOP_LEVEL->target = OUT;
     return DELEGATE_SUBLEVEL;
 
 } initial_entry_varargs: { ///////////////////////////////////////////////////
@@ -665,11 +665,14 @@ DECLARE_NATIVE(APPLIQUE)
     Tweak_Cell_Binding(def, use);
 
     STATE = ST_APPLIQUE_RUNNING_DEF_BLOCK;
-    return CONTINUE(SPARE, def);  // first run block bound to frame
+    return CONTINUE(def);  // first run block bound to frame
 
 } definition_result_in_spare: {  /////////////////////////////////////////////
 
-    return DELEGATE(OUT, Element_LOCAL(FRAME));  // now run the frame
+    UNUSED(SUBOUT);
+    Drop_Level(SUBLEVEL);
+
+    return DELEGATE(Element_LOCAL(FRAME));  // now run the frame
 }}
 
 
@@ -997,7 +1000,7 @@ DECLARE_NATIVE(APPLY)
         return b;
     }
 
-    return DELEGATE(OUT, Element_LOCAL(FRAME));
+    return DELEGATE(Element_LOCAL(FRAME));
 }
 
 
@@ -1093,7 +1096,7 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
         return b;
     }
 
-    return DELEGATE(OUT, Element_LOCAL(FRAME));
+    return DELEGATE(Element_LOCAL(FRAME));
 }}
 
 

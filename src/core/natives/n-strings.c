@@ -232,6 +232,10 @@ DECLARE_NATIVE(JOIN)
         goto stack_step_result_in_spare;
 
       case ST_JOIN_EVALUATING_THE_GROUP:
+        dont(Copy_Cell(SPARE, SUBOUT));  // SUBLEVEL in-between top level
+        Copy_Cell(SPARE, Level_Out(TOP_LEVEL));
+        Drop_Level(TOP_LEVEL);
+
         if (Is_Pinned_Form_Of(BLOCK, unwrap rest))
             SUBLEVEL->executor = &Inert_Stepper_Executor;
         else {
@@ -239,6 +243,7 @@ DECLARE_NATIVE(JOIN)
             SUBLEVEL->executor = &Stepper_Executor;
         }
         assert(Get_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT));
+
         goto mold_step_result_in_spare;
 
       default: assert(false);
@@ -413,7 +418,7 @@ DECLARE_NATIVE(JOIN)
         }
 
         if (item_heart == HEART_GROUP) {
-            SUBLEVEL->executor = &Just_Use_Out_Executor;
+            SUBLEVEL->executor = &Skip_Me_Executor;
             Element* scratch = Copy_Cell_May_Bind(
                 SCRATCH, item, Level_Binding(sub)
             );
@@ -422,7 +427,7 @@ DECLARE_NATIVE(JOIN)
 
             SUBLEVEL->baseline.stack_base = TOP_INDEX;
             STATE = ST_JOIN_EVALUATING_THE_GROUP;
-            return CONTINUE(SPARE, scratch);
+            return CONTINUE(scratch);
         }
 
         panic (Error_Bad_Value(item));

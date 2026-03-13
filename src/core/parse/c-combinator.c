@@ -260,6 +260,7 @@ void Push_Parser_Sublevel(
     const Value* parser,
     const Stable* input
 ){
+    UNUSED(out);  // !!! this code is defunct, needs redoing
     assert(Any_Series(input));
     assert(Is_Action(parser));
 
@@ -288,7 +289,6 @@ void Push_Parser_Sublevel(
     Init_Frame(temp, ctx, ANONYMOUS, UNCOUPLED);
 
     bool pushed = Pushed_Continuation(
-        out,
         LEVEL_MASK_NONE,
         SPECIFIED,
         temp,

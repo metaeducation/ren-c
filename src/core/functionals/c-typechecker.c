@@ -442,7 +442,7 @@ bool Predicate_Check_Spare_Uses_Scratch(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
     ));
-    Push_Level(Erase_Cell(SCRATCH), sub);  // sub's out is L->scratch
+    Push_Level(nullptr, sub);  // sub's out is L->scratch
     require (
       Push_Action(sub, predicate, PREFIX_0)
     );
@@ -481,6 +481,7 @@ bool Predicate_Check_Spare_Uses_Scratch(
     if (Trampoline_With_Top_As_Root_Throws())
         panic (Error_No_Catch_For_Throw(sub));
 
+    Copy_Cell(SCRATCH, Level_Out(sub));
     Drop_Level(sub);
 
     if (Is_Failure(SCRATCH))
@@ -1168,9 +1169,9 @@ Result(Value*) Init_Typechecker(
     }
 
     require (
-      Level* const L = Make_End_Level(&Just_Use_Out_Executor, LEVEL_MASK_NONE)
+      Level* const L = Make_End_Level(&Skip_Me_Executor, LEVEL_MASK_NONE)
     );
-    Push_Level(Erase_Cell(out), L);
+    Push_Level(out, L);
 
     USE_LEVEL_SHORTHANDS (L);
 

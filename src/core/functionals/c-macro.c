@@ -145,12 +145,15 @@ Bounce Inliner_Dispatcher(Level* const L)
     Tweak_Cell_Binding(body_in_spare, L->varlist);
 
     STATE = ST_INLINER_RUNNING_BODY;
-    return CONTINUE(OUT, body_in_spare);
+    return CONTINUE(body_in_spare);
 
 } body_result_in_out: { //////////////////////////////////////////////////////
 
   // 1. Generating a void should do the same thing as an empty splice, and
   //    continue running as a single step...not return in its own step.
+
+    Copy_Cell(OUT, SUBOUT);
+    Drop_Level(SUBLEVEL);
 
     if (Any_Void(OUT))
         goto continue_evaluating;  // MACRO never returns directly [1]
@@ -175,7 +178,7 @@ Bounce Inliner_Dispatcher(Level* const L)
     require (
       Level* sub = Make_Level(&Stepper_Executor, L->feed, LEVEL_MASK_NONE)
     );
-    Push_Level(Erase_Cell(OUT), sub);
+    Push_Level(OUT, sub);
 
     return DELEGATE_SUBLEVEL;
 }}
@@ -275,7 +278,7 @@ DECLARE_NATIVE(INLINE)
     require (
       Level* sub = Make_Level(&Stepper_Executor, level_->feed, LEVEL_MASK_NONE)
     );
-    Push_Level(Erase_Cell(OUT), sub);
+    Push_Level(OUT, sub);
 
     return DELEGATE_SUBLEVEL;
 }}

@@ -70,16 +70,26 @@
 
 
 //
-//  Just_Use_Out_Executor: C
+//  Skip_Me_Executor: C
 //
-// The "Just_Use_Out_Executor()" is never actually called, but it's a state
+// The "Skip_Me_Executor()" is never actually called, but it's a state
 // for the trampoline to check that's more obvious than `nullptr` in the
 // executor slot.
 //
 // Optimized builds could use nullptr instead.
 //
-Bounce Just_Use_Out_Executor(Level* L)
+Bounce Skip_Me_Executor(Level* L)
   { crash (Level_Out(L)); }
+
+
+//
+//  Just_Use_Out_Executor: C
+//
+// The "Just_Use_Out_Executor()" is a dummy executor for a Level that has had
+// its output cell primed with a value to return.
+//
+Bounce Just_Use_Out_Executor(Level* level_)
+  { return BOUNCE_OUT; }
 
 
 //
@@ -118,7 +128,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     Level* L = TOP_LEVEL;  // Current level changes, and isn't always top...
 
-  // 1. The Just_Use_Out_Executor() exists vs. using something like nullptr
+  // 1. The Skip_Me_Executor() exists vs. using something like nullptr
   //    for the executor just to make it more obvously intentional that a
   //    passthru is intended.  (Review in light of use of nonzero for GC and
   //    bookkeeping purposes; could STATE of 255 mean Just_Use_Out?)
@@ -140,18 +150,14 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
   bounce_on_trampoline_skip_just_use_out:
 
-    while (L->executor == &Just_Use_Out_Executor) {
-        /*if (L->target)
-            Copy_Cell(L->target, Level_Out(L));*/
-
+    while (L->executor == &Skip_Me_Executor)
         L = L->prior;  // fast skip, allow Is_Cell_Erased() output
-    }
 
   bounce_on_trampoline:
 
     Assert_No_DataStack_Pointers_Extant();
 
-    assert(L->executor != &Just_Use_Out_Executor);  // drops skip [1]
+    assert(L->executor != &Skip_Me_Executor);  // drops skip [1]
 
     if (LEVEL_STATE_BYTE(L) == STATE_0)
         assert(Is_Cell_Erased(Level_Out(L)));  // useful STATE_0 invariant [2]
@@ -246,7 +252,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         Drop_Level(L);
         L = TOP_LEVEL;
 
-        if (L->executor == &Just_Use_Out_Executor) {
+        if (L->executor == &Skip_Me_Executor) {
             if (Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE))
                 L = L->prior;  // don't let it be aborted [3]
         }
@@ -294,6 +300,13 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         if (Get_Level_Flag(TOP_LEVEL, ROOT_LEVEL)) {
             CLEANUP_BEFORE_EXITING_RECOVER_SCOPE;
             return BOUNCE_TOPLEVEL_OUT;
+        }
+
+        if (
+            TOP_LEVEL->prior->executor == &Action_Executor
+            and Get_Executor_Flag(ACTION, TOP_LEVEL->prior, DELEGATE_CONTROL)
+        ){
+            Force_Blit_Cell(Level_Out(TOP_LEVEL->prior), Level_Out(TOP_LEVEL));
         }
 
         L = TOP_LEVEL->prior;
@@ -500,7 +513,7 @@ void Startup_Trampoline(void)
 
     require (
       Level* L = Make_End_Level(  // ensure L->prior [1]
-        &Just_Use_Out_Executor,  // executor is irrelevant (permit nullptr?)
+        &Skip_Me_Executor,  // executor is irrelevant (permit nullptr?)
         LEVEL_FLAG_UNINTERRUPTIBLE  // can't interrupt while initializing [2]
     ));
     Push_Level_Dont_Inherit_Interruptibility(  // to attach API handles to [3]

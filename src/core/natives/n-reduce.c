@@ -166,7 +166,7 @@ DECLARE_NATIVE(REDUCE)
         goto reduce_step_result_in_spare;
 
       case ST_REDUCE_RUNNING_PREDICATE:
-        goto process_out;
+        goto predicate_finished;
 
       default: assert(false);
     }
@@ -254,17 +254,24 @@ DECLARE_NATIVE(REDUCE)
     }
 
     if (not predicate)  // default is no processing
-        goto process_out;
+        goto process_spare;
 
     if (Is_Void(SPARE))
         goto next_reduce_step;  // don't pass voids to predicate [1]
 
-    SUBLEVEL->executor = &Just_Use_Out_Executor;
+    SUBLEVEL->executor = &Skip_Me_Executor;
     STATE = ST_REDUCE_RUNNING_PREDICATE;
 
-    return CONTINUE(SPARE, unwrap predicate, SPARE);  // arg may also be output
+    return CONTINUE(unwrap predicate, SPARE);  // arg may also be output
 
-} process_out: {  ////////////////////////////////////////////////////////////
+} predicate_finished: {  /////////////////////////////////////////////////////
+
+    Copy_Cell(SPARE, SUBOUT);
+    Drop_Level(SUBLEVEL);
+
+    goto process_spare;
+
+} process_spare: {  //////////////////////////////////////////////////////////
 
   // 1. The sublevel that is pushed to run reduce evaluations uses the data
   //    stack position captured in BASELINE to tell things like whether a
@@ -489,7 +496,7 @@ DECLARE_NATIVE(REDUCE_EACH)
         goto reduce_next;  // REDUCE skips commas, so REDUCE-EACH does too
     }
 
-    if (Is_Pinned_Form_Of(BLOCK, block))  // undo &Just_Use_Out_Executor
+    if (Is_Pinned_Form_Of(BLOCK, block))  // undo &Skip_Me_Executor
         SUBLEVEL->executor = &Inert_Stepper_Executor;
     else
         SUBLEVEL->executor = &Stepper_Executor;
@@ -516,13 +523,18 @@ DECLARE_NATIVE(REDUCE_EACH)
 
 } invoke_loop_body: {
 
-    SUBLEVEL->executor = &Just_Use_Out_Executor;  // pass through sublevel
+    SUBLEVEL->executor = &Skip_Me_Executor;  // pass through sublevel
 
     STATE = ST_REDUCE_EACH_RUNNING_BODY;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for break/continue
-    return CONTINUE_BRANCH(OUT, body);
+    return CONTINUE_BRANCH(body);
 
 } body_result_in_out: { //////////////////////////////////////////////////////
+
+    if (not THROWING) {
+        Copy_Cell(OUT, SUBOUT);
+        Drop_Level(SUBLEVEL);
+    }
 
     if (Loop_Body_Threw_And_Cant_Catch_Continue(OUT, LEVEL))
         goto finished;

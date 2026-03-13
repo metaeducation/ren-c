@@ -149,7 +149,7 @@ static Result(None) Reuse_Sublevel_For_Action_Core(
     possibly(action == Level_Out(L));
 
     Level* sub = SUBLEVEL;
-    assert(sub->executor == &Just_Use_Out_Executor);
+    assert(sub->executor == &Skip_Me_Executor);
     assert(sub->feed == L->feed);
     assert(sub->baseline.stack_base == L->baseline.stack_base);
     assert(sub->target == OUT);
@@ -194,7 +194,7 @@ static Result(None) Reuse_Sublevel_For_Eval_Core(
     const Element* list
 ){
     Level* sub = SUBLEVEL;
-    assert(sub->executor == &Just_Use_Out_Executor);
+    assert(sub->executor == &Skip_Me_Executor);
     assert(sub->feed == L->feed);  // we change it, and change back later
     assert(sub->baseline.stack_base == L->baseline.stack_base);
     assert(sub->target == OUT);
@@ -240,7 +240,7 @@ static Result(None) Reuse_Sublevel_Target_Spare_For_Intrinsic_Arg_Core(
     Level* L
 ){
     Level* sub = SUBLEVEL;
-    assert(sub->executor == &Just_Use_Out_Executor);
+    assert(sub->executor == &Skip_Me_Executor);
     assert(sub->feed == L->feed);
     assert(sub->baseline.stack_base == L->baseline.stack_base);
     assert(sub->target == OUT);  // we tweak it... :-/
@@ -287,7 +287,7 @@ static Result(None) Reuse_Sublevel_Target_Spare_For_Intrinsic_Arg_Core(
 INLINE Result(None) Reuse_Sublevel_Same_Feed_For_Step_Core(Level* L)
 {
     Level *sub = SUBLEVEL;
-    assert(sub->executor == &Just_Use_Out_Executor);
+    assert(sub->executor == &Skip_Me_Executor);
     assert(sub->feed == L->feed);
     possibly(sub->baseline.stack_base != L->baseline.stack_base);   // [0]
     assert(sub->target == OUT);
@@ -381,7 +381,7 @@ Option(Phase*) Reuse_Sublevel_To_Determine_Left_Literal_Infix_Core(
     Sink(Option(InfixMode)) infix_mode
 ){
     Level* sub = SUBLEVEL;
-    assert(sub->executor == &Just_Use_Out_Executor);
+    assert(sub->executor == &Skip_Me_Executor);
     assert(sub->feed == L->feed);
     assert(sub->baseline.stack_base == L->baseline.stack_base);
     assert(sub->target == OUT);
@@ -563,7 +563,7 @@ Bounce Stepper_Executor(Level* L)
 
     require (  // for the sake of simpler invariants, always push a Level
       Level* sub = Make_Level(
-        &Just_Use_Out_Executor,
+        &Skip_Me_Executor,
         L->feed,  // feed *usually* L->feed, but GROUP!/etc. may change it
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // flags overwritten
       )
@@ -616,7 +616,7 @@ Bounce Stepper_Executor(Level* L)
 
     require (  // for the sake of simpler invariants, always push a Level
       Level* sub = Make_Level(
-        &Just_Use_Out_Executor,
+        &Skip_Me_Executor,
         L->feed,  // feed *usually* L->feed, but GROUP!/etc. may change it
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // flags overwritten
       )
@@ -782,7 +782,7 @@ Bounce Stepper_Executor(Level* L)
 
     } identity_rightside_in_out: {
 
-        SUBLEVEL->executor = &Just_Use_Out_Executor;  // temp (?) invariant
+        SUBLEVEL->executor = &Skip_Me_Executor;  // temp (?) invariant
         assert(SUBLEVEL->feed == L->feed);  // we didn't change it
 
         // !!! Did all the work just by making a not-afraid of voids step?
@@ -1028,7 +1028,7 @@ Bounce Stepper_Executor(Level* L)
 
     } bind_rightside_in_out: { ///////////////////////////////////////////////
 
-        SUBLEVEL->executor = &Just_Use_Out_Executor;  // temp (?) invariant
+        SUBLEVEL->executor = &Skip_Me_Executor;  // temp (?) invariant
         assert(SUBLEVEL->feed == L->feed);  // we didn't change it
 
         if (Is_Antiform(OUT))
@@ -1133,7 +1133,7 @@ Bounce Stepper_Executor(Level* L)
 
     // could in theory examine action level here
 
-    SUBLEVEL->executor = &Just_Use_Out_Executor;  // temporary (?) invariant
+    SUBLEVEL->executor = &Skip_Me_Executor;  // temporary (?) invariant
     if (SUBLEVEL->feed != L->feed)  // Retarget_Level_Feed() can change
         Retarget_Level_Feed(SUBLEVEL, L->feed);
 
@@ -1302,7 +1302,7 @@ Bounce Stepper_Executor(Level* L)
 
     assert(
         SUBLEVEL->executor == &Stepper_Executor  // if we evaluated arg
-        or SUBLEVEL->executor == &Just_Use_Out_Executor  // if we didn't
+        or SUBLEVEL->executor == &Skip_Me_Executor  // if we didn't
     );
     assert(SUBLEVEL->feed == L->feed);  // we didn't change it
     assert(SUBLEVEL->target == SPARE);  // we redirected it
@@ -1369,7 +1369,7 @@ Bounce Stepper_Executor(Level* L)
 
   } finished_intrinsic: { ////////////////////////////////////////////////////
 
-    SUBLEVEL->executor = &Just_Use_Out_Executor;  // temp (?) invariant
+    SUBLEVEL->executor = &Skip_Me_Executor;  // temp (?) invariant
     goto lookahead;
 
 
@@ -1502,7 +1502,7 @@ Bounce Stepper_Executor(Level* L)
 
 } group_or_meta_group_result_in_out: {
 
-    SUBLEVEL->executor = &Just_Use_Out_Executor;  // temporary (?) invariant
+    SUBLEVEL->executor = &Skip_Me_Executor;  // temporary (?) invariant
     Retarget_Level_Feed(SUBLEVEL, L->feed);  // must restore this
 
     L->flags.bits |= (
@@ -1748,7 +1748,7 @@ Bounce Stepper_Executor(Level* L)
 
 } generic_set_rightside_in_out: {
 
-    SUBLEVEL->executor = &Just_Use_Out_Executor;  // temporary (?) invariant
+    SUBLEVEL->executor = &Skip_Me_Executor;  // temporary (?) invariant
     assert(SUBLEVEL->feed == L->feed);  // we didn't change it
 
     if (Is_Space(CURRENT))  // e.g. `(void): ...`  !!! use space var!
@@ -1777,7 +1777,7 @@ Bounce Stepper_Executor(Level* L)
 
 } set_group_result_in_out: {
 
-    SUBLEVEL->executor = &Just_Use_Out_Executor;  // temporary (?) invariant
+    SUBLEVEL->executor = &Skip_Me_Executor;  // temporary (?) invariant
     Retarget_Level_Feed(SUBLEVEL, L->feed);  // must restore this
 
     if (Is_Space(CURRENT))
@@ -1834,7 +1834,7 @@ Bounce Stepper_Executor(Level* L)
 
 } set_block_rightside_in_out: {  /////////////////////////////////////////////
 
-    SUBLEVEL->executor = &Just_Use_Out_Executor;  // temporary (?) invariant
+    SUBLEVEL->executor = &Skip_Me_Executor;  // temporary (?) invariant
     assert(SUBLEVEL->feed == L->feed);  // we didn't change it
 
     assert(SUBLEVEL->baseline.stack_base == TOP_INDEX);
@@ -1962,7 +1962,7 @@ Bounce Stepper_Executor(Level* L)
   // an InfixMode set in the header, and run that action with 1 as the first
   // argument.
 
-    assert(SUBLEVEL->executor == &Just_Use_Out_Executor);
+    assert(SUBLEVEL->executor == &Skip_Me_Executor);
 
 } check_for_cached_infix_fetch_in_spare: {
 

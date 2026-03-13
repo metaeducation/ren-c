@@ -251,7 +251,7 @@ static bool Subparse_Throws(
 ){
     assert(Has_Series_Heart(input));
 
-    Push_Level(Erase_Cell(out), L);
+    Push_Level(out, L);
 
     require (
       Push_Action(L, LIB(SUBPARSE), PREFIX_0)

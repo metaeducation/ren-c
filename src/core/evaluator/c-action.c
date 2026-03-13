@@ -643,7 +643,7 @@ Bounce Action_Executor(Level* L)
 
         Track_Enable_Eval_Target_Cell(ARG);  // not visible yet
 
-        Push_Level(Erase_Cell(ARG), sub);
+        Push_Level(u_cast(Value*, ARG), sub);
 
         return CONTINUE_SUBLEVEL; }
 

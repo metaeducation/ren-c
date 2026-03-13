@@ -311,9 +311,12 @@ DECLARE_NATIVE(CHECK_TO_OR_AS)
  initial_entry: { ///////////////////////////////////////////////////////////
 
     STATE = ST_CHECK_TO_OR_AS_CHECKING_FORWARD;
-    return CONTINUE(OUT, frame);  // operates on copy, leaves frame intact
+    return CONTINUE(frame);  // operates on copy, leaves frame intact
 
 } forward_result_in_out: {  //////////////////////////////////////////////////
+
+    Copy_Cell(OUT, SUBOUT);
+    Drop_Level(SUBLEVEL);
 
     if (Is_Datatype(v))  // skip reverse for DATATYPE! (review)
         return BOUNCE_OUT;
@@ -329,9 +332,12 @@ DECLARE_NATIVE(CHECK_TO_OR_AS)
     Copy_Cell(type, Datatype_From_Type(unwrap Type_Of(v)));  // reverse
     Copy_Cell(v, As_Stable(OUT));
 
-    return CONTINUE(SPARE, frame);  // !!! could consume this frame (how?)
+    return CONTINUE(frame);  // !!! could consume this frame (how?)
 
 } backward_result_in_spare: {  ///////////////////////////////////////////////
+
+    Copy_Cell(SPARE, SUBOUT);
+    Drop_Level(SUBLEVEL);
 
     TypeEnum to_or_as = Type_From_Byte_Or_0(STATE);
     Stable* forward = As_Stable(SCRATCH);

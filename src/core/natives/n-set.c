@@ -159,7 +159,7 @@ Result(None) Set_Word_Or_Tuple(const Element* var, const Value* value)
     Copy_Cell(setval, value);
 
     require (
-      Level* sub = Make_End_Level(&Just_Use_Out_Executor, LEVEL_MASK_NONE)
+      Level* sub = Make_End_Level(&Skip_Me_Executor, LEVEL_MASK_NONE)
     );
     LEVEL_STATE_BYTE(sub) = ST_TWEAK_SETTING;  // != 0, tolerate unerased out
     Push_Level(setval, sub);
@@ -245,7 +245,7 @@ Result(bool) Push_Set_Block_Instructions_To_Stack_Throws(
     USE_LEVEL_SHORTHANDS (L);
 
     Level* sub = SUBLEVEL;
-    assert(sub->executor == &Just_Use_Out_Executor);
+    assert(sub->executor == &Skip_Me_Executor);
 
     Element* scratch = As_Element(SCRATCH);
 
@@ -438,7 +438,7 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Level* sub = SUBLEVEL;
-    assert(sub->executor == &Just_Use_Out_Executor);
+    assert(sub->executor == &Skip_Me_Executor);
     assert(sub->target == OUT);  // we don't use it
 
     const StackIndex base = STACK_BASE;  // L's stack base for Set_Block()
@@ -667,7 +667,7 @@ DECLARE_NATIVE(SET)
         STATE = ST_STEPPER_SET_BLOCK;
 
         require (
-          Level* sub = Make_End_Level(&Just_Use_Out_Executor, LEVEL_MASK_NONE)
+          Level* sub = Make_End_Level(&Skip_Me_Executor, LEVEL_MASK_NONE)
         );
         Push_Level(SPARE, sub);
 

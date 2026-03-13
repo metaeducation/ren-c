@@ -168,7 +168,7 @@ static void Push_Composer_Level(
         ),
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
     ));
-    Push_Level(Erase_Cell(out), sub);  // sublevel may fail
+    Push_Level(out, sub);  // sublevel may fail
 
     sub->u.compose.main_level = main_level;   // pass options [2]
     sub->u.compose.changed = false;
@@ -373,13 +373,16 @@ Bounce Composer_Executor(Level* const L)
 
     if (not predicate) {
         STATE = ST_COMPOSER_EVAL_GROUP;
-        return CONTINUE(OUT, As_Element(SPARE));
+        return CONTINUE(As_Element(SPARE));
     }
 
     STATE = ST_COMPOSER_RUNNING_PREDICATE;
-    return CONTINUE(OUT, unwrap predicate, SPARE);
+    return CONTINUE(unwrap predicate, SPARE);
 
 } process_slot_evaluation_result_in_out: {  //////////////////////////////////
+
+    Copy_Cell(OUT, SUBOUT);  // may be predicate or plain eval result
+    Drop_Level(SUBLEVEL);
 
     assert(
         STATE == ST_COMPOSER_EVAL_GROUP
@@ -972,12 +975,12 @@ DECLARE_NATIVE(COMPOSE2)
     Tweak_Cell_Binding(code, Cell_Binding(pattern));  // bind unbound code
 
     STATE = ST_COMPOSE2_STRING_EVAL;
-    return CONTINUE(
-        OUT,
-        Copy_Cell(SPARE, code)  // pass non-stack code
-    );
+    return CONTINUE(Copy_Cell(SPARE, code));  // pass non-stack code
 
 } string_eval_in_out: { //////////////////////////////////////////////////////
+
+    Copy_Cell(OUT, SUBOUT);
+    Drop_Level(SUBLEVEL);
 
     if (Is_Cell_A_Veto_Hot_Potato(OUT)) {
         Drop_Data_Stack_To(STACK_BASE);

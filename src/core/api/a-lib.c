@@ -1328,7 +1328,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     require (
       Level* L = Make_Level(&Stepper_Executor, feed, flags)
     );
-    Push_Level(Erase_Cell(value_out), L);
+    Push_Level(value_out, L);
     if (Trampoline_With_Top_As_Root_Throws()) {
         Drop_Level(L);
         return true;
@@ -1462,7 +1462,7 @@ void API_rebPushContinuation_internal(
     require (
       Level* L = Make_Level_At(&Evaluator_Executor, block, flags)
     );
-    Push_Level(Erase_Cell(u_cast(Value*, out)), L);
+    Push_Level(u_cast(Value*, out), L);
 }
 
 

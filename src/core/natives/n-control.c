@@ -184,7 +184,10 @@ Bounce Group_Branch_Executor(Level* const L)
     switch (STATE) {
       case ST_GROUP_BRANCH_INITIAL_ENTRY: goto initial_entry;
       case ST_GROUP_BRANCH_RUNNING_GROUP: goto group_result_in_scratch;
-      case ST_GROUP_BRANCH_RUNNING_BRANCH: return BOUNCE_OUT;
+      case ST_GROUP_BRANCH_RUNNING_BRANCH:
+        Copy_Cell(OUT, SUBOUT);
+        Drop_Level(SUBLEVEL);
+        return BOUNCE_OUT;
       default: assert(false);
     }
 
@@ -246,7 +249,7 @@ Bounce Group_Branch_Executor(Level* const L)
         panic (Error_Bad_Antiform(scratch_branch));
 
     STATE = ST_GROUP_BRANCH_RUNNING_BRANCH;
-    return CONTINUE(OUT, As_Element(scratch_branch), spare_with);
+    return CONTINUE(As_Element(scratch_branch), spare_with);
 }}
 
 
@@ -270,7 +273,7 @@ DECLARE_NATIVE(IF)
     if (not Logical_Test(condition))
         return VOID_OUT_UNBRANCHED;  // "light" void (triggers ELSE)
 
-    return DELEGATE_BRANCH(OUT, branch, condition);  // branch semantics [A]
+    return DELEGATE_BRANCH(branch, condition);  // branch semantics [A]
 }
 
 
@@ -295,7 +298,7 @@ DECLARE_NATIVE(EITHER)
         ? ARG(OKAY_BRANCH)
         : ARG(NULL_BRANCH);
 
-    return DELEGATE_BRANCH(OUT, branch, condition);  // branch semantics [A]
+    return DELEGATE_BRANCH(branch, condition);  // branch semantics [A]
 }
 
 
@@ -374,7 +377,7 @@ DECLARE_NATIVE(THEN)
     if (Is_Light_Null(left) or Is_Void(left))
         return COPY_TO_OUT(left);
 
-    return DELEGATE_BRANCH(OUT, branch, left);
+    return DELEGATE_BRANCH(branch, left);
 }
 
 
@@ -401,7 +404,7 @@ DECLARE_NATIVE(THENCE)
     if (Is_Light_Null(v) or Is_Void(v))
         return COPY_TO_OUT(v);
 
-    return DELEGATE_BRANCH(OUT, branch, v);
+    return DELEGATE_BRANCH(branch, v);
 }
 
 
@@ -427,7 +430,7 @@ DECLARE_NATIVE(ELSE)
 
     possibly(Is_Failure(left));  // handler must take ^META arg, or will panic
 
-    return DELEGATE_BRANCH(OUT, branch, left);
+    return DELEGATE_BRANCH(branch, left);
 }
 
 
@@ -469,11 +472,12 @@ DECLARE_NATIVE(ALSO)
         return COPY_TO_OUT(left);
 
     STATE = ST_ALSO_RUNNING_BRANCH;
-    return CONTINUE_BRANCH(OUT, branch, left);
+    return CONTINUE_BRANCH(branch, left);
 
 } discard_branch_result_in_out_and_return_input: {  //////////////////////////
 
-    dont(UNUSED(OUT));  // would corrupt the OUT pointer itself
+    UNUSED(SUBOUT);  // would corrupt the OUT pointer itself
+    Drop_Level(SUBLEVEL);
 
     return COPY_TO_OUT(left);
 }}
@@ -572,16 +576,19 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
   // 2. The predicate allows you to return VOID! and opt out of voting one
   //    way or another.  (Heavy void can't decay for the Logical_Test())
 
-    SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru [1]
+    SUBLEVEL->executor = &Skip_Me_Executor;  // tunnel thru [1]
 
     STATE = ST_ANY_ALL_NONE_PREDICATE;
-    return CONTINUE(SCRATCH, unwrap predicate, SPARE);  // not branch [2]
+    return CONTINUE(unwrap predicate, SPARE);  // not branch [2]
 
 } predicate_result_in_scratch: {  ////////////////////////////////////////////
 
   // 1. The only way a falsey evaluation should make it to the end is if a
   //    predicate let it pass.  Don't want that to trip up `if all` so make
   //    it heavy...but this way `(all:predicate [null] not?/) then [<runs>]`
+
+    Copy_Cell(SCRATCH, SUBOUT);
+    Drop_Level(SUBLEVEL);
 
     if (Is_Void(SCRATCH))  // allow void predicates to be ignored
         goto next_eval_step;  // (heavy voids will cause an error)
@@ -795,7 +802,7 @@ DECLARE_NATIVE(CASE)
         goto reached_end;
 
     STATE = ST_CASE_CONDITION_EVAL_STEP;
-    SUBLEVEL->executor = &Stepper_Executor;  // undo &Just_Use_Out_Executor
+    SUBLEVEL->executor = &Stepper_Executor;  // undo &Skip_Me_Executor
     Reset_Stepper_Erase_Out(SUBLEVEL);
 
     return CONTINUE_SUBLEVEL;  // one step to pass predicate [1]
@@ -825,10 +832,13 @@ DECLARE_NATIVE(CASE)
         goto processed_result_in_spare;
 
     STATE = ST_CASE_RUNNING_PREDICATE;
-    SUBLEVEL->executor = &Just_Use_Out_Executor;
-    return CONTINUE(SPARE, unwrap predicate, SPARE);  // with == out is legal
+    SUBLEVEL->executor = &Skip_Me_Executor;
+    return CONTINUE(unwrap predicate, SPARE);  // with == out is legal
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
+
+    Copy_Cell(SPARE, SUBOUT);
+    Drop_Level(SUBLEVEL);
 
     if (Any_Void(SPARE))  // error on void predicate results (not same as [1])
         panic (Error_Bad_Void());
@@ -871,10 +881,14 @@ DECLARE_NATIVE(CASE)
     }
 
     STATE = ST_CASE_RUNNING_BRANCH;
-    SUBLEVEL->executor = &Just_Use_Out_Executor;
-    return CONTINUE_BRANCH(OUT, branch, SPARE);  // [2]
+    SUBLEVEL->executor = &Skip_Me_Executor;
+    return CONTINUE_BRANCH(branch, SPARE);  // [2]
 
 } branch_result_in_out: {  ///////////////////////////////////////////////////
+
+    dont(Copy_Cell(OUT, SUBOUT));  // SUBLEVEL in-between top level
+    Copy_Cell(OUT, Level_Out(TOP_LEVEL));
+    Drop_Level(TOP_LEVEL);
 
     if (not ARG(ALL)) {
         Drop_Level(SUBLEVEL);
@@ -956,11 +970,14 @@ DECLARE_NATIVE(SWITCH)
     predicate = unwrap ARG(PREDICATE);
 
     switch (STATE) {
-
       case ST_SWITCH_EVALUATING_RIGHT:
         goto right_result_in_spare;
 
       case ST_SWITCH_RUNNING_BRANCH:
+        dont(Copy_Cell(OUT, SUBOUT));  // TOP_LEVEL holds branch result
+        Copy_Cell(OUT, Level_Out(TOP_LEVEL));
+        Drop_Level(TOP_LEVEL);
+
         if (not ARG(ALL)) {
             Drop_Level(SUBLEVEL);
             return OUT_BRANCHED;
@@ -1108,8 +1125,8 @@ DECLARE_NATIVE(SWITCH)
     Inherit_Const(scratch, cases);  // need to inherit proxy const bit [3]
 
     STATE = ST_SWITCH_RUNNING_BRANCH;
-    SUBLEVEL->executor = &Just_Use_Out_Executor;
-    return CONTINUE_BRANCH(OUT, scratch, spare);
+    SUBLEVEL->executor = &Skip_Me_Executor;
+    return CONTINUE_BRANCH(scratch, spare);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
@@ -1250,9 +1267,12 @@ DECLARE_NATIVE(DEFAULT)
     }
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;
-    return CONTINUE(OUT, branch, SPARE);
+    return CONTINUE(branch, SPARE);
 
 }} branch_result_in_out: {  ///////////////////////////////////////////////////
+
+    Copy_Cell(OUT, SUBOUT);
+    Drop_Level(SUBLEVEL);
 
     possibly(Get_Cell_Flag(target, OUT_NOTE_WAS_SLASHED));  // how to honor?
 
@@ -1365,11 +1385,14 @@ DECLARE_NATIVE(CATCH_P)  // specialized to plain CATCH w/ NAME="THROW" in boot
 
     STATE = ST_CATCH_RUNNING_CODE;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // not caught by default
-    return CONTINUE(OUT, block);
+    return CONTINUE(block);
 
 } code_result_in_out: {  //////////////////////////////////////////////////////
 
     if (not THROWING) {
+        Copy_Cell(OUT, SUBOUT);
+        Drop_Level(SUBLEVEL);
+
         require (  // error if failure before erroring on non-throw
           Ensure_No_Failures_Including_In_Packs(OUT)
         );
