@@ -162,7 +162,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     assert(L->executor != &Skip_Me_Executor);  // drops skip [1]
 
-    if (LEVEL_STATE_BYTE(L) == STATE_0)
+    if (LEVEL_STATE_BYTE(L) == STATE_0 and not Is_Throwing(L))
         assert(Is_Cell_Erased(Level_Out(L)));  // useful STATE_0 invariant [2]
 
     possibly(L != TOP_LEVEL);  // e.g. REDUCE keeps an evaluator pushed
