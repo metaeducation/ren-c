@@ -640,3 +640,70 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
     STATE = ST_YIELD_SUSPENDED;  // can't Bounce_Continue() with STATE_0 [2]
     return Bounce_Continue(yielder_level);  // not longer at yield_level
 }
+
+
+//
+//  /yield: native [
+//
+//  "Yield from a GENERATOR or YIELDER body"
+//
+//      return: [any-value?]
+//      ^value "Value to yield (will be return value on re-entry) or DONE"
+//          [<veto> any-value?]
+//      :final "Yield, but also signal the yielder or generator is done"
+//      {yield*}
+//  ]
+//
+DECLARE_NATIVE(YIELD)
+//
+// YIELD is implemented by calling the YIELD* currently in scope, giving
+// it whatever argument it got.
+{
+  default_handling: {
+
+    INCLUDE_PARAMS_OF_YIELD;
+
+    Element* yield_p = Init_Word(LOCAL(YIELD_P), CANON(YIELD_P));
+    Add_Cell_Sigil(yield_p, SIGIL_META);  // !!! /YIELD* or YIELD*/
+    Bind_Cell_If_Unbound(yield_p, Level_Binding(LEVEL));
+
+    heeded (Corrupt_Cell_If_Needful(SPARE));
+    heeded (Corrupt_Cell_If_Needful(SCRATCH));
+
+    STATE = ST_TWEAK_GETTING;
+
+    require (
+      Get_Var_To_Out_Use_Toplevel(yield_p, GROUP_EVAL_NO)
+    );
+
+    if (not Is_Action(OUT))
+        panic ("found a YIELD* that wasn't an ACTION!");
+
+    if (Frame_Phase(OUT) == Frame_Phase(LIB(DEFINITIONAL_YIELD)))
+        goto optimized_builtin_yield_call;  // avoid rebDelegate overhead
+
+    Param* param = ARG(VALUE);
+    if (Is_Cell_A_Bedrock_Hole(param))  // no argument
+        return rebDelegate(rebRUN(OUT));
+
+    Value* v = As_Value(param);
+    Lift_Cell(v);  // one argument, lift it (eval will unlift)
+    return rebDelegate(rebRUN(OUT), v);
+
+} optimized_builtin_yield_call: { ////////////////////////////////////////////
+
+  // we adjust the phase and coupling to match YIELD*, because we don't want
+  // to have to look up the YIELD* again when we resume the yielder.
+
+    INCLUDE_PARAMS_OF_DEFINITIONAL_YIELD;
+
+    heeded (ARG(VALUE));
+
+    require (
+      Tweak_Level_Phase(LEVEL, Frame_Phase(OUT))
+    );
+    Tweak_Level_Coupling(LEVEL, Frame_Coupling(OUT));
+
+    STATE = STATE_0;
+    return Apply_Cfunc(NATIVE_CFUNC(DEFINITIONAL_YIELD), LEVEL);
+}}

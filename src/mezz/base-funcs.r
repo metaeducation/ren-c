@@ -86,7 +86,7 @@ quit*: final ~<QUIT* used when no (DO, IMPORT, CONSOLE) is providing it>~
     ]
 ]
 
-yield: ~<YIELD used when no generator or yielder is providing it>~
+yield*: ~<YIELD* used when no generator or yielder is providing it>~
 
 /catch: specialize catch*/ [name: 'throw]
 

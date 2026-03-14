@@ -40,16 +40,16 @@
 
 ; Trying to run YIELD while a generator is suspended is an error
 (
-    stolen-yield: ~
+    stolen-yield*: ~
     g: generator [
-        stolen-yield: yield/
+        stolen-yield*: yield*/
         yield 1
         yield 2
     ]
 
     did all [
         g = 1
-        'frame-not-on-stack = (sys.util/recover [stolen-yield 3]).id
+        'frame-not-on-stack = (sys.util/recover [stolen-yield* 3]).id
     ]
 )
 
@@ -133,7 +133,7 @@
 (
     e-generator: func [body [block!]] [
         let g: generator [
-            yield: enclose yield/ f -> [
+            yield*: enclose yield*/ f -> [
                 ignore ^f.value
                 if '~null~ = lift ^f.value [  ; safe "light null" detection
                     ignore ^f.value: done
@@ -246,8 +246,10 @@
     ]
 
     v: vowelizer "The Quick Brown Fox Jumped Over The Lazy Dogs"
-    ([#"e" #"u" #"i" #"o" #"o" #"u" #"e" #"O" #"e" #"e" #"a" #"o" <end>]
-        = reduce [v v v v v v v v v v v v any [try v, <end>]])
+    equal? // [
+        [#e #u #i #o #o #u #e #O #e #e #a #o <end>]
+        reduce [v v v v v v v v v v v v any [try v, <end>]]
+    ]
 )
 
 

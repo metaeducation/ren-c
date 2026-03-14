@@ -138,6 +138,8 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_CONTINUE;
 
+    assert(STATE == STATE_0);
+
     Param* param = ARG(VALUE);
 
     Value* v;
@@ -224,8 +226,12 @@ DECLARE_NATIVE(CONTINUE)
 
     heeded (ARG(VALUE));
 
+    require (
+      Tweak_Level_Phase(LEVEL, Frame_Phase(OUT))
+    );
     Tweak_Level_Coupling(LEVEL, Frame_Coupling(OUT));
 
+    STATE = STATE_0;
     return Apply_Cfunc(NATIVE_CFUNC(DEFINITIONAL_CONTINUE), LEVEL);
 }}
 

@@ -757,6 +757,8 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;  // cached name usually RETURN [1]
 
+    assert(STATE == STATE_0);
+
     Level* return_level = LEVEL;  // Level of this RETURN call
 
     Option(VarList*) coupling = Level_Coupling(return_level);
@@ -917,8 +919,12 @@ DECLARE_NATIVE(RETURN)
 
     heeded (ARG(VALUE));
 
+    require (
+      Tweak_Level_Phase(LEVEL, Frame_Phase(OUT))
+    );
     Tweak_Level_Coupling(LEVEL, Frame_Coupling(OUT));
 
+    STATE = STATE_0;
     return Apply_Cfunc(NATIVE_CFUNC(DEFINITIONAL_RETURN), LEVEL);
 }}
 
