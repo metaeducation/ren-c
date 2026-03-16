@@ -535,7 +535,7 @@ INLINE Result(Level*) Prep_Level_Core(
 
     FORCE_TRACK_0(Force_Erase_Cell_Untracked(&L->spare));
     FORCE_TRACK_0(Force_Erase_Cell_Untracked(&L->scratch));
-    FORCE_TRACK_0(Force_Erase_Cell_Untracked(&L->output));
+    FORCE_TRACK_0(Force_Erase_Cell_Untracked(&L->out));
 
     L->varlist = nullptr;
     L->executor = executor;
@@ -787,7 +787,7 @@ INLINE Value* Native_Copy_Result_Untracked(Level* L, const Value* v) {
     #define SPARE       Level_Spare(level_)
     #define SCRATCH     Level_Scratch(level_)
 
-    #define OUT  &level_->output
+    #define OUT  &level_->out
 
     #define BOUNCE_OUT \
         (assert(TOP_LEVEL == level_), BOUNCE_TOPLEVEL_OUT)

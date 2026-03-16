@@ -70,7 +70,7 @@ INLINE const Element* VAL_THROWN_LABEL(Level* level_) {
 
 
 #define Level_Out(L) \
-    (&known(Level*, (L))->output)  // should be in sys-level.h
+    (&known(Level*, (L))->out)  // should be in sys-level.h
 
 
 INLINE void Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg

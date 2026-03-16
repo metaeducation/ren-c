@@ -216,7 +216,7 @@
     null = while [okay] [
         assert [(1 + 2 + 3) = implemented-with-loops [
             counter: counter + 1
-            if counter <= 3 [counter]
+            all [counter <= 3, counter]
         ]]
         implemented-with-loops [
             if counter < 10 [break]

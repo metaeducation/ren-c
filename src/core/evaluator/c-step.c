@@ -518,15 +518,15 @@ Bounce Stepper_Executor(Level* L)
       case ST_STEPPER_LOOKING_AHEAD: goto lookahead;
       case ST_STEPPER_REEVALUATING: goto reevaluate;
       case ST_STEPPER_FULFILLING_INTRINSIC_ARG: goto intrinsic_arg_in_subout;
-      case ST_STEPPER_SET_GROUP: goto set_group_result_in_out;
-      case ST_STEPPER_GENERIC_SET: goto generic_set_rightside_in_out;
-      case ST_STEPPER_SET_BLOCK: goto set_block_rightside_in_out;
+      case ST_STEPPER_SET_GROUP: goto set_group_result_in_subout;
+      case ST_STEPPER_GENERIC_SET: goto generic_set_rightside_in_subout;
+      case ST_STEPPER_SET_BLOCK: goto set_block_rightside_in_subout;
 
-      case ST_STEPPER_RUNNING_GROUP: goto group_or_meta_group_result_in_out;
-      case ST_STEPPER_RUNNING_ACTION: goto action_result_in_out;
+      case ST_STEPPER_RUNNING_GROUP: goto group_or_meta_group_result_in_subout;
+      case ST_STEPPER_RUNNING_ACTION: goto action_result_in_subout;
 
-      case ST_STEPPER_BIND_OPERATOR: goto bind_rightside_in_out;
-      case ST_STEPPER_IDENTITY_OPERATOR: goto identity_rightside_in_out;
+      case ST_STEPPER_BIND_OPERATOR: goto bind_rightside_in_subout;
+      case ST_STEPPER_IDENTITY_OPERATOR: goto identity_rightside_in_subout;
 
     #if RUNTIME_CHECKS
       case ST_STEPPER_FINISHED_DEBUG:
@@ -751,7 +751,7 @@ Bounce Stepper_Executor(Level* L)
         if (Is_Feed_At_End(L->feed))  // no literal to take as argument
             panic (Error_Need_Non_End(CURRENT));
 
-        if (Is_Antiform(L_next)) {  // special featur: tolerate antiforms as-is
+        if (Is_Antiform(L_next)) {  // e.g. rebValue("^", some_antiform)
             Copy_Cell(OUT, L_next);
             Fetch_Next_In_Feed(L->feed);
             Invalidate_Next_Fetched_In_Spare(L);
@@ -765,15 +765,17 @@ Bounce Stepper_Executor(Level* L)
         STATE = ST_STEPPER_IDENTITY_OPERATOR;
         return CONTINUE_SUBLEVEL;
 
-    } identity_rightside_in_out: {
+    } identity_rightside_in_subout: {
 
-        Copy_Cell(OUT, SUBOUT);
+        Copy_Cell_Core(
+            OUT,
+            SUBOUT,  // `^` overrides the signal --v
+            CELL_MASK_COPY | (not CELL_FLAG_OUT_NOTE_VOID_TO_MAKE_HEAVY)
+        );
         Erase_Cell(SUBOUT);
 
         SUBLEVEL->executor = &Skip_Me_Executor;  // temp (?) invariant
         assert(SUBLEVEL->feed == L->feed);  // we didn't change it
-
-        // !!! Did all the work just by making a not-afraid of voids step?
 
         goto lookahead;
 
@@ -1021,7 +1023,7 @@ Bounce Stepper_Executor(Level* L)
         STATE = ST_STEPPER_BIND_OPERATOR;
         return CONTINUE_SUBLEVEL;
 
-    } bind_rightside_in_out: { ///////////////////////////////////////////////
+    } bind_rightside_in_subout: { ////////////////////////////////////////////
 
         Copy_Cell(OUT, SUBOUT);
         Erase_Cell(SUBOUT);
@@ -1127,11 +1129,13 @@ Bounce Stepper_Executor(Level* L)
     assert(SUBLEVEL->feed == L->feed);  // we didn't change it
     return CONTINUE_SUBLEVEL;
 
-} action_result_in_out: {
+} action_result_in_subout: {
 
-    // could in theory examine action level here
-
-    Copy_Cell(OUT, SUBOUT);
+    Copy_Cell_Core(
+        OUT,
+        SUBOUT,
+        CELL_MASK_COPY | CELL_FLAG_OUT_NOTE_VOID_TO_MAKE_HEAVY
+    );
     Erase_Cell(SUBOUT);
 
     SUBLEVEL->executor = &Skip_Me_Executor;  // temporary (?) invariant
@@ -1512,7 +1516,7 @@ Bounce Stepper_Executor(Level* L)
     STATE = ST_STEPPER_RUNNING_GROUP;
     return CONTINUE_SUBLEVEL;
 
-} group_or_meta_group_result_in_out: {
+} group_or_meta_group_result_in_subout: {
 
     Copy_Cell(OUT, SUBOUT);
     Erase_Cell(SUBOUT);
@@ -1759,7 +1763,7 @@ Bounce Stepper_Executor(Level* L)
 
     return CONTINUE_SUBLEVEL;
 
-} generic_set_rightside_in_out: {
+} generic_set_rightside_in_subout: {
 
     Copy_Cell(OUT, SUBOUT);
     dont(Erase_Cell(SUBOUT));  // used in SET below
@@ -1791,7 +1795,7 @@ Bounce Stepper_Executor(Level* L)
     Set_Eval_Executor_Flag(L, OUT_IS_DISCARDABLE);
     goto lookahead;
 
-} set_group_result_in_out: {
+} set_group_result_in_subout: {
 
     Copy_Cell(OUT, SUBOUT);
     Erase_Cell(SUBOUT);
@@ -1851,7 +1855,7 @@ Bounce Stepper_Executor(Level* L)
 
     return CONTINUE_SUBLEVEL;
 
-} set_block_rightside_in_out: {  /////////////////////////////////////////////
+} set_block_rightside_in_subout: {  //////////////////////////////////////////
 
     Copy_Cell(OUT, SUBOUT);
     Erase_Cell(SUBOUT);

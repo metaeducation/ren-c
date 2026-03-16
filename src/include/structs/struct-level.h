@@ -369,7 +369,7 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     // as an intermediate free location to do calculations en route to a final
     // result, due to being GC-safe during function evaluation.
     //
-    Value output;
+    Value out;
 
     // Each executor subclass can store specialized information in the level.
     // We place it here up top where we've been careful to make sure the
