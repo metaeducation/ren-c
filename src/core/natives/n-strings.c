@@ -493,8 +493,11 @@ DECLARE_NATIVE(JOIN)
             goto next_mold_step;
         }
     }
-    else if (Is_Antiform(subout))
+    else if (Is_Antiform(subout)) {
+        Drop_Level(SUBLEVEL);
+        Drop_Data_Stack_To(STACK_BASE);
         return fail (Error_Bad_Antiform(subout));
+    }
 
     if (Is_Rune(subout)) {  // do not delimit (unified w/char) [2]
         if (delimiter)

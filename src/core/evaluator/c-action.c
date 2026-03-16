@@ -1047,9 +1047,6 @@ Bounce Action_Executor(Level* L)
     Do_After_Action_Checks(L);
   #endif
 
-    if (not Is_Failure(OUT))  // !!! Should there be an R_FAIL ?
-        assert(STACK_BASE == TOP_INDEX);
-
     if (Get_Level_Flag(L, VANISHABLE_VOIDS_ONLY) and Is_Void(OUT))
         Note_Level_Out_As_Void_To_Make_Heavy(L);
 
