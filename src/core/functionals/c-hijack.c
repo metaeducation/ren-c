@@ -228,7 +228,7 @@ Bounce Hijacker_Dispatcher(Level* const L)
             Tweak_Level_Phase(L, hijacker)
           );
             Tweak_Level_Coupling(L, hijacker_coupling);
-            return BOUNCE_REDO_UNCHECKED;
+            return CONTINUE_SAMELEVEL;
         }
         if (keylist == Link_Keylist_Ancestor(keylist))  // terminates with self
             break;

@@ -141,7 +141,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 
     Tweak_Level_Coupling(L, Frame_Coupling(adaptee));
 
-    return BOUNCE_REDO_CHECKED;  // redo uses updated phase & coupling [1]
+    return REDO_TYPECHECKED;  // redo uses updated phase & coupling [1]
 }}
 
 

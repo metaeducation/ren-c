@@ -101,11 +101,6 @@ INLINE Value* Value_From_Bounce(Bounce b) {
 // frame from expected types, and then let those reach an underlying native
 // who thought the types had been checked.
 //
-#define C_REDO_UNCHECKED  'r'
-#define BOUNCE_REDO_UNCHECKED   x_cast(Bounce, &g_bounce_redo_unchecked)
-
-#define C_REDO_CHECKED  'R'
-#define BOUNCE_REDO_CHECKED  x_cast(Bounce, &g_bounce_redo_checked)
 
 #define C_TOPLEVEL_OUT  'T'
 #define BOUNCE_TOPLEVEL_OUT  x_cast(Bounce, &g_bounce_toplevel_out)

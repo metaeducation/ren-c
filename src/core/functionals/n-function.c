@@ -200,7 +200,7 @@ Bounce Func_Dispatcher(Level* const L)
     assert(Get_Executor_Flag(ACTION, L, DISPATCHER_CATCHES));
     Clear_Executor_Flag(ACTION, L, DISPATCHER_CATCHES);
 
-    return BOUNCE_REDO_CHECKED;  // !!! should it clear DISPATCHER_CATCHES?
+    return REDO_TYPECHECKED;  // !!! should it clear DISPATCHER_CATCHES?
 
 } reuse_level_to_run_frame_in_out: { /////////////////////////////////////////
 

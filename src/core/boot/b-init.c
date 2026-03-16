@@ -327,8 +327,6 @@ static void Init_Root_Vars(void)
   make_bounce_signals: {
 
     Init_Bounce_Wild(g_bounce_thrown, C_THROWN);
-    Init_Bounce_Wild(g_bounce_redo_unchecked, C_REDO_UNCHECKED);
-    Init_Bounce_Wild(g_bounce_redo_checked, C_REDO_CHECKED);
     Init_Bounce_Wild(g_bounce_toplevel_out, C_TOPLEVEL_OUT);
     Init_Bounce_Wild(g_bounce_suspend, C_SUSPEND);
     Init_Bounce_Wild(g_bounce_okay, C_OKAY);
@@ -373,8 +371,6 @@ static void Shutdown_Root_Vars(void)
     g_dispatcher_table = nullptr;
 
     Erase_Bounce_Wild(g_bounce_thrown);
-    Erase_Bounce_Wild(g_bounce_redo_unchecked);
-    Erase_Bounce_Wild(g_bounce_redo_checked);
     Erase_Bounce_Wild(g_bounce_toplevel_out);
     Erase_Bounce_Wild(g_bounce_suspend);
     Erase_Bounce_Wild(g_bounce_okay);

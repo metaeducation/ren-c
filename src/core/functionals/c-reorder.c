@@ -73,7 +73,9 @@ enum {
 // was created for; exemplars can be reused by functions that don't need to
 // tweak them (e.g. ADAPT).
 //
-Bounce Reorderer_Dispatcher(Level* L) {
+Bounce Reorderer_Dispatcher(Level* const L) {
+    USE_LEVEL_SHORTHANDS (L);
+
     Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == MAX_IDX_REORDERER);
 
@@ -85,7 +87,7 @@ Bounce Reorderer_Dispatcher(Level* L) {
 
     Tweak_Level_Coupling(L, Frame_Coupling(reorderee));
 
-    return BOUNCE_REDO_UNCHECKED;  // exemplar unchanged; known to be valid
+    return CONTINUE_SAMELEVEL;  // exemplar unchanged; known to be valid
 }
 
 

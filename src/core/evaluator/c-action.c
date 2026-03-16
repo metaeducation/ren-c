@@ -672,7 +672,7 @@ Bounce Action_Executor(Level* L)
   //
   // Note that there may be functions on the stack if this is the second time
   // through, and we were just jumping up to check the parameters in response
-  // to a BOUNCE_REDO_CHECKED; if so, skip this.
+  // to a REDO_TYPECHECKED; if so, skip this.
   //
   // 1. PANIC() uses the data stack, so we can't pass stack values to it.
 
@@ -1025,17 +1025,8 @@ Bounce Action_Executor(Level* L)
       case C_THROWN:
         goto handle_thrown;
 
-      case C_REDO_UNCHECKED:
-        Clear_Action_Executor_Flag(L, IN_DISPATCH);
-        goto dispatch;  // Note: dispatcher may have changed level's PHASE
-
-      case C_REDO_CHECKED:
-        Clear_Action_Executor_Flag(L, IN_DISPATCH);
-        STATE = ST_ACTION_TYPECHECKING;
-        goto typecheck_then_dispatch;
-
       default:
-        assert(!"Invalid pseudotype returned from action dispatcher");
+        assert(!"Invalid bounce returned from action dispatcher");
     }
 
 }}} check_output: {  /////////////////////////////////////////////////////////

@@ -328,7 +328,7 @@ Bounce Reframer_Dispatcher(Level* const L)
 
     Tweak_Level_Coupling(L, Frame_Coupling(shim));
 
-    return BOUNCE_REDO_CHECKED;  // the redo will use the updated phase & binding
+    return REDO_TYPECHECKED;  // the redo will use the updated phase & binding
 }
 
 

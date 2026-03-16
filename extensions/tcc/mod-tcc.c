@@ -287,7 +287,7 @@ Bounce Pending_Native_Dispatcher(Level* L) {
 
     assert(Details_Dispatcher(details) == &Api_Function_Dispatcher);
 
-    return BOUNCE_REDO_UNCHECKED;
+    return CONTINUE_SAMELEVEL;
 }
 
 

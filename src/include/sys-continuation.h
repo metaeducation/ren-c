@@ -65,6 +65,13 @@
 #define CONTINUE_SAMELEVEL \
     /* <- */ Bounce_Continue(LEVEL)  // STATE may be STATE_0
 
+#define REDO_TYPECHECKED \
+    (assert(Not_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES)), \
+        assert(Get_Executor_Flag(ACTION, LEVEL, IN_DISPATCH)), \
+        Clear_Executor_Flag(ACTION, LEVEL, IN_DISPATCH), \
+        STATE = ST_ACTION_TYPECHECKING, \
+        Bounce_Continue(LEVEL))
+
 
 //=//// DELEGATION HELPER MACROS ///////////////////////////////////////////=//
 //
