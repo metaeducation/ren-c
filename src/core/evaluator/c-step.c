@@ -129,9 +129,7 @@ INLINE void Invalidate_Next_Fetched_In_Spare(Level* level_) {
 // be that if a Stepper has its own Level, that could be reused for actions.
 //
 // 1. Frequently the ACTION! we are pushing is something that lives in OUT.
-//    But OUT is also where we're asking the Level to put its result.  So we
-//    ease the assertion that OUT is erased in STATE_0 in Push_Level(), but
-//    be sure to Erase_Cell() before getting back to the Trampoline.
+//    If this is infix execution, then that OUT cell is Level_Out(sub->prior)
 //
 // 2. The only way that the SPARE value we are holding from an infix prefetch
 //    will still be usable after an action will be if it takes no arguments,
@@ -142,9 +140,16 @@ static Result(None) Reuse_Sublevel_For_Action_Core(
     const Value* action,
     Option(InfixMode) infix_mode
 ){
-    possibly(action == Level_Out(L));
-
     Level* sub = SUBLEVEL;
+
+    assert(
+        action == Level_Out(sub)  // must erase after this call if so!
+        or (
+            action != Level_Out(L)  // OUT is where infix is read from
+            and Is_Cell_Erased(Level_Out(sub))
+        )
+    );
+
     assert(sub->executor == &Skip_Me_Executor);
     assert(sub->feed == L->feed);
     assert(sub->baseline.stack_base == L->baseline.stack_base);
@@ -157,18 +162,14 @@ static Result(None) Reuse_Sublevel_For_Action_Core(
     sub->flags.bits = (
         FLAG_BASE_BYTE(BASE_BYTE_LEVEL)
             | (L->flags.bits & LEVEL_FLAG_PURE)
-            | LEVEL_FLAG_DEBUG_STATE_0_OUT_NOT_ERASED_OK  // [1]
             | (Get_Cell_Flag(action, WEIRD_VANISHABLE) ? 0
                 : (L->flags.bits & LEVEL_FLAG_VANISHABLE_VOIDS_ONLY))
     );
 
-    assert(Is_Cell_Erased(Level_Out(sub)));
-
     trap (
       Push_Action(sub, action, infix_mode)
     );
-    if (infix_mode)
-        Copy_Cell(Level_Out(sub), OUT);
+    heeded(Level_Out(L));  // see ST_ACTION_FULFILLING_INFIX_FROM_PRIOR_OUT
 
     Invalidate_Next_Fetched_In_Spare(L);  // can advance feed, invalidates [2]
 
@@ -715,11 +716,11 @@ Bounce Stepper_Executor(Level* L)
     if (not infixed)
         goto give_up_backward_quote_priority;
 
+    assert(infix_mode);
+
     require (
       Reuse_Sublevel_For_Action(SPARE, infix_mode)
     );
-    if (infix_mode == PREFIX_0)  // sets STATE_0 for level
-        Erase_Cell(OUT);
     goto process_action;
 
 
@@ -1169,35 +1170,37 @@ Bounce Stepper_Executor(Level* L)
       Get_Var_To_Out_Use_Toplevel(CURRENT, GROUP_EVAL_NO)
     );
 
-    Copy_Cell(OUT, SUBOUT);
-    Erase_Cell(SUBOUT);
+    if (Is_Failure(SUBOUT))  // e.g. couldn't pick word as field from binding
+        panic (SUBOUT);  // don't conflate with action result
 
-    if (Is_Failure(OUT))  // e.g. couldn't pick word as field from binding
-        panic (OUT);  // don't conflate with action result
-
-    if (Is_Hot_Potato(OUT))
+    if (Is_Hot_Potato(SUBOUT)) {
+        Copy_Cell(OUT, SUBOUT);
+        Erase_Cell(SUBOUT);
         goto lookahead;  // legal e.g. for VETO
+    }
 
-    if (Is_Action(OUT))  // check first [1]
-        goto run_action_in_out;
+    if (Is_Action(SUBOUT))  // check first [1]
+        goto run_action_in_subout;
 
-    if (Is_Trash(OUT))  // checked second [1]
-        panic (Error_Bad_Word_Get(CURRENT, OUT));
+    if (Is_Trash(SUBOUT))  // checked second [1]
+        panic (Error_Bad_Word_Get(CURRENT, SUBOUT));
 
-    if (Not_Cell_Stable(OUT))
+    if (Not_Cell_Stable(SUBOUT))
         panic (Error_Unstable_Non_Meta_Raw(CURRENT));
 
-    Stable* out = As_Stable(OUT);
+    Stable* subout = As_Stable(SUBOUT);
 
     if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD)) {
-        if (Is_Frame(out))
-            goto run_action_in_out;
+        if (Is_Frame(subout))
+            goto run_action_in_subout;
         panic ("Leading slash means execute FRAME! or ACTION! only");
     }
 
+    Copy_Cell(OUT, SUBOUT);
+    Erase_Cell(SUBOUT);
     goto lookahead;
 
-} run_action_in_out: {
+} run_action_in_subout: {
 
   // For C-DEBUG-BREAK, it's not that helpful to *actually* dispatch to an
   // action called C-DEBUG-BREAK (because we want to debug the callsite, not
@@ -1214,17 +1217,19 @@ Bounce Stepper_Executor(Level* L)
 
 #if INCLUDE_C_DEBUG_BREAK_NATIVE && RUNTIME_CHECKS
 
-  if (Frame_Phase(OUT) == Frame_Phase(LIB(C_DEBUG_BREAK))) {
+  if (Frame_Phase(SUBOUT) == Frame_Phase(LIB(C_DEBUG_BREAK))) {
     // -----------------------------------------------------------------------
       debug_break();  // <-- C_DEBUG_BREAK lands here
     // -----------------------------------------------------------------------
+
+      Erase_Cell(SUBOUT);
 
       if (Is_Level_At_End(L)) {
           Init_Void(OUT);  // cue Evaluator_Executor() to keep last result
           goto finished;
       }
 
-      Erase_Cell(OUT);
+      possibly(Is_Cell_Erased(OUT));
       Erase_Cell(SPARE);  // may or may not hold lookahead fetch
       unnecessary(Erase_Cell(CURRENT));  // will be fetched by feed advance
       goto start_new_expression;  // requires OUT and SPARE be erased
@@ -1232,7 +1237,7 @@ Bounce Stepper_Executor(Level* L)
 
 #endif
 
-} run_non_debug_break_action: {
+} run_non_debug_break_action_in_subout: {
 
   // 2. When dispatching infix and you have something on the left, you want to
   //    push the level *after* the flag for infixness has been set...to avoid
@@ -1241,7 +1246,7 @@ Bounce Stepper_Executor(Level* L)
   //    So pushing *before* we set the flags means the FLAG_STATE_BYTE() will
   //    be 0, and we get clearing.
 
-    Option(InfixMode) infix_mode = Frame_Infix_Mode(OUT);
+    Option(InfixMode) infix_mode = Frame_Infix_Mode(SUBOUT);
 
     if (infix_mode) {
         if (infix_mode != INFIX_TIGHT) {  // defer or postpone
@@ -1253,7 +1258,7 @@ Bounce Stepper_Executor(Level* L)
     }
 
   #if (! DEBUG_DISABLE_INTRINSICS)
-    Details* details = opt Try_Frame_Details(OUT);
+    Details* details = opt Try_Frame_Details(SUBOUT);
     if (
         not infix_mode  // too rare a case for intrinsic optimization
         and details
@@ -1261,7 +1266,8 @@ Bounce Stepper_Executor(Level* L)
         and Not_Level_At_End(L)  // can't do <hole>, fallthru to error
         and not SPORADICALLY(10)  // checked builds sometimes bypass
     ){
-        Copy_Plain_Cell(CURRENT, OUT);
+        Copy_Plain_Cell(CURRENT, SUBOUT);
+        Erase_Cell(SUBOUT);
 
         const Param* param = Phase_Param(details, 1);
 
@@ -1290,9 +1296,11 @@ Bounce Stepper_Executor(Level* L)
   #endif
 
     require (
-      Reuse_Sublevel_For_Action(OUT, infix_mode)
+      Reuse_Sublevel_For_Action(SUBOUT, infix_mode)
     );
-    Erase_Cell(SUBOUT);  // want SUBOUT clear, even for nonzero infix_mode
+    Erase_Cell(OUT);  // want OUT clear, even for nonzero infix_mode
+
+    Erase_Cell(SUBOUT);
 
     goto process_action;
 
@@ -1460,25 +1468,27 @@ Bounce Stepper_Executor(Level* L)
 
     require (
       Get_Chain_Push_Refinements(
-        OUT,  // where to write action
+        SUBOUT,  // where to write action
         CURRENT,
         L_binding
     ));
 
-    assert(Is_Action(OUT));
+    assert(Is_Action(SUBOUT));
 
-    if (Is_Frame_Infix(OUT)) {  // too late, left already evaluated
+    if (Is_Frame_Infix(SUBOUT)) {  // too late, left already evaluated
         Drop_Data_Stack_To(STACK_BASE);
         panic ("Use `->-` to shove left infix operands into CHAIN!s");
     }
 
-} handle_action_in_out_with_refinements_pushed: {
+} handle_action_in_subout_with_refinements_pushed: {
 
     require (
-      Reuse_Sublevel_For_Action(OUT, PREFIX_0)
+      Reuse_Sublevel_For_Action(SUBOUT, PREFIX_0)
     );
     SUBLEVEL->baseline.stack_base = STACK_BASE;  // !!! refinements, review
     Erase_Cell(OUT);  // not infix, sub state is 0
+
+    Erase_Cell(SUBOUT);
     goto process_action;
 
 
@@ -1693,30 +1703,30 @@ Bounce Stepper_Executor(Level* L)
         panic (e);  // don't FAIL, PANIC [1]
     }
 
-    Copy_Cell(OUT, SUBOUT);
-    Erase_Cell(SUBOUT);  // !!! need it clear
-
-    assert(Is_Action(OUT));
+    assert(Is_Action(SUBOUT));
 
     if (slash_at_tail) {  // do not run action, just return it [3]
         if (TOP_INDEX != base) {
             if (Specialize_Action_Throws(
-                SPARE, OUT, nullptr, base
+                OUT, SUBOUT, nullptr, base
             )){
                 goto return_thrown;
             }
-            Move_Cell(OUT, SPARE);
         }
+        else
+            Copy_Cell(OUT, SUBOUT);
+
+        Erase_Cell(SUBOUT);
         goto lookahead;
     }
 
-    if (Is_Frame_Infix(OUT)) {  // too late, left already evaluated [4]
+    if (Is_Frame_Infix(SUBOUT)) {  // too late, left already evaluated [4]
         Drop_Data_Stack_To(STACK_BASE);
         panic ("Use `->-` to shove left infix operands into PATH!s");
     }
 
     UNUSED(slash_at_head);  // !!! should e.g. enforce /1.2.3 as error?
-    goto handle_action_in_out_with_refinements_pushed;
+    goto handle_action_in_subout_with_refinements_pushed;
 
 }} handle_generic_set: { /////////////////////////////////////////////////////
 
@@ -1990,8 +2000,12 @@ Bounce Stepper_Executor(Level* L)
   //    a word is used to do it, like `->-` in `x: ->- lib/default [...]`.
 
     if (Next_Not_Word_Or_Is_Newline_Or_End(L)) {  // only WORD! is infix [1]
-        possibly(Is_Antiform(L_next));  // API calls, rebValue("^", antiform)
-        goto finished;
+        if (Next_Not_Frame_Or_Is_Newline_Or_End(L)) {
+            possibly(Is_Antiform(L_next));  // e.g. rebValue("^", antiform)
+            goto finished;
+        }
+        Copy_Cell(SPARE, L_next);
+        goto spare_is_frame_or_lifted_action;
     }
 
     if (not Try_Push_Steps_To_Stack_For_Word(As_Element(L_next), L_binding))
@@ -2014,6 +2028,8 @@ Bounce Stepper_Executor(Level* L)
 
     if (not Is_Lifted_Action(As_Stable(SPARE)))  // dual protocol
         goto finished;
+
+} spare_is_frame_or_lifted_action: {
 
     Option(InfixMode) infix_mode = Frame_Infix_Mode(SPARE);
     if (not infix_mode)

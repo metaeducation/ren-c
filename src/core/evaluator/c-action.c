@@ -327,7 +327,7 @@ Bounce Action_Executor(Level* L)
             goto fulfill;
 
           case ST_ACTION_INITIAL_ENTRY_INFIX:
-            STATE = ST_ACTION_FULFILLING_INFIX_FROM_OUT;
+            STATE = ST_ACTION_FULFILLING_INFIX_FROM_PRIOR_OUT;
             goto fulfill;
 
           case ST_ACTION_FULFILLING_ARGS: {
@@ -344,7 +344,7 @@ Bounce Action_Executor(Level* L)
           case ST_ACTION_TYPECHECKING:
             goto typecheck_then_dispatch;
 
-          case ST_ACTION_FULFILLING_INFIX_FROM_OUT:  // no evals during this
+          case ST_ACTION_FULFILLING_INFIX_FROM_PRIOR_OUT:  // no evals during
           default:
             assert(false);
         }
@@ -497,8 +497,8 @@ Bounce Action_Executor(Level* L)
 
     ParamClass pclass = Parameter_Class(PARAM);
 
-    if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT)
-        goto fill_next_arg_from_out_cell;
+    if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_PRIOR_OUT)
+        goto fill_next_arg_from_prior_out;
 
     if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // don't consume *yet* [1]
         Force_Level_Varlist_Managed(L);
@@ -510,17 +510,19 @@ Bounce Action_Executor(Level* L)
     goto fill_next_arg_from_callsite;
 
 
-  fill_next_arg_from_out_cell: { /////////////////////////////////////////////
+  fill_next_arg_from_prior_out: { ////////////////////////////////////////////
 
-  // ST_ACTION_FULFILLING_INFIX_FROM_OUT is primarily for infix, but also
-  // CASCADE, etc... as a trick for slipping in the first argument when you
-  // want the rest of the arguments to come from an input feed.
+  // ST_ACTION_FULFILLING_INFIX_FROM_PRIOR_OUT is primarily for infix, but
+  // also CASCADE, etc... as a trick for slipping in the first argument when
+  // you want the rest of the arguments to come from an input feed.
 
     STATE = ST_ACTION_FULFILLING_ARGS;
 
     Erase_Cell(ARG);
 
-    if (Is_Cell_Erased(OUT)) {  // "nothing" to left
+    Value* prior_out = Level_Out(L->prior);
+
+    if (Is_Cell_Erased(prior_out)) {  // "nothing" to left
         if (
             L->prior->executor == &Stepper_Executor
             and Get_Executor_Flag(EVAL, L->prior, FULFILLING_ARG)
@@ -529,45 +531,42 @@ Bounce Action_Executor(Level* L)
         }
 
         Handle_Barrier_Hit(ARG, L);  // (else [...]), treated as <hole>
-        Init_Unreadable(OUT);
     }
     else if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // treat as single value
-        if (Is_Antiform(OUT))
+        if (Is_Antiform(prior_out))
             panic ("Antiform infix variadics not supported ATM, review idea");
-        Init_Varargs_Untyped_Infix(ARG, As_Element(OUT));
-        Init_Unreadable(OUT);
+        Init_Varargs_Untyped_Infix(ARG, As_Element(prior_out));
     }
     else switch (pclass) {
       case PARAMCLASS_NORMAL:  // decay happens during typechecking
       case PARAMCLASS_META:  // !!! ...META "ParamClass" is going away!
-        possibly(Not_Cell_Stable(OUT));  // e.g. VOID! as left hand of ELSE
-        Move_Cell(ARG, OUT);
+        possibly(Not_Cell_Stable(prior_out));  // e.g. VOID! as left of ELSE
+        Copy_Cell(ARG, prior_out);
         break;
 
       case PARAMCLASS_LITERAL:
-        assert(not Is_Antiform(OUT));
-        Move_Cell(ARG, OUT);
+        assert(not Is_Antiform(prior_out));
+        Copy_Cell(ARG, prior_out);
         break;
 
       case PARAMCLASS_SOFT:
-        assert(not Is_Antiform(OUT));
-        if (Is_Soft_Escapable_Group(As_Element(OUT))) {
+        assert(not Is_Antiform(prior_out));
+        if (Is_Soft_Escapable_Group(As_Element(prior_out))) {
             if (Eval_Any_List_At_Throws(
-                ARG, As_Element(OUT), SPECIFIED
+                ARG, As_Element(prior_out), SPECIFIED
             )){
                 goto handle_thrown;
             }
-            Init_Unreadable(OUT);
         }
         else
-            Move_Cell(ARG, OUT);
+            Copy_Cell(ARG, prior_out);
         break;
 
       default:
         assert(false);
     }
 
-    assert(Not_Cell_Readable(OUT));  // output should be "used up"
+    Corrupt_Cell_If_Needful(prior_out);  // output should be "used up"
 
     goto continue_fulfilling;
 
@@ -913,8 +912,7 @@ Bounce Action_Executor(Level* L)
     assert(Not_Action_Executor_Flag(L, IN_DISPATCH));
     Set_Action_Executor_Flag(L, IN_DISPATCH);
 
-    if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT)  // arity-0 infix [1]
-        assert(Is_Level_Infix(L));
+    possibly(STATE == ST_ACTION_FULFILLING_INFIX_FROM_PRIOR_OUT);  // see [1]
 
     assert(Get_Action_Executor_Flag(L, IN_DISPATCH));
 
@@ -1063,8 +1061,8 @@ Bounce Action_Executor(Level* L)
   //
   // NOTE: Anything that calls panic() must do so before Drop_Action()!
 
-    if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT)  // !!! can this happen?
-        panic ("skip_output_check + ST_ACTION_FULFILLING_INFIX_FROM_OUT");
+    if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_PRIOR_OUT)  // !!! possible?
+        panic ("skip_output_check + ST_ACTION_FULFILLING_INFIX_FROM_PRIOR_OUT");
 
     Drop_Action(L);  // must panic before Drop_Action()
 
@@ -1105,7 +1103,6 @@ Result(None) Push_Action(
     assert(L->executor == &Action_Executor);
 
     assert(Not_Action_Executor_Flag(L, FULFILL_ONLY));
-    assert(not Is_Level_Infix(L));  // Begin_Action() sets mode
 
     Phase* phase = Frame_Phase(frame);
 
@@ -1205,8 +1202,7 @@ Result(None) Push_Action(
 void Begin_Action(Level* L, Option(InfixMode) infix_mode)
 {
     assert(not L->u.action.label or Is_Stub_Symbol(unwrap L->u.action.label));
-    assert(not Is_Level_Infix(L));
-    /* assert(Not_Feed_Flag(L->feed, DEFERRING_INFIX)); */  // !!! happens? [1]
+    dont(assert(Not_Feed_Flag(L->feed, DEFERRING_INFIX)));  // !!! happens? [1]
 
     assert(KEY == KEY_TAIL or Is_Stub_Symbol(*KEY));
     assert(ARG == L->rootvar + 1);
@@ -1215,15 +1211,17 @@ void Begin_Action(Level* L, Option(InfixMode) infix_mode)
     Set_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
 
     if (not infix_mode) {
-        assert(not Is_Level_Infix(L));
+        assert(
+            LEVEL_STATE_BYTE(L) == STATE_0
+            or LEVEL_STATE_BYTE(L) == ST_ACTION_INITIAL_ENTRY_INFIX
+            or LEVEL_STATE_BYTE(L) == ST_ACTION_TYPECHECKING
+        );
     }
     else {
-        // While ST_ACTION_FULFILLING_ARG_FROM_OUT is set only during the first
-        // argument of an infix call, the type of infix we launched from is
-        // set for the whole duration.
-        //
-        Set_Level_Infix_Mode(L, infix_mode);
-
+        assert(
+            LEVEL_STATE_BYTE(L) == STATE_0
+            or LEVEL_STATE_BYTE(L) == ST_ACTION_INITIAL_ENTRY_INFIX
+        );
         LEVEL_STATE_BYTE(L) = ST_ACTION_INITIAL_ENTRY_INFIX;
     }
 }
@@ -1263,8 +1261,6 @@ void Drop_Action(Level* L) {
     L->flags.bits &= ~ (  // reuse scenarios are speculative, but expect this
         FLAG_STATE_BYTE(255)
             | ACTION_EXECUTOR_FLAG_FULFILL_ONLY
-            | ACTION_EXECUTOR_FLAG_INFIX_A
-            | ACTION_EXECUTOR_FLAG_INFIX_B
     );
 
     Corrupt_If_Needful(ORIGINAL); // action is no longer running

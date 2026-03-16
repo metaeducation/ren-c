@@ -22,7 +22,7 @@
 // union of the Level.
 //
 
-#define EXECUTOR_ACTION &Action_Executor   // shorthand in Xxx_Executor_Flag()
+#define EXECUTOR_ACTION  &Action_Executor  // shorthand in Xxx_Executor_Flag()
 
 
 //=//// ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX //////////////////////=//
@@ -135,10 +135,10 @@
 //
 // Note: It was tried to do this with ST_ACTION_DOING_PICKUPS as a state byte,
 // which are not as scarce as executor flags.  But that overwrote the case
-// of ST_ACTION_FULFILLING_INFIX_FROM_OUT, and sometimes the infix argument
+// of ST_ACTION_FULFILLING_INFIX_FROM_PRIOR_OUT, and sometimes the infix arg
 // is actually a pickup (e.g. a refinement specialized to be the first
-// ordinary argument).  There's a good reason for INFIX_FROM_OUT to be a state
-// byte, so this moved to being a flag.
+// ordinary argument).  There's a good reason for INFIX_FROM_PRIOR_OUT to be a
+// state byte, so this moved to being a flag.
 //
 // Note: This flag only applies when not IN_DISPATCH, so could have a distinct
 // meaning during dispatch if desired (e.g. DELEGATE_CONTROL)
@@ -167,25 +167,15 @@
     LEVEL_EXECUTOR_FLAG_29
 
 
-//=//// ACTION_EXECUTOR_FLAG_INFIX_A //////////////////////////////////////=//
+//=//// ACTION_EXECUTOR_FLAG_30 ///////////////////////////////////////////=//
 //
-// Due to the unusual influences of partial refinement specialization, a frame
-// may wind up with its infix parameter as being something like the last cell
-// in the argument list...when it has to then go back and fill earlier args
-// as normal.  There's no good place to hold the memory that one is doing an
-// infix fulfillment besides a bit on the frame itself.
-//
-// It is also used to indicate to a ST_STEPPER_REEVALUATING frame whether
-// to run an ACTION! cell as infix or not.  The reason this may be overridden
-// on what's in the action can be seen in the DECLARE_NATIVE(SHOVE) code.
-//
-#define ACTION_EXECUTOR_FLAG_INFIX_A \
+#define ACTION_EXECUTOR_FLAG_30 \
     LEVEL_EXECUTOR_FLAG_30
 
 
-//=//// ACTION_EXECUTOR_FLAG_INFIX_B //////////////////////////////////////=//
+//=//// ACTION_EXECUTOR_FLAG_31 ///////////////////////////////////////////=//
 //
-#define ACTION_EXECUTOR_FLAG_INFIX_B \
+#define ACTION_EXECUTOR_FLAG_31 \
     LEVEL_EXECUTOR_FLAG_31
 
 
@@ -241,13 +231,8 @@ enum {
 
     ST_ACTION_FULFILLING_ARGS = 100,  // weird number if dispatcher gets it
 
-    // Using the state byte to convey the next argument should come from OUT
-    // serves an additional purpose, because STATE_0 would mean that OUT has
-    // to be stale.  This allows the caller to subvert that rule as well as
-    // have the infix-from-out signal without needing a separate flag.
-    //
     ST_ACTION_INITIAL_ENTRY_INFIX,
-    ST_ACTION_FULFILLING_INFIX_FROM_OUT,
+    ST_ACTION_FULFILLING_INFIX_FROM_PRIOR_OUT,
 
     ST_ACTION_TYPECHECKING
 

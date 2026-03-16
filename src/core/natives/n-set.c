@@ -523,20 +523,20 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
             goto skip_circled_check;  // we checked it wasn't circled
         }
 
-        Init_Null(Level_Out(sub));
+        Init_Null(SUBOUT);
     }
     else {
-        Copy_Cell(Level_Out(sub), pack_at_lifted);
+        Copy_Cell(SUBOUT, pack_at_lifted);
         require (
-          Unlift_Cell_No_Decay(Level_Out(sub))  // unlift for output...
+          Unlift_Cell_No_Decay(SUBOUT)  // unlift for output...
         );
     }
 
     if (Is_Metaform_Blank(var))
         goto circled_check;
 
-    if (Is_Failure(Level_Out(sub)))  // don't passthru errors if not ^ sigil
-        panic (Level_Out(sub));
+    if (Is_Failure(SUBOUT))  // don't passthru errors if not ^ sigil
+        panic (SUBOUT);
 
     if (Is_Space(var))
         goto circled_check;
@@ -561,7 +561,7 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
   // Note: no circling passes through the original PACK!
 
     if (circled == stackindex_var)
-        Copy_Cell(OUT, Level_Out(sub));
+        Copy_Cell(OUT, SUBOUT);
 
 } skip_circled_check: { //////////////////////////////////////////////////////
 
@@ -596,6 +596,8 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
 
     Corrupt_Cell_If_Needful(SPARE);  // we trashed it
     Corrupt_Cell_If_Needful(SCRATCH);  // we trashed it too
+
+    Erase_Cell(SUBOUT);
 
     return none;
 }}

@@ -853,7 +853,19 @@ INLINE Result(Feed*) Prep_At_Feed(
         FLAG_HEART(HEART_WORD) /* CHAIN! or PATH!...worth it? [2] */ \
             | FLAG_TYPE(TYPE_WORD)   \
             | (not CELL_FLAG_NEWLINE_BEFORE)  /* no infix newlines [3] */ \
-    ))  // !!! REVIEW: can just look for TYPE_WORD!
+    ))
+
+
+#define Next_Not_Frame_Or_Is_Newline_Or_End(L) ( \
+    (u_cast(Cell*, L->feed->p)->header.bits & ( /* g_cell_aligned_end? [1] */ \
+        FLAG_HEARTSIGIL_BYTE(255) \
+            | FLAG_LIFT_BYTE(255) \
+            | CELL_FLAG_NEWLINE_BEFORE \
+    )) != ( \
+        FLAG_HEART(HEART_FRAME) /* CHAIN! or PATH!...worth it? [2] */ \
+            | FLAG_TYPE(TYPE_FRAME)   \
+            | (not CELL_FLAG_NEWLINE_BEFORE)  /* no infix newlines [3] */ \
+    ))
 
 
 // Due to Feeds canonizing rebEND to g_cell_aligned_end, we can take advantage

@@ -100,62 +100,6 @@
     ((L)->executor == &Action_Executor)
 
 
-// 1. When Drop_Action() happens, it currently sets the action executor to be
-//    nullptr in order to tell the GC not to mark the state variables.  This
-//    may not be the right way to do it, instead reflecting the dropped state
-//    in the executor state struct and leaving the executor alone.  But this
-//    routine helps find places that turn the level back into one that the
-//    Push_Action() function is legal on.
-//
-// 2. CASCADE has a strange implementation detail where it steals the frame
-//    data built for the cascade and gives it to the function at the head of
-//    the pipeline.  Then it replaces the executor for the original frame to
-//    the &Cascader_Executor.  Hence Drop_Action() is never called on such
-//    functions to null out the executor.  These mechanisms are the ones
-//    most likely to break when code is rearranged, so it's good to call
-//    out the weirdness.
-//
-INLINE void Restart_Action_Level(Level* L) {
-    assert(
-        L->executor == nullptr  // Drop_Action() sets to nullptr [1]
-        or L->executor == &Cascader_Executor   // Weird exception [2]
-    );
-    L->executor = &Action_Executor;
-}
-
-
-#define LEVEL_MASK_CRUMB \
-    (ACTION_EXECUTOR_FLAG_INFIX_A | ACTION_EXECUTOR_FLAG_INFIX_B)
-
-STATIC_ASSERT(LEVEL_MASK_CRUMB == CELL_MASK_CRUMB);
-
-#define Get_Level_Crumb(L) \
-    (FOURTH_BYTE(&(L)->flags.bits))
-
-#define FLAG_LEVEL_CRUMB(crumb) \
-    FLAG_FOURTH_BYTE(crumb)
-
-INLINE void Set_Level_Crumb(Level* L, Crumb crumb) {
-    L->flags.bits &= ~(LEVEL_MASK_CRUMB);
-    L->flags.bits |= FLAG_LEVEL_CRUMB(crumb);
-}
-
-INLINE Option(InfixMode) Get_Level_Infix_Mode(Level* L) {
-    assert(Is_Action_Level(L));
-    return u_cast(InfixMode, Get_Level_Crumb(L));
-}
-
-INLINE void Set_Level_Infix_Mode(Level* L, Option(InfixMode) mode) {
-    assert(Is_Action_Level(L));
-    Set_Level_Crumb(L, opt mode);
-}
-
-INLINE bool Is_Level_Infix(Level* L) {  // a bit faster than != PREFIX_0
-    assert(Is_Action_Level(L));
-    return logical (L->flags.bits & LEVEL_MASK_CRUMB);
-}
-
-
 INLINE bool Level_Is_Variadic(Level* L) {
     return FEED_IS_VARIADIC(L->feed);
 }
@@ -409,6 +353,30 @@ INLINE void Set_Action_Level_Label(Level* L, Option(const Symbol*) label) {
   #endif
 }
 
+
+// 1. When Drop_Action() happens, it currently sets the action executor to be
+//    nullptr in order to tell the GC not to mark the state variables.  This
+//    may not be the right way to do it, instead reflecting the dropped state
+//    in the executor state struct and leaving the executor alone.  But this
+//    routine helps find places that turn the level back into one that the
+//    Push_Action() function is legal on.
+//
+// 2. CASCADE has a strange implementation detail where it steals the frame
+//    data built for the cascade and gives it to the function at the head of
+//    the pipeline.  Then it replaces the executor for the original frame to
+//    the &Cascader_Executor.  Hence Drop_Action() is never called on such
+//    functions to null out the executor.  These mechanisms are the ones
+//    most likely to break when code is rearranged, so it's good to call
+//    out the weirdness.
+//
+INLINE void Restart_Action_Level(Level* L) {
+    assert(
+        L->executor == nullptr  // Drop_Action() sets to nullptr [1]
+        or L->executor == &Cascader_Executor   // Weird exception [2]
+    );
+    L->executor = &Action_Executor;
+    LEVEL_STATE_BYTE(L) = 0;  // !!! what about other flags?
+}
 
 
 //=//// LEVEL ALLOCATION AND FREEING //////////////////////////////////////=//
