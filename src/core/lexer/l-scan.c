@@ -3045,10 +3045,9 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         );
         Add_Cell_Sigil(items, SIGIL_PIN);  // don't want to evaluate
         Api(Stable*) email = rebStable("as email! delimit -[.]-", items);
-
-        Element* scratch = Copy_Cell(SCRATCH, As_Element(email));
+        Copy_Cell(PUSH(), As_Element(email));
         rebRelease(email);
-        Copy_Cell(PUSH(), scratch);
+
         goto sequence_or_conflation_was_pushed;
     }
 
@@ -3112,20 +3111,20 @@ static Bounce Scanner_Executor_Core(Level* const L) {
   // for details on the applicable compressions and mechanisms.)
 
     trap (
-      Element* scratch = Pop_Sequence_Or_Conflation(
-        SCRATCH,  // doesn't write directly to stack since popping stack
+      Element* spare = Pop_Sequence_Or_Conflation(
+        SPARE,  // doesn't write directly to stack since popping stack
         heart,
         stackindex_path_head - 1
     ));
 
     assert(
-        Is_Quasi_Word(scratch)     // [~ ~] => ~.~ or ~/~ or ~:~
-        or Is_Word(scratch)        // [_ _] => . or / or :
-        or Is_Time(scratch)        // [12 34] => 12:34
-        or Any_Sequence(scratch)
+        Is_Quasi_Word(spare)     // [~ ~] => ~.~ or ~/~ or ~:~
+        or Is_Word(spare)        // [_ _] => . or / or :
+        or Is_Time(spare)        // [12 34] => 12:34
+        or Any_Sequence(spare)
     );
 
-    Copy_Cell(PUSH(), scratch);
+    Copy_Cell(PUSH(), spare);
 
 } reapply_sigil_and_quotes: {
 

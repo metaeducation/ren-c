@@ -138,10 +138,6 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 
 #define DATASTACK_FLAG_HAS_MOLD             STUB_SUBCLASS_FLAG_25
 
-#define DATASTACK_FLAG_HAS_SPARE            STUB_SUBCLASS_FLAG_26
-
-#define DATASTACK_FLAG_HAS_SCRATCH          STUB_SUBCLASS_FLAG_27
-
 #define PLUG_SUSPENDED_LEVEL(plug)   (plug)->link.p
 
 INLINE Level* Plug_Suspended_Level(const Array* plug)
@@ -280,23 +276,6 @@ void Unplug_Stack(
     //
     Flags flags = 0;
 
-    if (Not_Cell_Erased(&base->spare)) {
-        if (Is_Cell_Readable(&base->spare))
-            Copy_Lifted_Cell(PUSH(), Level_Spare(base));
-        else
-            Init_Quasar(PUSH());
-        flags |= DATASTACK_FLAG_HAS_SPARE;
-    }
-
-    if (Not_Cell_Erased(&base->scratch)) {
-        if (Is_Cell_Readable(&base->scratch))
-            Copy_Lifted_Cell(PUSH(), Level_Scratch(base));
-        else
-            Init_Quasar(PUSH());
-
-        flags |= DATASTACK_FLAG_HAS_SCRATCH;
-    }
-
     if (Strand_Size(g_mold.buffer) > base->baseline.mold_buf_size) {
         flags |= DATASTACK_FLAG_HAS_MOLD;
         Init_Text(
@@ -335,20 +314,10 @@ void Unplug_Stack(
 // This reverses the process of Unplug_Stack, patching a stack onto a new
 // base location.
 //
-// 1. The previous base Level probably was freed, which means that if it had
-//    given out pointers to its SPARE or SCRATCH cells that serve as the
-//    OUT pointer for any nested Levels those pointers would have gone bad.
-//    We redirect the pointers to the new base's SPARE and SCRATCH.
-//
-// 2. Unplug made the stack_base be relative to 0.  We're going to restore the
+// 1. Unplug made the stack_base be relative to 0.  We're going to restore the
 //    values that were between the base and the unplugged level on the data
 //    stack.  But that means we have to touch up the `stack_base` pointers as
 //    well in the levels.
-//
-// 3. We chain the stack that was underneath the old base to the new base so
-//    that it now considers this base the parent.  We also update the outputs
-//    of that sublevel to match the output of the current level (see assert in
-//    Unplug_Stack() proving sublevel had same L->out).
 //
 void Replug_Stack(Level* base, Stable* plug) {
     assert(base == TOP_LEVEL);  // currently can only plug atop topmost frame
@@ -357,7 +326,7 @@ void Replug_Stack(Level* base, Stable* plug) {
 
     Level* temp = L;
     while (true) {
-        temp->baseline.stack_base += base->baseline.stack_base;  // [2]
+        temp->baseline.stack_base += base->baseline.stack_base;  // [1]
 
         if (temp->prior == nullptr)
             break;
@@ -386,34 +355,6 @@ void Replug_Stack(Level* base, Stable* plug) {
         assert(Series_Index(item) == 0);
         Append_Any_Utf8(g_mold.buffer, item);
     }
-
-    if (Get_Flavor_Flag(DATASTACK, array, HAS_SCRATCH)) {
-        --item;
-        if (Is_Quasar(item))
-            Init_Unreadable(Level_Scratch(base));
-        else {
-            Copy_Cell(Level_Scratch(base), item);
-            assume (
-              Unlift_Cell_No_Decay(Level_Scratch(base))
-            );
-        }
-    }
-    else
-        Erase_Cell(Level_Scratch(base));
-
-    if (Get_Flavor_Flag(DATASTACK, array, HAS_SPARE)) {
-        --item;
-        if (Is_Quasar(item))
-            Init_Unreadable(Level_Spare(base));
-        else {
-            Copy_Cell(&base->spare, item);
-            assume (
-              Unlift_Cell_No_Decay(Level_Spare(base))
-            );
-        }
-    }
-    else
-        Erase_Cell(&base->spare);
 
     if (Get_Flavor_Flag(DATASTACK, array, HAS_PUSHED_CELLS)) {
         Stable* stacked = Flex_Head(Stable, array);
