@@ -166,6 +166,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         assert(Is_Cell_Erased(Level_Out(L)));  // useful STATE_0 invariant [2]
 
     possibly(L != TOP_LEVEL);  // e.g. REDUCE keeps an evaluator pushed
+    assert(TOP_INDEX >= L->baseline.stack_base);
 
     Maybe_Trampoline_Break_On_Tick(L);  // C-DEBUG-BREAK native calls land here
 

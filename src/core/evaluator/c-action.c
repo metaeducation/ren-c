@@ -365,8 +365,6 @@ Bounce Action_Executor(Level* L)
     assert(Stub_Flavor(ORIGINAL));  // set by Begin_Action(), shouldn't crash
   #endif
 
-    assert(TOP_INDEX >= L->baseline.stack_base);  // paths push refinements
-
     assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
 
     for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {

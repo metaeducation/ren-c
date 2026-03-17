@@ -501,9 +501,6 @@ Bounce Stepper_Executor(Level* L)
     if (THROWING)
         return THROWN;  // no state to clean up
 
-    assert(TOP_INDEX >= STACK_BASE);  // e.g. REDUCE accrues
-    assert(OUT != SPARE);  // overwritten by temporary calculations
-
   switch_on_state_byte: {
 
   // Given how the evaluator is written, it's inevitable that there has to be
