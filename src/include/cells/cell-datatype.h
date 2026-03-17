@@ -76,11 +76,11 @@
 // Datatypes cache a byte of their datatype in the array of the FENCE!.
 // This is only available on antiforms, which are canonized from arbitrary
 // FENCE!s created by the user to the ones made in Startup_Datatypes() which
-// have the DATALIFT_BYTE() set.
+// have the DATATYPE_BYTE() set.
 //
 // Non-builtin types will give zero (Datatype_Type() returns an Option(Type))
 //
-#define DATALIFT_BYTE(source) \
+#define DATATYPE_BYTE(source) \
     SECOND_BYTE(&FLEX_INFO(source))
 
 
@@ -175,11 +175,11 @@ INLINE Option(SymId) Datatype_Id(const Stable* v) {
 
 // 1. When a user writes (type: anti '{integer!}) then converting to an
 //    antiform is what canonizes the fence's array to one that has the
-//    DATALIFT_BYTE() set.  So you can only ask this of antiforms.
+//    DATATYPE_BYTE() set.  So you can only ask this of antiforms.
 //
 INLINE Option(Type) Datatype_Type(const Stable* v) {
     assert(Is_Datatype(v));  // only works on antiform [1]
-    return Type_From_Byte(DATALIFT_BYTE(Cell_Array(v)));
+    return Type_From_Byte(DATATYPE_BYTE(Cell_Array(v)));
 }
 
 #if RUNTIME_CHECKS
@@ -232,6 +232,33 @@ INLINE bool Have_Same_Type(const Stable* a, const Stable* b) {
     if (Is_Logic_Type(ta) and Is_Logic_Type(tb))
         return true;  // all logic types are same type, regardless of heart
     return ii_cast(TypeEnum, ta) == ii_cast(TypeEnum, tb);
+}
+
+
+INLINE bool Possibly_Unstable_Value_Has_Datatype(
+    const Value* v,
+    const Stable* datatype
+){
+    Option(Type) t = Type_Of_Possibly_Unstable(v);
+    Option(Type) dt = Datatype_Type(datatype);
+    if (t) {  // built-in type for v
+        possibly(not dt);  // can be 0, assume uncommon, make other cases fast
+
+        if (dt == ii_cast(TypeEnum, t))
+            return true;  // fast path for builtin types
+
+        if (Is_Quoted_Type(dt) and Is_Quoted_Type(t))
+            return true;  // all quoted types are same
+
+        if (Is_Logic_Type(dt) and Is_Logic_Type(t))
+            return true;  // all logic types are same type
+
+        return false;
+    }
+    if (dt)  // built-in datatype
+        return false;  // builtin type can't match non-builtin value
+
+    return Datatype_Extra_Heart(datatype) == Cell_Extra_Heart(v);
 }
 
 

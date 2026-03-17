@@ -781,14 +781,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
         goto test_failed;
 
       case TYPE_DATATYPE: {
-        Option(Type) t = Type_Of_Possibly_Unstable(SPARE);
-        if (t) {  // builtin type
-            if (Datatype_Type(stable_test) == ii_cast(TypeEnum, t))
-                goto test_succeeded;
-
-            goto test_failed;
-        }
-        if (Datatype_Extra_Heart(stable_test) == Cell_Extra_Heart(SPARE))
+        if (Possibly_Unstable_Value_Has_Datatype(SPARE, stable_test))
             goto test_succeeded;
         goto test_failed; }
 

@@ -85,7 +85,7 @@ void Startup_Datatypes(void)
         Sink(Stable) datatype = Stub_Cell(patch);
         Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
         Init_Word(Stub_Cell(a), Canon_Symbol(Symbol_Id_From_Type(type)));
-        DATALIFT_BYTE(a) = Byte_From_Type(type);
+        DATATYPE_BYTE(a) = Byte_From_Type(type);
 
         Freeze_Source_Deep(a);
         Init_Fence(datatype, a);
