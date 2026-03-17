@@ -1207,7 +1207,7 @@ DECLARE_NATIVE(IDENTITY)  // '<-' defined as non-vanishable version [2]
 //
 //  "Releases the underlying data of a value so it can no longer be accessed"
 //
-//      return: ~
+//      return: [trash!]
 //      memory [any-series? any-context? handle!]
 //  ]
 //
@@ -1400,7 +1400,7 @@ DECLARE_NATIVE(TRIPWIRE_Q)
 //
 //  "Returns TRASH! (alternative to [] branches returning VOID)"  ; [1]
 //
-//      return: ~
+//      return: [trash!]
 //  ]
 //
 DECLARE_NATIVE(NOOP)  // lack of a hyphen common, e.g. jQuery.noop

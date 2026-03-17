@@ -303,24 +303,9 @@ INLINE Option(const Source*) Parameter_Spec(const Cell* v) {
     FLAG_LEFT_BIT(22)
 
 
-//=//// PARAMETER_FLAG_AUTO_TRASH /////////////////////////////////////////=//
+//=//// PARAMETER_FLAG_23 /////////////////////////////////////////////////=//
 //
-// There's a lighter notation than `return: [trash!]` to say that you return
-// TRASH!, and that's [return ~].  (At one time this was [return: []] but that
-// makes too much sense for meaning a function that can't return any type at
-// all, e.g. a divergent function.)
-//
-// As far as clients of the function are concerned, `return: ~` will show them
-// `return: [trash!]` if they ask for RETURN OF.  However, the mechanics of
-// functions that were declared with the ~ syntax is that they automatically
-// put the name of the function into any TRASH! they return--to help with
-// debugging.  This flag guides that behavior in the various dispatchers.
-//
-// (Since natives are their own dispatchers, the only way to get them to run
-// common code is through macros, so `return TRASH_OUT;` does the embedding of
-// the name through code in the TRASH_OUT macro.)
-//
-#define PARAMETER_FLAG_AUTO_TRASH \
+#define PARAMETER_FLAG_23 \
     FLAG_LEFT_BIT(23)
 
 

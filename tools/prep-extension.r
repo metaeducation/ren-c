@@ -754,8 +754,8 @@ script-uncompressed: cscape [--[
         $<Header>
     ]
 
-    register-extension*: native ["Extension Startup Hooks" return: ~]
-    unregister-extension*: native ["Extension Shutdown Hooks" return: ~]
+    register-extension*: native ["Extension Startup Hooks" return: [trash!]]
+    unregister-extension*: native ["Extension Shutdown Hooks" return: [trash!]]
 
     /register-extension*
 

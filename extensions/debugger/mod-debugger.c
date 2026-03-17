@@ -111,7 +111,7 @@ bool Do_Breakpoint_Throws(
 //
 //  "Signal breakpoint to the host, but do not participate in evaluation"
 //
-//      return: ~
+//      return: [trash!]
 //  ]
 //
 DECLARE_NATIVE(BREAKPOINT_P)
@@ -225,7 +225,7 @@ DECLARE_NATIVE(RESUME)
 //
 //  "Perform a step in the debugger"
 //
-//      return: ~
+//      return: [trash!]
 //      amount [<hole> word! integer!]
 //          "Number of steps to take (default is 1) or IN, OUT, OVER"
 //  ]

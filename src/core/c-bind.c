@@ -967,7 +967,7 @@ DECLARE_NATIVE(ADD_LET_BINDING)
 //
 //  "Experimental function for adding an object's worth of binding to a frame"
 //
-//      return: ~
+//      return: [trash!]
 //      frame [frame!]
 //      object [object!]
 //  ]

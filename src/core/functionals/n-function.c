@@ -553,23 +553,8 @@ DECLARE_NATIVE(PROCEDURE)
         Phase_Paramlist(details), SYM_RETURN
     ));
 
-    if (Is_Parameter_Unconstrained(param)) {
-        Unshield_Param_If_Debug(param);
-
-        const Strand* notes = opt Parameter_Strand(param);
-        Copy_Cell(param, g_auto_trash_param);
-        Set_Parameter_Strand(param, notes);
-        Unspecialize_Parameter(param);  // we immediately undo...
-        Regularize_Parameter_Local(param);  // ...but this points out callsite
-        Set_Cell_Flag(param, PARAM_NOTE_TYPECHECKED);
-
-        assert(Get_Parameter_Flag(param, TRASH_DEFINITELY_OK));
-        assert(Get_Parameter_Flag(param, AUTO_TRASH));
-
-        Shield_Param_If_Tracking(param);
-    }
-    else if (Not_Parameter_Flag(param, AUTO_TRASH))
-        panic ("If PROCEDURE has RETURN:, it must be [return: ~]");
+    if (not Is_Parameter_Unconstrained(param))
+        panic ("PROCEDURE can't have RETURN:");  // allow `return: [trash!]`?
 
     return BOUNCE_OUT;
 }}
@@ -805,13 +790,6 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
         );
         if (not check)  // do it now [2]
             panic (Error_Bad_Return_Type(target_level, v, return_param));
-
-        if (
-            Is_Trash(v)
-            and Get_Parameter_Flag(return_param, AUTO_TRASH)
-        ){
-            Init_Trash_Named_From_Level(v, target_level);
-        }
 
         DECLARE_ELEMENT (label_unwind_frame);
         Copy_Plain_Cell(label_unwind_frame, LIB(UNWIND));

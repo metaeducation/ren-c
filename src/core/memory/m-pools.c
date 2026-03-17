@@ -972,7 +972,7 @@ void Swap_Stub_Content(Stub* a, Stub* b)
 //
 //  "Low-level operation for swapping the underlying data for two series"
 //
-//      return: ~
+//      return: [trash!]
 //      series1 [any-series?]
 //      series2 [any-series?]
 //  ]
@@ -1290,11 +1290,11 @@ void Assert_Pointer_Detection_Working(void)
     assert(Detect_Rebol_Pointer("") == DETECTED_AS_UTF8);
     assert(Detect_Rebol_Pointer("asdf") == DETECTED_AS_UTF8);
 
-    Cell* cell = g_auto_trash_param;
+    Cell* cell = g_tag_void;
     assert(Detect_Rebol_Pointer(cell) == DETECTED_AS_CELL);
     UNUSED(cell);
 
-    const Stub* stub = unwrap Parameter_Spec(g_auto_trash_param);
+    const Stub* stub = Cell_Strand(g_tag_void);
     assert(Detect_Rebol_Pointer(stub) == DETECTED_AS_STUB);
     UNUSED(stub);
 

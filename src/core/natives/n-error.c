@@ -365,7 +365,7 @@ DECLARE_NATIVE(REQUIRE)
 //
 //  "Sets the WHERE, NEAR, FILE, and LINE fields of an error"
 //
-//      return: ~
+//      return: [trash!]
 //      error [error!]
 //      location [frame! any-word?]
 //  ]

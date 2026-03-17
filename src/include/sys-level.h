@@ -668,10 +668,6 @@ INLINE Bounce Native_Panic_Result(Level* L, Error* e) {;
 }
 
 
-// Dispatchers like Lambda_Dispatcher() etc. have their own knowledge of
-// whether they are `return: ~` or not, based on where they keep the return
-// information.  So they can't use the `return TRASH_OUT;` idiom.
-//
 INLINE Value* Init_Trash_Named_From_Level(Sink(Value) out, Level* level_) {
     Option(const Symbol*) label = Level_Label(level_);
     if (label)
@@ -682,25 +678,14 @@ INLINE Value* Init_Trash_Named_From_Level(Sink(Value) out, Level* level_) {
 }
 
 
-// Functions that `return: ~` actually make a TRASH! with the label of the
-// level that produced it.  This is usually done in typechecking, but natives
-// don't run typechecks in the release build...so the `return TRASH_OUT;` has to
-// do it.
-//
-// 1. If you say `return: [trash!]` then type checking doesn't distort the
-//    contents of the trash, so we don't want natives using `return TRASH_OUT;`
-//    to have the behavior on accident.
+// A function that does `return: [trash!]` can return a specific named trash,
+// but if you use the `return TRASH_OUT;` pattern it will derive the name
+// of the trash from the function's label.
 //
 INLINE Value* Native_Trash_Result_Untracked(
     Level* level_
 ){
     assert(not THROWING);
-
-  #if RUNTIME_CHECKS
-    Details* details = Ensure_Level_Details(level_);
-    Element* param = As_Element(Details_At(details, IDX_RAW_NATIVE_RETURN));
-    assert(Get_Parameter_Flag(param, AUTO_TRASH));  // only `return: ~` [1]
-  #endif
 
     return Init_Trash_Named_From_Level(Level_Out(level_), level_);
 }

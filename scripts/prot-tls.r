@@ -1613,8 +1613,7 @@ make-master-secret: lambda [
 ]
 
 
-do-commands: func [
-    return: ~  ; some paths returned LOGIC!, others none...was unused
+do-commands: proc [  ; some paths returned LOGIC!, others none...was unused
     tls-port [port!]
     commands [block!]
 ][

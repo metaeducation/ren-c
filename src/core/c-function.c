@@ -209,9 +209,6 @@ static Result(None) Push_Keys_And_Params_Core(
     if (Is_Tag(v))
         goto handle_top_level_spec_tag;
 
-    if (Is_Quasar(v))
-        goto handle_quasar_for_auto_named_trash_return;
-
     goto handle_any_word_parameters_themselves;
 
   handle_description_or_parameter_note: { ////////////////////////////////////
@@ -298,32 +295,6 @@ static Result(None) Push_Keys_And_Params_Core(
     }
 
     return fail (Error_Bad_Value(v));
-
-} handle_quasar_for_auto_named_trash_return: { ///////////////////////////////
-
-  // [return: ~] means the function returns TRASH!, but also that the name of
-  // the trash will be automatically generated from the WORD! the function
-  // was dispatched from (if it was dispatched from a word...)
-
-    if (augment_initial_entry)
-        return fail (
-            "Function return indicator not allowed in AUGMENT spec"
-        );
-
-    if (TOP_INDEX != returner_index)
-        return fail (
-            "Quasar (~) must be used to indicate function return spec"
-        );
-
-    if (Parameter_Spec(TOP_SLOT))  // `func [return: [integer!] ~]`
-        return fail (Error_Bad_Func_Def_Raw(v));
-
-    const Strand* notes = opt Parameter_Strand(TOP_SLOT);
-    Copy_Cell(u_cast(Init(Slot), TOP_SLOT), g_auto_trash_param);
-    Set_Parameter_Strand(TOP_SLOT, notes);
-    Unspecialize_Parameter(TOP_SLOT);
-
-    goto next_spec_item;
 
 } handle_any_word_parameters_themselves: { ///////////////////////////////////
 

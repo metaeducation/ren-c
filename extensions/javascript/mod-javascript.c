@@ -1171,7 +1171,7 @@ DECLARE_NATIVE(JS_EVAL_P)
 //
 //  "Initialize the JavaScript Extension"
 //
-//      return: ~
+//      return: [trash!]
 //  ]
 //
 DECLARE_NATIVE(STARTUP_P)
@@ -1205,7 +1205,7 @@ DECLARE_NATIVE(STARTUP_P)
 //
 //  "Internal debug tool for seeing what's going on in JavaScript dispatch"
 //
-//      return: ~
+//      return: [trash!]
 //      enable [logic!]
 //  ]
 //

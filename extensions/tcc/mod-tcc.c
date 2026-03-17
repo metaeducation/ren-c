@@ -778,7 +778,7 @@ DECLARE_NATIVE(COMPILE_P)
 //
 //  "Initialize TCC extension"
 //
-//      return: ~
+//      return: [trash!]
 //  ]
 //
 DECLARE_NATIVE(STARTUP_P)
@@ -798,7 +798,7 @@ DECLARE_NATIVE(STARTUP_P)
 //
 //  "Shut down TCC extension"
 //
-//      return: ~
+//      return: [trash!]
 //  ]
 //
 DECLARE_NATIVE(SHUTDOWN_P)

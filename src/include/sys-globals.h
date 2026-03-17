@@ -91,8 +91,6 @@ PVAR Flex* g_dispatcher_table;
 // by the same mechanism they use.  This means they can be initialized at
 // the appropriate moment during the boot, one at a time.
 
-PVAR Element* g_auto_trash_param;  // holds [trash!] spec used by [return ~]
-
 PVAR Element* g_tag_variadic;  // marks variadic argument <variadic>
 PVAR Element* g_tag_hole;  // marks if a parameter can be left unspecialized
 PVAR Element* g_tag_veto;  // passing void makes action a noop

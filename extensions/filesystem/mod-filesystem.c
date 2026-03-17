@@ -50,7 +50,7 @@
 //
 //  "Startup the filesystem device"
 //
-//      return: ~
+//      return: [trash!]
 //  ]
 //
 DECLARE_NATIVE(STARTUP_P)
@@ -66,7 +66,7 @@ DECLARE_NATIVE(STARTUP_P)
 //
 //  "Shut down the filesystem device"
 //
-//      return: ~
+//      return: [trash!]
 //  ]
 //
 DECLARE_NATIVE(SHUTDOWN_P)

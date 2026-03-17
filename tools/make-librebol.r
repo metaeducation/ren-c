@@ -845,7 +845,7 @@ typedef const void* RebolBounce;
  *
  *     Value* action = rebFunction(R"(
  *         -[Another way to do functions]-
- *         return: ~
+ *         return: [trash!]
  *         message [text!]
  *     ])",
  *     [](Context* binding) {

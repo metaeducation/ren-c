@@ -314,7 +314,7 @@ bind construct [
 /move: func [
     "Move a value or span of values in a series"
 
-    return: ~  ; !!! Define return value?
+    return: [trash!]  ; !!! Define return value?
     source "Source series (modified)"
         [any-series?]
     offset "Offset to move by, or index to move to"
@@ -651,7 +651,7 @@ printf: proc [
 /find-all: func [
     "Find all occurrences of a value within a series (allows modification)."
 
-    return: ~
+    return: [trash!]
     @series "Variable for block, string, or other series"
         [word!]
     value

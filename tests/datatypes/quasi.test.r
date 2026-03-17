@@ -107,7 +107,7 @@
     (lift ~<foo>~) = lift foo
 )(
     data: [a b c]
-    f: func [return: ~] [append data spread [1 2 3] return]
+    f: func [return: [trash!]] [append data spread [1 2 3] return]
     (lift ~<f>~) = lift f
 )]
 
