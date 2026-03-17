@@ -693,10 +693,10 @@ vacant?: redescribe [
 ; definition which runs if a PANIC happens before this point, which crashes
 ; and gives more debug information.
 ;
-; Note: we use CHAIN into NULL? as an arbitrary intrinsic which won't take
-; an error, because the CHAIN doesn't add a stack level that obscures
-; generation of the NEAR and WHERE fields.  If we tried to ENCLOSE and EVAL
-; the error it would add more overhead and confuse those matters.
+; Note: we CASCADE into DECAY as an intrinsic which won't take failure, because
+; CASCADE doesn't add a stack level that obscures generation of the NEAR and
+; WHERE fields.  If we tried to ENCLOSE and EVAL the error it would add more
+; overhead and confuse those matters.
 ;
 unprotect $panic
-/panic: cascade [fail/ null?/]
+/panic: cascade [fail/ decay/]
