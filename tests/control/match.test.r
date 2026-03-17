@@ -76,9 +76,9 @@
     ~???~ !! (prohibit integer! 10)
     (append/ = prohibit integer! append/)
 
-    (10 = prohibit null 10)
+    (10 = prohibit [null?] 10)
 
-    ~???~ !! (prohibit null null)
+    ~???~ !! (prohibit [<null>] null)
     ~???~ !! (prohibit [logic!] okay)
 ]
 
