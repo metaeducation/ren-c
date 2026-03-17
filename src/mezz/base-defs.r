@@ -48,10 +48,16 @@ lib: system.contexts.lib  ; alias for faster access
 ][
     ; Remember this is early in the boot, so many things not defined.
 
-    write stdout if antiform? ^value [
-        unspaced [mold lift ^value _ _ "; anti"]  ; lifted is quasiform
-    ] else [
-        mold value
+    write stdout case [
+        antiform? ^value [
+            unspaced [mold lift ^value _ _ "; anti"]  ; lifted is quasiform
+        ]
+        blank? ^value [  ; gives error at the moment (no molded representation)
+            "; blank"
+        ]
+        <else> [
+            mold value
+        ]
     ]
     write stdout newline
 
