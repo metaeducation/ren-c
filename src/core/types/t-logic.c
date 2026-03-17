@@ -599,7 +599,7 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
 
 
 //
-//  /unless: infix native [
+//  /unless: infix:defer native [
 //
 //  "Give left hand side when right hand side is not pure null"
 //
