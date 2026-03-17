@@ -176,7 +176,7 @@
     ;
     count-up 'i 2048 {
         derived: make o-big [var-1: 100000 + i]
-        if 132639 + i <> derived/meth-255 [
+        if derived/meth-255 <> 132639 + i [
             panic "Unexpected Sum"
         ]
     }

@@ -30,7 +30,7 @@
 
 ; Math operations should only work on single characters
 [
-    (#a + 1 = #b)
+    (#b = #a + 1)
 
     ~expect-arg~ !! (  ; was ~cannot-use~ before
         #aa + 1

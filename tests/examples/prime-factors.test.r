@@ -8,14 +8,14 @@
         let s: 1
         let a: copy []
         insist [
-            either n mod m = 0 [
+            either 0 = n mod m [
                 n: n / m
                 append a m
             ][
                 m: m + s
                 s: 2
             ]
-            if 1.0 * m * m > n [
+            if n < 1.0 * m * m [
                 append a n
                 n: 1
             ]

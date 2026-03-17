@@ -51,10 +51,10 @@
 
 
 [#1156 (
-    0:01:00 / 0:00:07 = 8.571428571428571
+    8.571428571428571 = 0:01:00 / 0:00:07
 )]
 [#1156 (
-    8 * 0:00:07 = 0:00:56
+    0:00:56 = 8 * 0:00:07
 )]
 
 ; Primitive exposed as interim workaround for writing NOW/TIME/PRECISE, since

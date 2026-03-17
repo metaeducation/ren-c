@@ -23,7 +23,7 @@
     foo: infix add/
     all [
         infix? foo/
-        1 foo 2 = 3
+        3 = 1 foo 2
     ]
 )
 (
