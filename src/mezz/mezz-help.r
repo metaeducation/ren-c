@@ -27,22 +27,21 @@ Rebol [
     []: [<null> text!]
     v [any-stable?]
 ][
-    switch:type ^v [
+    switch:type v [
         any-list?/ [
             spaced ["list of length:" length of v]
         ]
         datatype! [
             mold v
         ]
-        action!
         frame! [
-            if let adjunct: adjunct of ^v [
-                copy cond adjunct.description
-            ]
+            (return of v).text
         ]
         object! [mold words of v]
         parameter! [mold v]
         port! [mold reduce [v.spec.title v.spec.ref]]
+    ] else [
+        null
     ]
 ]
 
@@ -169,26 +168,20 @@ help-value: proc [
     ]
 
     case [  ; !!! should come from %types.r
+        void? ^value ['void!]
+        pack? ^value ['pack!]
         trash? ^value ['trash!]
+        action? ^value ['action!]
+        failure? ^value ['failure!]
+
         logic? ^value ['logic!]
         splice? ^value ['splice!]
-        action? ^value ['action!]
-        pack? ^value ['pack!]
-        void? ^value ['void!]
-        failure? ^value ['failure!]
 
         antiform? ^value [
             panic "Invalid Antiform Heart Found, Please Report:" @value'
         ]
     ] then (antitype -> [
-        let heart: reify heart of ^value
-        print [
-            (opt name) "is" (an antitype) ["(antiform of" _ @(heart) ")"]
-        ]
-        if free? ^value [
-            print "!!! contents no longer available, as it has been FREE'd !!!"
-            return
-        ]
+        print [(opt name) "is" (an antitype) "antiform"]
         if action? ^value [
             help-action ^value
             return
@@ -216,7 +209,7 @@ help-value: proc [
 ]
 
 
-/help: func [
+/help: proc [
     --[HELP is a dialected function.  If you want non-dialected help on any
     particular value, then pass that value in a GROUP! to get some very
     literal information back:
@@ -259,7 +252,6 @@ help-value: proc [
         help object!
         help datatype!]--
 
-    return: ~  ; may return other types if dialected to do so?
     @topic "WORD! to explain, or other HELP target (if no args, general help)"
         [<hole> element?]
     :web "Open web browser to related documentation."
@@ -308,10 +300,10 @@ help-value: proc [
     ]
 
     let make-libuser: does [  ; hacky unified context for searching
-        let libuser: copy system.contexts.lib
-        for-each [key val] system.contexts.user [
-            if not vacant? $val [
-               set (extend libuser key) get $val
+        let libuser: copy system.contexts.user
+        for-each [key ^val] system.contexts.lib [
+            if not has libuser key [
+               ignore set meta (extend libuser key) ^val
             ]
         ]
         libuser

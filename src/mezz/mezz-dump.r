@@ -196,8 +196,9 @@ dumps: infix func [
         val
         size
     ][
-        let val: form val
-        insert:dup (tail of val) space (size - length of val)
+        val: form reify val
+        size: size - length of val
+        insert:dup (tail of val) space (either size > 0 [size] [0])
         val
     ]
 
@@ -205,9 +206,12 @@ dumps: infix func [
 
     return collect [
         for-each [word ^val] obj [
-            if unset? $val [continue]  ; don't consider unset fields
+            if hot-potato? ^val [continue]  ; !!! undecayable, in general?
+            if failure? ^val [continue]
 
-            let type: type of noantiform ^val
+            if vacant? $val [continue]  ; don't consider unset/trash/null/void
+
+            let type: type of ^val
 
             let str: if type = object! [
                 spaced [word, form words of val]
