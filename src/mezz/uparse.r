@@ -581,8 +581,7 @@ default-combinators: make map! [
             panic "No PARSE iteration to BREAK"
         ]
 
-        f.remainder: input
-        f/return fail "BREAK encountered"
+        f/return* fail "BREAK encountered"
     ]
 
     'stop combinator [
