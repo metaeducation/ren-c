@@ -2523,7 +2523,7 @@ default-combinators: make map! [
                 print mold:limit rules 200
                 panic "Combinator did not set pending"
             ]
-            either void? ^subresult [
+            either light-void? ^subresult [
                 if not can-vanish [
                     ^result: ~()~  ; heavy void
                 ]

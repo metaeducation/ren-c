@@ -73,6 +73,27 @@ DECLARE_NATIVE(ANY_VOID_Q)
 
 
 //
+//  /light-void?: native:intrinsic [
+//
+//  "Is VALUE specifically LIGHT VOID (blank! antiform)"
+//
+//      return: [logic!]
+//      ^value '[any-value?]
+//  ]
+//
+DECLARE_NATIVE(LIGHT_VOID_Q)
+{
+    INCLUDE_PARAMS_OF_LIGHT_VOID_Q;
+
+    Value* v = ARG(VALUE);
+
+    // !!! what about FAILURE!?  Should this panic?
+
+    return LOGIC_OUT(Is_Void(v));
+}
+
+
+//
 //  /heavy-void?: native:intrinsic [
 //
 //  "Is VALUE specifically HEAVY VOID (empty pack!)"
