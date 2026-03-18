@@ -272,7 +272,9 @@ static void Tcc_State_Handle_Cleaner(void* p, size_t length)
 // However, as a convenience, calling a pending user native will trigger a
 // simple COMPILE for just that one function, using default options.
 //
-Bounce Pending_Native_Dispatcher(Level* L) {
+Bounce Pending_Native_Dispatcher(Level* const L) {
+    USE_LEVEL_SHORTHANDS (L);
+
     Details* details = Ensure_Level_Details(L);
     assert(Details_Dispatcher(details) == &Pending_Native_Dispatcher);
 
