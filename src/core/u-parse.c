@@ -222,7 +222,6 @@ static bool Subparse_Throws(
     L->flags = Endlike_Header(EVAL_FLAG_PARSE_FRAME); // terminates L->spare
 
     Push_Level_Core(L); // checks for C stack overflow
-    Reuse_Varlist_If_Available(L);
     Push_Action(L, NAT_ACTION(SUBPARSE), UNBOUND);
 
     Begin_Action(L, CANON(SUBPARSE), m_cast(Value*, END_BASE));

@@ -182,7 +182,7 @@ INLINE void Push_Level_Core(Level* L)
     L->prior = TG_Top_Level;
     TG_Top_Level = L;
 
-    Corrupt_If_Needful(L->varlist); // must Try_Reuse_Varlist() or fill in
+    L->varlist = nullptr;
 
     // If the source for the frame is a Array*, then we want to temporarily
     // lock that array against mutations.
@@ -226,18 +226,6 @@ INLINE void UPDATE_EXPRESSION_START(Level* L) {
     L->expr_index = L->feed->index; // this is garbage if EVAL_FLAG_VA_LIST
 }
 
-INLINE void Reuse_Varlist_If_Available(Level* L) {
-    Assert_Corrupted_If_Needful(L->varlist);
-    if (not TG_Reuse)
-        L->varlist = nullptr;
-    else {
-        L->varlist = TG_Reuse;
-        TG_Reuse = LINK(TG_Reuse).reuse;
-        L->rootvar = cast(Value*, L->varlist->content.dynamic.data);
-        LINK(L->varlist).keysource = L;  // carries BASE_FLAG_CELL
-    }
-}
-
 INLINE void Push_Level_At(
     Level* L,
     Array* array,
@@ -266,7 +254,6 @@ INLINE void Push_Level_At(
     L->out = m_cast(Value*, END_BASE);
 
     Push_Level_Core(L);
-    Reuse_Varlist_If_Available(L);
 }
 
 INLINE void Push_Level(Level* L, const Value* v)
@@ -596,10 +583,9 @@ pop:;
 INLINE void Drop_Level_Core(Level* L) {
     if (L->varlist) {
         assert(Not_Base_Managed(L->varlist));
-        LINK(L->varlist).reuse = TG_Reuse;
-        TG_Reuse = L->varlist;
+        GC_Kill_Flex(L->varlist);
     }
-    Corrupt_If_Needful(L->varlist);
+    L->varlist = nullptr;
 
     assert(TG_Top_Level == L);
     TG_Top_Level = L->prior;
@@ -723,7 +709,6 @@ INLINE bool Eval_Step_In_Subframe_Throws(
     Corrupt_If_Needful(child->feed->gotten);
   #endif
 
-    Reuse_Varlist_If_Available(child);
     bool threw = Eval_Core_Throws(child);
     Drop_Level(child);
 
@@ -769,7 +754,6 @@ INLINE REBIXO Eval_At_Core(
     L->feed->specifier = specifier;
 
     Push_Level_Core(L);
-    Reuse_Varlist_If_Available(L);
     bool threw = Eval_Core_Throws(L);
     Drop_Level(L);
 
@@ -916,7 +900,6 @@ INLINE REBIXO Eval_Va_Core(
     L->feed->gotten = nullptr;
 
     Push_Level_Core(L);
-    Reuse_Varlist_If_Available(L);
     bool threw = Eval_Core_Throws(L);
     Drop_Level(L); // will va_end() if not reified during evaluation
 

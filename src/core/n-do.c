@@ -629,7 +629,7 @@ DECLARE_NATIVE(APPLIQUE)
     LINK(stolen).keysource = L;  // changes Varlist_Keys_Head result
 
     if (def_threw) {
-        Free_Unmanaged_Flex(Varlist_Array(stolen)); // could TG_Reuse it
+        Free_Unmanaged_Flex(Varlist_Array(stolen));
         return COPY_TO_OUT(temp);
     }
 

@@ -146,7 +146,6 @@ void Startup_Level_Stack(void)
     //
     Init_Block(Array_Head(ACT_DETAILS(PG_Dummy_Action)), EMPTY_ARRAY);
 
-    Reuse_Varlist_If_Available(L); // needed to attach API handles to
     Push_Action(L, PG_Dummy_Action, UNBOUND);
 
     Symbol* opt_label = nullptr;

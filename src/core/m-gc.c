@@ -1382,17 +1382,6 @@ REBLEN Recycle_Core(bool shutdown, Flex* sweeplist)
 
     assert(Array_Len(BUF_COLLECT) == 0);
 
-    // The TG_Reuse list consists of entries which could grow to arbitrary
-    // length, and which aren't being tracked anywhere.  Cull them during GC
-    // in case the stack at one point got very deep and isn't going to use
-    // them again, and the memory needs reclaiming.
-    //
-    while (TG_Reuse) {
-        Array* varlist = TG_Reuse;
-        TG_Reuse = LINK(TG_Reuse).reuse;
-        GC_Kill_Flex(varlist);  // no track for Free_Unmanaged_Flex()
-    }
-
     // MARKING PHASE: the "root set" from which we determine the liveness
     // (or deadness) of a series.  If we are shutting down, we do not mark
     // several categories of series...but we do need to run the root marking.

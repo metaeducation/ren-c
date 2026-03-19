@@ -773,7 +773,6 @@ RebolValue* API_rebRescue(
     Symbol* opt_label = nullptr;
     Push_Level_At_End(L, DO_MASK_NONE);
 
-    Reuse_Varlist_If_Available(L); // needed to attach API handles to
     Push_Action(L, PG_Dummy_Action, UNBOUND);
     Begin_Action(L, opt_label, m_cast(Value*, END_BASE));
     assert(IS_END(L->arg));

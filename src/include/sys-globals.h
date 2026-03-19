@@ -213,13 +213,6 @@ TVAR Level* TG_Bottom_Level;
 TVAR Feed TG_Level_Feed_End;
 
 
-// When Drop_Level() happens, it may have an allocated varlist Array that
-// can be reused by the next Push_Level().  Reusing this has a significant
-// performance impact, as opposed to paying for freeing the memory when a
-// frame is dropped and then reallocating it when the next one is pushed.
-//
-TVAR Array* TG_Reuse;
-
 //-- Evaluation stack:
 TVAR Array* DS_Array;
 TVAR StackIndex DS_Index;
