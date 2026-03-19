@@ -206,7 +206,9 @@ decode-url: sys.util.decode-url/
         block! [
             parse question [
                 opt prompt: text!
-                opt let word: word! (type: ensure datatype! get word)
+                opt [  ; LET is a hack, not a combinator, can't `opt let`
+                    let word: word! (type: ensure datatype! get word)
+                ]
             ] except [
                 panic -[ASK currently only supports ["Prompt:" datatype!]]-
             ]
