@@ -1509,7 +1509,7 @@ DECLARE_NATIVE(SUBPARSE)
                         // be used by the Copy_Cell() inlined here.  Get
                         // past that by initializing it.
                         //
-                        thrown_arg->extra.corrupt = thrown_arg;  // local junk
+                        thrown_arg->extra.binding = nullptr;
 
                         CONVERT_NAME_TO_THROWN(P_OUT, thrown_arg);
                         return BOUNCE_THROWN;

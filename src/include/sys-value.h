@@ -1291,20 +1291,18 @@ INLINE void Blit_Cell(Cell* out, const Cell* v)
 // Rather than allow a cell to be declared plainly as a local variable in
 // a C function, this macro provides a generic "constructor-like" hook.
 //
-// Note: because this will run instructions, a routine should avoid doing a
+// Note: because this will runs code, a routine should avoid doing a
 // DECLARE_VALUE inside of a loop.  It should be at the outermost scope of
-// the function.
+// the function.  (Note that the code is minimal in release builds--just
+// setting a header to 0--but DEBUG_TRACK_EXTEND_CELLS is more complex.)
 //
-// Note: It sets BASE_FLAG_UNREADABLE, so this is a "trash" cell by default.
-//
+
 #define DECLARE_VALUE(name) \
-    Value name##_pair[2]; \
-    Erase_Cell(cast(Value*, &name##_pair)); \
-    Value* const name = cast(Value*, &name##_pair) + 1; \
+    Value name##_value; \
+    Value* const name = &name##_value; \
     Erase_Cell(name)
 
 #define DECLARE_ELEMENT(name) /* compatibility w/modern EXE synonym */ \
-    Value name##_pair[2]; \
-    Erase_Cell(cast(Value*, &name##_pair)); \
-    Value* const name = cast(Value*, &name##_pair) + 1; \
+    Value name##_element; \
+    Value* const name = &name##_element; \
     Erase_Cell(name)
