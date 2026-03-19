@@ -287,7 +287,7 @@ copy: generic [
 take: generic [
     {Removes and returns one or more elements}
 
-    return: [any-stable!]
+    return: {VARARGS! can give unstable VOID! or TRASH!} [any-value!]
     series [blank! any-series! port! blank! varargs!]
         {At position (modified)}
     /part {Specifies a length or end position}
