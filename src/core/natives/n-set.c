@@ -535,9 +535,6 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
     if (Is_Metaform_Blank(var))
         goto circled_check;
 
-    if (Is_Failure(SUBOUT))  // don't passthru errors if not ^ sigil
-        panic (SUBOUT);
-
     if (Is_Space(var))
         goto circled_check;
 

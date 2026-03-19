@@ -59,7 +59,7 @@ lib.exit-process: ~<See SYS.UTIL/EXIT>~
 
     return: [
         ~(module! any-value?)~
-        "Module and meta-result (may be error) of running the body"
+        "Module and result (may be FAILURE!) of running the body"
     ]
     spec "The header block of the module (modified)"
         [<opt> block! object!]
