@@ -1618,7 +1618,7 @@ calculate-sequence: func [
         for-each 'b extensions [
             if b.name = req [
                 seq: seq + any [
-                    match integer! opt b.sequence
+                    match integer! cond b.sequence
                     calculate-sequence b
                 ]
                 break
