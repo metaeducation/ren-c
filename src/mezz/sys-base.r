@@ -112,7 +112,7 @@ do*: function [
 
         if quit_FINALIZER [
             if only [
-                quit/value value'  ; "rethrow" the QUIT if DO/ONLY
+                quit* value'  ; "rethrow" the QUIT if DO/ONLY
             ] else [
                 value': lift value'  ; wasn't lifted
             ]

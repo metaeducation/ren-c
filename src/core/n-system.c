@@ -50,38 +50,67 @@ DECLARE_NATIVE(HALT)
 
 
 //
+//  quit*: native [
+//
+//  {Stop evaluating and return control to command shell or calling script}
+//
+//      value "Any value to return"
+//          [<hole> any-value!]
+//  ]
+//
+DECLARE_NATIVE(QUIT_P)
+//
+// In Ren-C, QUIT is definitional and calls QUIT* which is the generalized
+// quitting mechanism that takes any value.  We approximate it in a non
+// definitional way.
+{
+    INCLUDE_PARAMS_OF_QUIT_P;
+
+    Value* exitcode = ARG(VALUE);
+
+    if (Is_Cell_A_Holelike_Nulled(exitcode))
+        Init_Integer(exitcode, 0);
+
+    Copy_Cell(OUT, NAT_VALUE(QUIT));
+
+    CONVERT_NAME_TO_THROWN(OUT, exitcode);
+
+    return BOUNCE_THROWN;
+}
+
+
+//
 //  quit: native [
 //
-//  {Stop evaluating and return control to command shell or calling script.}
+//  {Stop evaluating and return control to command shell or calling script}
 //
-//      atom "See: http://en.wikipedia.org/wiki/Exit_status"
-//          [<hole> any-stable!]
-//      /value "Allow non-integers for yielding values to calling scripts"
+//      exitcode "Defaults 0, see: http://en.wikipedia.org/wiki/Exit_status"
+//          [<hole> integer!]
 //  ]
 //
 DECLARE_NATIVE(QUIT)
 //
-// QUIT is implemented via a THROWN() value that bubbles up through
-// the stack.  It uses the value of its own native function as the
-// name of the throw, like `throw/name value :quit`.
+// QUIT is implemented via a THROWN() value that bubbles up through the stack.
+// It uses the value of its own native function as the name of the throw, like
+// `throw/name value :quit`.
+//
+// In modern Ren-C, non-0 values are translated into ERROR! results that hold
+// the exit code, and passed to QUIT* which expects a value that may or may
+// not be an integer.  We just approximate the experience here with a split
+// between the two non-definitional forms.
 {
     INCLUDE_PARAMS_OF_QUIT;
 
-    Value* atom = ARG(ATOM);
+    Value* exitcode = ARG(EXITCODE);
 
-    if (Bool_ARG(VALUE)) {
-        // don't convert end to integer 0 for success synonym
-    }
-    else {
-        if (Is_Cell_A_Holelike_Nulled(atom))
-            Init_Integer(atom, 1);
-        else if (not Is_Integer(atom))
-            panic ("QUIT must receive INTEGER! unless /VALUE used");
-    }
+    if (Is_Cell_A_Holelike_Nulled(exitcode))
+        Init_Integer(exitcode, 0);
+    else
+        assert(Is_Integer(exitcode));
 
     Copy_Cell(OUT, NAT_VALUE(QUIT));
 
-    CONVERT_NAME_TO_THROWN(OUT, ARG(ATOM));
+    CONVERT_NAME_TO_THROWN(OUT, exitcode);
 
     return BOUNCE_THROWN;
 }

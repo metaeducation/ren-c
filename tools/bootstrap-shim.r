@@ -88,7 +88,7 @@ trap [  ; in even older bootstrap executable, this means SYS.UTIL/RECOVER
         panic/blame "Use PARSE2 in Bootstrap" 'return
     ]
 
-    quit/value system/options/path  ; see [1]
+    quit* system/options/path  ; see [1]
 ]
 
 print "== SHIMMING OLDER R3 TO MODERN LANGUAGE DEFINITIONS =="

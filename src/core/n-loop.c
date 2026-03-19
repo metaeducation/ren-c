@@ -106,8 +106,7 @@ DECLARE_NATIVE(BREAK)
 //  "Throws control back to top of loop for next iteration."
 //
 //      return: []
-//      /with "Act as if loop body finished with this value"
-//      value [any-element!]
+//      value [<hole> any-value!]
 //  ]
 //
 DECLARE_NATIVE(CONTINUE)
@@ -118,11 +117,13 @@ DECLARE_NATIVE(CONTINUE)
 {
     INCLUDE_PARAMS_OF_CONTINUE;
 
-    if (not Bool_ARG(WITH))  // it's an END (should change to CONTINUE/WITH)
-        Init_Void(ARG(VALUE));
+    Value* v = ARG(VALUE);
+
+    if (Is_Cell_A_Holelike_Nulled(v))
+        Init_Void(v);
 
     Copy_Cell(OUT, NAT_VALUE(CONTINUE));
-    CONVERT_NAME_TO_THROWN(OUT, ARG(VALUE)); // null if e.g. `eval [continue]`
+    CONVERT_NAME_TO_THROWN(OUT, v);  // void if e.g. `eval [continue]`
 
     return BOUNCE_THROWN;
 }

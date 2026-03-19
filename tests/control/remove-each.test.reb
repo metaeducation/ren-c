@@ -45,7 +45,7 @@
 (
     block: copy [1 2 3 4]
     remove-each i block [
-        if i = 3 [continue/with okay]
+        if i = 3 [continue okay]
         degrade (if i = 4 ['~okay~] else ['~null~])
     ]
     block = [1 2]
