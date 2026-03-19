@@ -682,6 +682,11 @@ gen-obj: func [
                 ; point for stream operators.  Ignore this with prejudice.
                 ;
                 <msc:/wd4686>
+
+                ; We use conversions of pointers to bool in the ARG() macro.
+                ; MSVC allows it in C++, but throws this warning in C++
+                ;
+                <msc:/wd4305>
             ]
         ]
         'no [

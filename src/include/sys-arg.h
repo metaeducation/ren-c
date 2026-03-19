@@ -223,12 +223,17 @@ INLINE Cell* Arg_Of_Level_Inline(
 // This needs to be triaged as not being missing before accessed with normal
 // Value* accessors.
 //
+// 1. We allow ARG() to be cast to a bool if the refinement has no arguments.
+//    MSVC lets you cast pointers to bool in C++ mode, but in C it will give
+//    you a "narrowing conversion" warning C4305.  Casting pointers to bool
+//    is legitimate, so we have to suppress that warning in C builds.
+//
 
 #define Level_Args_Head(L) \
     (u_cast(Arg*, (L)->rootvar) + 1)  // 1-based indexing
 
 #define ARG(name) \
-    x_cast(checked_type_##name##_, Arg_Of_Level_Inline( \
+    x_cast(checked_type_##name##_, Arg_Of_Level_Inline( /* bool casts [1] */ \
         level_, \
         checked_##name##_, \
         u_cast(ArgMode, checked_argmode_##name##_)))
