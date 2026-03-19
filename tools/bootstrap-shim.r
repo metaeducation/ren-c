@@ -763,7 +763,7 @@ collect-lets: func3 [
 
 let: func3 [
     return: [any-value!]
-    args [trash! any-value! <...>]
+    args [any-value! <...>]
     :look [any-value! <...>]
 ][
     if word? first look [return take look]  ; otherwise leave SET-WORD! to run
