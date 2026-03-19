@@ -62,7 +62,7 @@ cflags: compose [
 
 ldflags: compose [
     (if libtcc-lib-dir [
-        unspaced [{-L} -["]- file-to-local libtcc-lib-dir -["]-]
+        unspaced ["-L" -["]- file-to-local libtcc-lib-dir -["]-]
     ])
 ]
 
