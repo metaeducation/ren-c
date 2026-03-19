@@ -217,7 +217,7 @@ if os = 'Windows [
         tcp.c
         thread.c
         tty.c
-        udp.c
+        udp.c [<clang:-Wno-gnu-folding-constant>]
     ]
     if not find [Android OS390 QNX] os [
         append uv-libraries spread [
