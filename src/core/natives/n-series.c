@@ -199,7 +199,7 @@ DECLARE_NATIVE(INSERT)  // Must be frame-compatible with CHANGE [A]
 
 } handle_non_series: { ///////////////////////////////////////////////////////
 
-    return Run_Generic_Dispatch(series, LEVEL, CANON(INSERT));
+    return Old_Dispatch_Generic(INSERT, series, LEVEL);
 }}
 
 
@@ -272,7 +272,7 @@ DECLARE_NATIVE(APPEND)
 
 }} handle_non_series: { ///////////////////////////////////////////////////////
 
-    return Run_Generic_Dispatch(series, LEVEL, CANON(APPEND));
+    return Old_Dispatch_Generic(APPEND, series, LEVEL);
 }}
 
 
@@ -332,7 +332,7 @@ DECLARE_NATIVE(CHANGE)  // Must be frame-compatible with APPEND, INSERT [A]
 
 } handle_non_series: { ///////////////////////////////////////////////////////
 
-    return Run_Generic_Dispatch(series, LEVEL, CANON(CHANGE));
+    return Old_Dispatch_Generic(CHANGE, series, LEVEL);
 }}
 
 
@@ -395,7 +395,7 @@ DECLARE_NATIVE(CLEAR)
     INCLUDE_PARAMS_OF_CLEAR;
 
     Element* series = Element_ARG(SERIES);
-    return Run_Generic_Dispatch(series, LEVEL, CANON(CLEAR));
+    return Old_Dispatch_Generic(CLEAR, series, LEVEL);
 }
 
 
@@ -414,7 +414,7 @@ DECLARE_NATIVE(SWAP)
     INCLUDE_PARAMS_OF_SWAP;
 
     Element* series1 = Element_ARG(SERIES1);
-    return Run_Generic_Dispatch(series1, LEVEL, CANON(SWAP));
+    return Old_Dispatch_Generic(SWAP, series1, LEVEL);
 }
 
 
@@ -594,7 +594,7 @@ DECLARE_NATIVE(FIND)  // Must be frame-compatible with SELECT
     INCLUDE_PARAMS_OF_FIND;
 
     Element* series = Element_ARG(SERIES);
-    return Run_Generic_Dispatch(series, LEVEL, CANON(FIND));
+    return Old_Dispatch_Generic(FIND, series, LEVEL);
 }
 
 
@@ -619,5 +619,5 @@ DECLARE_NATIVE(SELECT)  // Must be frame-compatible with FIND
     INCLUDE_PARAMS_OF_SELECT;
 
     Element* series = Element_ARG(SERIES);
-    return Run_Generic_Dispatch(series, LEVEL, CANON(SELECT));
+    return Old_Dispatch_Generic(SELECT, series, LEVEL);
 }

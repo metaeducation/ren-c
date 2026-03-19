@@ -39,7 +39,7 @@ DECLARE_NATIVE(CREATE)
     INCLUDE_PARAMS_OF_CREATE;
 
     Element* port = Element_ARG(PORT);
-    return Run_Generic_Dispatch(port, LEVEL, CANON(CREATE));
+    return Old_Dispatch_Generic(CREATE, port, LEVEL);
 }
 
 
@@ -57,7 +57,7 @@ DECLARE_NATIVE(DELETE)
     INCLUDE_PARAMS_OF_DELETE;
 
     Element* port = Element_ARG(PORT);
-    return Run_Generic_Dispatch(port, LEVEL, CANON(DELETE));
+    return Old_Dispatch_Generic(DELETE, port, LEVEL);
 }
 
 
@@ -78,7 +78,7 @@ DECLARE_NATIVE(OPEN)
     INCLUDE_PARAMS_OF_OPEN;
 
     Element* spec = Element_ARG(SPEC);
-    return Run_Generic_Dispatch(spec, LEVEL, CANON(OPEN));
+    return Old_Dispatch_Generic(OPEN, spec, LEVEL);
 }
 
 
@@ -129,7 +129,7 @@ DECLARE_NATIVE(READ)
     INCLUDE_PARAMS_OF_READ;
 
     Element* port = Element_ARG(SOURCE);
-    return Run_Generic_Dispatch(port, LEVEL, CANON(READ));
+    return Old_Dispatch_Generic(READ, port, LEVEL);
 }
 
 
@@ -180,7 +180,7 @@ DECLARE_NATIVE(WRITE)
         );
     }
 
-    return Run_Generic_Dispatch(port, LEVEL, CANON(WRITE));
+    return Old_Dispatch_Generic(WRITE, port, LEVEL);
 }
 
 
@@ -198,7 +198,7 @@ DECLARE_NATIVE(QUERY)
     INCLUDE_PARAMS_OF_QUERY;
 
     Element* target = Element_ARG(TARGET);
-    return Run_Generic_Dispatch(target, LEVEL, CANON(QUERY));
+    return Old_Dispatch_Generic(QUERY, target, LEVEL);
 }
 
 
@@ -222,7 +222,7 @@ DECLARE_NATIVE(MODIFY)
     INCLUDE_PARAMS_OF_MODIFY;
 
     Element* target = Element_ARG(TARGET);
-    return Run_Generic_Dispatch(target, LEVEL, CANON(MODIFY));
+    return Old_Dispatch_Generic(MODIFY, target, LEVEL);
 }
 
 
@@ -241,5 +241,5 @@ DECLARE_NATIVE(RENAME)
     INCLUDE_PARAMS_OF_RENAME;
 
     Element* from = Element_ARG(FROM);
-    return Run_Generic_Dispatch(from, LEVEL, CANON(RENAME));
+    return Old_Dispatch_Generic(RENAME, from, LEVEL);
 }

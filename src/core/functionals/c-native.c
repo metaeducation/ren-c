@@ -498,22 +498,6 @@ DECLARE_NATIVE(OLDGENERIC)
 }
 
 
-//
-//   Run_Generic_Dispatch: C
-//
-// !!! Old concept of generics, based on each type directing to a single
-// function with a big switch() statement in it.
-//
-Bounce Run_Generic_Dispatch(
-    const Element* cue,
-    Level* L,
-    const Symbol* verb
-){
-    L->u.action.label = verb;  // !!! hack for Level_Verb() for now
-    return Dispatch_Generic(OLDGENERIC, cue, L);
-}
-
-
 // Create a native in the library without using the evaluator.
 //
 static void Make_Native_In_Lib_By_Hand(Level* const L, SymId id)

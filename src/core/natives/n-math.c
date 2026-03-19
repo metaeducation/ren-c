@@ -109,7 +109,7 @@ DECLARE_NATIVE(ADD)
         return BOUNCE_OUT;
     }
 
-    return Run_Generic_Dispatch(e1, LEVEL, CANON(ADD));
+    return Old_Dispatch_Generic(ADD, e1, LEVEL);
 }
 
 
@@ -155,7 +155,7 @@ DECLARE_NATIVE(SUBTRACT)
         panic ("Only CHAR? can have NUL? #{00} state subtracted");
     }
 
-    return Run_Generic_Dispatch(e1, LEVEL, CANON(SUBTRACT));
+    return Old_Dispatch_Generic(SUBTRACT, e1, LEVEL);
 }
 
 
@@ -216,7 +216,7 @@ DECLARE_NATIVE(DIVIDE)
     INCLUDE_PARAMS_OF_DIVIDE;
 
     Element* v1 = Element_ARG(VALUE1);
-    return Run_Generic_Dispatch(v1, LEVEL, CANON(DIVIDE));
+    return Old_Dispatch_Generic(DIVIDE, v1, LEVEL);
 }
 
 
@@ -236,7 +236,7 @@ DECLARE_NATIVE(REMAINDER)
     INCLUDE_PARAMS_OF_REMAINDER;
 
     Element* v1 = Element_ARG(VALUE1);
-    return Run_Generic_Dispatch(v1, LEVEL, CANON(REMAINDER));
+    return Old_Dispatch_Generic(REMAINDER, v1, LEVEL);
 }
 
 
@@ -255,7 +255,7 @@ DECLARE_NATIVE(POWER)
     INCLUDE_PARAMS_OF_POWER;
 
     Element* v = Element_ARG(VALUE);
-    return Run_Generic_Dispatch(v, LEVEL, CANON(POWER));
+    return Old_Dispatch_Generic(POWER, v, LEVEL);
 }
 
 

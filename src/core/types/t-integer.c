@@ -230,7 +230,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
                 Element* out = Move_Cell(OUT, val2);
                 Move_Cell(val2, val);
                 Move_Cell(val, out);
-                return Run_Generic_Dispatch(val, level_, verb); }
+                return Old_Dispatch_Generic_Core(verb, val, level_); }
 
             // Only type valid to subtract from, divide into, is decimal:
             case SYM_SUBTRACT:

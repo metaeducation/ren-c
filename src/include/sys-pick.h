@@ -99,6 +99,23 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
     (did Get_Generic_Dispatcher(&g_generic_##name, datatype))
 
 
+
+// !!! Old concept of generics, based on each type directing to a single
+// function with a big switch() statement in it.
+//
+INLINE Bounce Old_Dispatch_Generic_Core(
+    const Symbol* verb,
+    const Element* cue,
+    Level* L
+){
+    L->u.action.label = verb;  // !!! hack for Level_Verb() for now
+    return Dispatch_Generic(OLDGENERIC, cue, L);
+}
+
+#define Old_Dispatch_Generic(name,cue,L) \
+    Old_Dispatch_Generic_Core(Canon_Symbol(SYM_##name), (cue), (L))
+
+
 // If you pass in a nullptr for the steps in the Get_Var() and Set_Var()
 // mechanics, they will disallow groups.  This is a safety measure which helps
 // avoid unwanted side effects in SET and GET, and motivates passing in a

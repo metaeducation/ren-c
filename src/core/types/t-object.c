@@ -2167,5 +2167,5 @@ DECLARE_NATIVE(EXTEND)
     INCLUDE_PARAMS_OF_EXTEND;
 
     Element* context = Element_ARG(CONTEXT);
-    return Run_Generic_Dispatch(context, LEVEL, CANON(EXTEND));
+    return Old_Dispatch_Generic(EXTEND, context, LEVEL);
 }

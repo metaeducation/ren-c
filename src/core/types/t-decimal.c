@@ -393,7 +393,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
             Element* out = Move_Cell(OUT, arg);
             Move_Cell(arg, val);
             Move_Cell(val, out);
-            return Run_Generic_Dispatch(val, level_, verb);
+            return Old_Dispatch_Generic_Core(verb, val, level_);
         }
 
         // If the type of the second arg is something we can handle:

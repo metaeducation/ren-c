@@ -56,7 +56,7 @@ DECLARE_NATIVE(BITWISE_NOT)
         return LOGIC_OUT(not b1);
     }
 
-    return Run_Generic_Dispatch(As_Element(v), LEVEL, CANON(BITWISE_NOT));
+    return Old_Dispatch_Generic(BITWISE_NOT, As_Element(v), LEVEL);
 }
 
 
@@ -87,7 +87,7 @@ DECLARE_NATIVE(BITWISE_AND)
     else if (Is_Logic(v2))
         panic (PARAM(VALUE2));
 
-    return Run_Generic_Dispatch(As_Element(v1), LEVEL, CANON(BITWISE_AND));
+    return Old_Dispatch_Generic(BITWISE_AND, As_Element(v1), LEVEL);
 }
 
 
@@ -118,7 +118,7 @@ DECLARE_NATIVE(BITWISE_OR)
     else if (Is_Logic(v2))
         panic (PARAM(VALUE2));
 
-    return Run_Generic_Dispatch(As_Element(v1), LEVEL, CANON(BITWISE_OR));
+    return Old_Dispatch_Generic(BITWISE_OR, As_Element(v1), LEVEL);
 }
 
 
@@ -149,7 +149,7 @@ DECLARE_NATIVE(BITWISE_XOR)
     else if (Is_Logic(v2))
         panic (PARAM(VALUE2));
 
-    return Run_Generic_Dispatch(As_Element(v1), LEVEL, CANON(BITWISE_XOR));
+    return Old_Dispatch_Generic(BITWISE_XOR, As_Element(v1), LEVEL);
 }
 
 
@@ -180,9 +180,7 @@ DECLARE_NATIVE(BITWISE_AND_NOT)
     else if (Is_Logic(v2))
         panic (PARAM(VALUE2));
 
-    return Run_Generic_Dispatch(
-        As_Element(v1), LEVEL, CANON(BITWISE_AND_NOT)
-    );
+    return Old_Dispatch_Generic(BITWISE_AND_NOT, As_Element(v1), LEVEL);
 }
 
 
