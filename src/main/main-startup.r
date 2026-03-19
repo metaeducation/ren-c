@@ -480,7 +480,7 @@ main-startup: nonfinal function [  ; overwrites self when finished
 
             emit [
                 do (<*> spaced ["Rebol []" param]) except (e -> [
-                    sys.contexts.user/quit e.exit-code
+                    quit e
                 ])
             ]
         )

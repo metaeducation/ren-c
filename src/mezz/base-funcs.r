@@ -62,20 +62,20 @@ quit*: final ~<QUIT* used when no (DO, IMPORT, CONSOLE) is providing it>~
         integer! "https://en.wikipedia.org/wiki/Exit_status"
         <hole> "same as 0"
         logic! "~okay~ same as 0, ~null~ same as 1"
-        failure! "passed through to QUIT* (will heed EXIT-CODE, else 255)"
+        error! "passed as FAILURE! to QUIT* (will heed EXIT-CODE, else 255)"
     ]
 ][
     let /quit*: definitional (binding of $result) '^quit*
 
-    if failure? ^result [
-        quit* ^result
-    ]
     any [
         hole? $result
         okay? result
         0 = result
     ] then [
         quit* ~okay~
+    ]
+    if error? result [
+        quit* fail result
     ]
     quit* fail make error! compose [
         id: 'nonzero-passed-to-quit  ; does error need an ID?
