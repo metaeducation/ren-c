@@ -1101,49 +1101,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
       case SYM_APPEND:
         panic ("APPEND on OBJECT!, MODULE!, etc. replaced with EXTEND");
 
-      case SYM_EXTEND: {
-        INCLUDE_PARAMS_OF_EXTEND;
-
-        Element* def = Element_ARG(DEF);
-
-        if (Is_Word(def)) {
-            bool strict = true;
-            Option(Ordinal) n = Find_Symbol_In_Context(
-                context, Word_Symbol(def), strict
-            );
-            if (n) {
-                if (Is_Module(context))
-                    Tweak_Cell_Binding(def, cast(SeaOfVars*, c));
-                else
-                    Tweak_Cell_Binding(def, c);
-                return COPY_TO_OUT(def);
-            }
-            Init_Void_Signifying_Unset(Append_Context_Bind_Word(c, def));
-            return COPY_TO_OUT(def);
-        }
-
-        assert(Is_Block(def));
-
-        CollectFlags flags = COLLECT_ONLY_SET_WORDS;
-        if (ARG(PREBOUND))
-            flags |= COLLECT_TOLERATE_PREBOUND;
-
-        require (
-          Wrap_Extend_Core(c, def, flags)
-        );
-        require (
-          Use* use = Alloc_Use_Inherits(Cell_Binding(def))
-        );
-        Copy_Cell(Stub_Cell(use), context);
-
-        Tweak_Cell_Binding(def, use);
-
-        bool threw = Eval_Any_List_At_Throws(OUT, def, SPECIFIED);
-        if (threw)
-            return BOUNCE_THROWN;
-
-        return COPY_TO_OUT(context); }
-
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
         UNUSED(ARG(SERIES));  // extracted as `c`
@@ -2151,7 +2108,7 @@ DECLARE_NATIVE(CONSTRUCT)
 
 
 //
-//  /extend: native:generic [
+//  /extend: native [
 //
 //  "Add more material to a context"
 //
@@ -2166,6 +2123,45 @@ DECLARE_NATIVE(EXTEND)
 {
     INCLUDE_PARAMS_OF_EXTEND;
 
+    Element* def = Element_ARG(DEF);
     Element* context = Element_ARG(CONTEXT);
-    return Old_Dispatch_Generic(EXTEND, context, LEVEL);
+    Context* c = Cell_Context(context);
+
+    if (Is_Word(def)) {
+        bool strict = true;
+        Option(Ordinal) n = Find_Symbol_In_Context(
+            context, Word_Symbol(def), strict
+        );
+        if (n) {
+            if (Is_Module(context))
+                Tweak_Cell_Binding(def, cast(SeaOfVars*, c));
+            else
+                Tweak_Cell_Binding(def, c);
+            return COPY_TO_OUT(def);
+        }
+        Init_Void_Signifying_Unset(Append_Context_Bind_Word(c, def));
+        return COPY_TO_OUT(def);
+    }
+
+    assert(Is_Block(def));
+
+    CollectFlags flags = COLLECT_ONLY_SET_WORDS;
+    if (ARG(PREBOUND))
+        flags |= COLLECT_TOLERATE_PREBOUND;
+
+    require (
+        Wrap_Extend_Core(c, def, flags)
+    );
+    require (
+        Use* use = Alloc_Use_Inherits(Cell_Binding(def))
+    );
+    Copy_Cell(Stub_Cell(use), context);
+
+    Tweak_Cell_Binding(def, use);
+
+    bool threw = Eval_Any_List_At_Throws(OUT, def, SPECIFIED);
+    if (threw)
+        return BOUNCE_THROWN;
+
+    return COPY_TO_OUT(context);
 }
