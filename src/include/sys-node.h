@@ -172,7 +172,7 @@ INLINE void *Alloc_Pooled(REBLEN pool_id)
     pool->free--;
 
   #if DEBUG_MEMORY_ALIGNMENT
-    if (i_cast(uintptr_t, unit) % sizeof(REBI64) != 0) {
+    if (p_cast(uintptr_t, unit) % sizeof(REBI64) != 0) {
         printf(
             "Base address %p not aligned to %d bytes\n",
             cast(void*, unit),

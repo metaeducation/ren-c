@@ -1006,16 +1006,16 @@ struct StubStruct {
 //    vs. x_cast() on the (f) to get the typechecking of [1]
 
 #define Get_Flex_Flag(f,name) \
-    ((ensure(Flex*, (f))->header.bits & FLEX_FLAG_##name) != 0)
+    ((known(Flex*, (f))->header.bits & FLEX_FLAG_##name) != 0)
 
 #define Not_Flex_Flag(f,name) \
-    ((ensure(Flex*, (f))->header.bits & FLEX_FLAG_##name) == 0)
+    ((known(Flex*, (f))->header.bits & FLEX_FLAG_##name) == 0)
 
 #define Set_Flex_Flag(f,name) /* m_cast() [1] */ \
-    (m_cast(Flex*, ensure(Flex*, (f)))->header.bits |= FLEX_FLAG_##name)
+    (m_cast(Flex*, known(Flex*, (f)))->header.bits |= FLEX_FLAG_##name)
 
 #define Clear_Flex_Flag(f,name) /* m_cast() [1] */ \
-    (m_cast(Flex*, ensure(Flex*, (f)))->header.bits &= (~ FLEX_FLAG_##name))
+    (m_cast(Flex*, known(Flex*, (f)))->header.bits &= (~ FLEX_FLAG_##name))
 
 
 

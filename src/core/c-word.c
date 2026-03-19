@@ -331,8 +331,8 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
     }
 
   #if RUNTIME_CHECKS
-    uint16_t sym_canon = cast(uint16_t, Symbol_Id(Canon_Symbol(intern)));
-    uint16_t sym = cast(uint16_t, Symbol_Id(intern));
+    uint16_t sym_canon = ii_cast(uint16_t, Symbol_Id(Canon_Symbol(intern)));
+    uint16_t sym = ii_cast(uint16_t, Symbol_Id(intern));
     assert(sym == sym_canon); // C++ build disallows compare w/o cast
   #endif
 

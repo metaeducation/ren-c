@@ -212,14 +212,14 @@ INLINE Value* PUSH(void) {
 #elif defined(OS_STACK_GROWS_DOWN)
 
     #define C_STACK_OVERFLOWING(address_of_local_var) \
-        (i_cast(uintptr_t, (address_of_local_var)) <= TG_Stack_Limit)
+        (p_cast(uintptr_t, (address_of_local_var)) <= TG_Stack_Limit)
 
 #else
 
     #define C_STACK_OVERFLOWING(address_of_local_var) \
         (TG_Stack_Grows_Up \
-            ? i_cast(uintptr_t, (address_of_local_var)) >= TG_Stack_Limit \
-            : i_cast(uintptr_t, (address_of_local_var)) <= TG_Stack_Limit)
+            ? p_cast(uintptr_t, (address_of_local_var)) >= TG_Stack_Limit \
+            : p_cast(uintptr_t, (address_of_local_var)) <= TG_Stack_Limit)
 #endif
 
 #define STACK_BOUNDS (2*1024*1024) // note: need a better way to set it !!

@@ -1,11 +1,11 @@
 //
-//  file: %needful-casts.h
+//  file: %needful-casts.hpp
 //  summary: "Cast macros with added features when built as C++11 or higher"
 //  homepage: <needful homepage TBD>
 //
 //=/////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2015-2025 hostilefork.com
+// Copyright 2015-2026 hostilefork.com
 //
 // Licensed under the MIT License
 //
@@ -17,11 +17,12 @@
 //
 //  http://blog.hostilefork.com/c-casts-for-the-masses/
 //
+//=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// D. The casts are implemented with a static method of a templated struct vs.
-//    just as a templated function.  This is because partial specialization of
-//    function templates is not legal in C++ due to the fact that functions can
-//    be overloaded, while structs and classes can't:
+// A. Most casts use a static method of a templated struct vs. a templated
+//    function.  This is because partial specialization of function templates
+//    is not legal in C++ due to the fact that functions can be overloaded,
+//    while structs and classes can't:
 //
 //      http://www.gotw.ca/publications/mill17.htm
 //
@@ -32,17 +33,8 @@
 //     signature. Everyone can specialize that -- both fully and partially,
 //     and without affecting the results of overload resolution."
 //
-// E. The CastHook classes do not use references in their specialization.
-//    So don't write:
-//
-//        struct CastHook<Foo<X>&, Y*>
-//          { static void Validate_Bits(Foo<X>& foo) { ... } }
-//
-//    It won't ever match since the reference was removed by the macro.  But
-//    do note you can leave the reference on the Validate_Bits arg if needed:
-//
-//        struct CastHook<Foo<X>, Y*>  // note no reference on Foo<X>
-//          { static void Validate_Bits(Foo<X>& foo) { ... } }
+//    The exception is h_cast() which requires && for "universal references".
+//    Hence Hookable_Cast_Helper is a function, not a struct.
 //
 
 
@@ -66,47 +58,49 @@
 //
 //    (Good argument for building your code with more than one compiler...)
 //
+#if NEEDFUL_DONT_INCLUDE_STDARG_H
+    template<typename From, typename To>
+    struct ValistCastBlocker {};  // no-op
 
-template<typename From, typename To>
-struct ValistCastBlocker {  // non-valist-casts use to stop valist casts [1]
-  #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
-    static_assert(
-        (  // v-- we can't warn you about va_list* cast() if this is true
-            std::is_pointer<va_list>::value
-            and std::is_fundamental<remove_pointer_t<va_list>>::value
-        )
-        or (  // v-- but if it's a struct or something we can warn you
-            not std::is_same<From, va_list*>::value
-            and not std::is_same<To, va_list*>::value
-        ),
-        "only legal va_list casts are v_cast() mutable va_list* <-> void*"
-    );
-  #endif
-};
+    // leave needful_valist_cast() as plain cast
+#else
+    template<typename From, typename To>
+    struct ValistCastBlocker {  // non-valist-casts stop valist casts [1]
+        static_assert(
+            (  // v-- we can't warn you about va_list* cast() if this is true
+                std::is_pointer<va_list>::value
+                and std::is_fundamental<remove_pointer_t<va_list>>::value
+            )
+            or (  // v-- but if it's a struct or something we can warn you
+                not std::is_same<From, va_list*>::value
+                and not std::is_same<To, va_list*>::value
+            ),
+            "only legal va_list casts are v_cast() mutable va_list* <-> void*"
+        );
+    };
 
-template<typename From, typename To>
-struct ValistPointerCastHelper {
-    using FromDecayed = decay_t<From>;
-    using ToDecayed = decay_t<To>;
+    template<typename From, typename To>
+    struct ValistPointerCastHelper {
+        using FromDecayed = decay_t<From>;
+        using ToDecayed = decay_t<To>;
 
-  #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
-    static_assert(
-        (std::is_same<FromDecayed, va_list*>::value
-            and std::is_same<ToDecayed, void*>::value)
-        or (std::is_same<FromDecayed, void*>::value
-            and std::is_same<ToDecayed, va_list*>::value),
-        "v_cast() can only convert va_list* <-> void*"
-    );
-  #endif
+        static_assert(
+            (std::is_same<FromDecayed, va_list*>::value
+                and std::is_same<ToDecayed, void*>::value)
+            or (std::is_same<FromDecayed, void*>::value
+                and std::is_same<ToDecayed, va_list*>::value),
+            "v_cast() can only convert va_list* <-> void*"
+        );
 
-    using type = ToDecayed;
-};
+        using type = ToDecayed;
+    };
 
-#undef needful_valist_cast
-#define needful_valist_cast(T,expr) \
-    (reinterpret_cast< \
-        needful::ValistPointerCastHelper<decltype(expr),T>::type \
-    >(expr))
+    #undef needful_valist_cast
+    #define needful_valist_cast(T,expr) \
+        (reinterpret_cast< \
+            needful::ValistPointerCastHelper<decltype(expr),T>::type \
+        >(expr))
+#endif
 
 
 //=//// u_cast(): UNHOOKABLE CONST-PRESERVING CAST ////////////////////////=//
@@ -159,28 +153,15 @@ struct ValistPointerCastHelper {
     >(needful_upcast(needful_constify_t(needful_unwrapped_type(T)), (expr)))))
 
 
-//=//// h_cast(): HOOKABLE CAST, IDEALLY cast() = h_cast() [A] ////////////=//
+//=//// CastHook DEFINITION ///////////////////////////////////////////////=//
 //
-// This is the form of hookable cast you should generally reach for.  Default
-// hooks are provided for pointer-to-pointer, or integral-to-integral.
-//
-// USAGE:
-//    T result = h_cast(T, value);
-//
-// BEHAVIOR:
-// - For arithmetic/enum types: static_cast if not explicitly convertible
-// - For pointer-to-pointer: reinterpret_cast if not explicitly convertible
-// - For explicitly convertible types: static_cast
-//
-// CUSTOMIZATION:
-// To hook the cast, you define `CastHook` for the types you are interested
+// To hook a cast, you define `CastHook` for the types you are interested
 // in hooking. Example specialization:
 //
 //    template<>
 //    struct CastHook<SourceType, TargetType> {
 //        static void Validate_Bits(SourceType value) {
-//            // Add validation logic here
-//            return reinterpret_cast<TargetType>(value);
+//            assert(some_condition(value));  // your check here
 //        }
 //    };
 //
@@ -272,21 +253,18 @@ struct ValistPointerCastHelper {
 //    can't provide a default that doesn't create ambiguities with the
 //    SFINAE that come afterwards.
 //
-// 3. If you want things like char[10] to be decayed to char* for casting
-//    purposes, it has to go through a decaying process.
+// 3. The CastHook classes do not use references in their specialization.
+//    So don't write:
 //
-// 4. Many of the "helpers" in this file use structs with static member
-//    functions, to work around the fact that functions can't be partially
-//    specialized while objects can.  However, we want "universal references"
-//    which is how (T&& arg) is interpreted for functions vs. objects.
+//        struct CastHook<Foo<X>&, Y*>
+//          { static void Validate_Bits(Foo<X>& foo) { ... } }
 //
-
-template<typename>
-struct IsResultWrapper : std::false_type {};
-
-template<typename T>
-struct ResultWrapper;
-
+//    It won't ever match since the reference was removed by the macro.  But
+//    do note you can leave the reference on the Validate_Bits arg if needed:
+//
+//        struct CastHook<Foo<X>, Y*>  // note no reference on Foo<X>
+//          { static void Validate_Bits(Foo<X>& foo) { ... } }
+//
 
 template<typename V, typename T>
 struct CastHook {  // object template for partial specialization [2]
@@ -296,19 +274,40 @@ struct CastHook {  // object template for partial specialization [2]
     }
 };
 
-template<typename T>
-struct IsBasicType {
-    static constexpr bool value = std::is_fundamental<T>::value
-        or std::is_enum<T>::value
-        or (HasWrappedType<T>::value and (
-            std::is_fundamental<needful_unwrapped_type(T)>::value
-            or std::is_enum<needful_unwrapped_type(T)>::value
-        ));
-};
 
+//=//// h_cast(): HOOKABLE CAST, IDEALLY cast() = h_cast() ////////////////=//
+//
+// This is the form of hookable cast you should generally reach for.
+//
+// USAGE:
+//    T result = h_cast(T, value);
+//
+// The five overloads of Hookable_Cast_Helper are:
+//
+//   1. basic -> basic: constexpr static_cast (fast path, no hooks)
+//   2. non-basic non-rewrappable -> basic: hooked, pointer<->int rejected
+//   3. non-rewrappable -> non-basic: general pointer/class/array casts
+//   4. semantic rewrappable -> re-wrapped: preserves Option/Result
+//   5. non-semantic rewrappable -> extracted: strips Sink/Need/Exact/etc.
+//
+// Non-template wrappers (plain structs like Heart/Type that expose
+// `wrapped_type` for introspection but aren't template instantiations)
+// are NOT rewrappable, so they route through overloads 1-3 like regular
+// types--their own conversion operators handle the casting naturally.
+//
+
+
+//=//// OVERLOAD 1: basic -> basic (int, enum, bool) //////////////////////=//
+//
+// Why it exists: Fundamentals and enums can bind to `const&` which allows
+// constexpr, and static_cast between them is always valid.  This is the
+// fast path that avoids reinterpret_cast entirely.  Rewrappable wrappers
+// (e.g. Need(int)) are routed to overloads 4/5 instead.
+//
 template<typename To, typename From>
-enable_if_t<  // For ints/enums: use & as && can't bind const
-    IsBasicType<From>::value and IsBasicType<To>::value,
+enable_if_t<
+    IsBasicType<From>::value and IsBasicType<To>::value
+        and not IsRewrappable<From>::value,  // rewrappable -> overload 4/5
     To
 >
 constexpr Hookable_Cast_Helper(const From& from) {
@@ -316,10 +315,19 @@ constexpr Hookable_Cast_Helper(const From& from) {
 }
 
 
+//=//// OVERLOAD 2: non-basic non-wrapped -> basic ////////////////////////=//
+//
+// Why it exists: Catches casts where the source is non-basic (pointer, class)
+// but the target is basic (int, enum, bool).  Can't use universal references
+// (overload 3) because the target is basic, and can't merge with overload 1
+// because the source isn't basic.  A key role is rejecting pointer<->integer
+// casts with a clear static_assert directing you to p_cast()/p_cast().
+//
 template<typename To, typename From>
-enable_if_t<  // For ints/enums: use & as && can't bind const
+enable_if_t<
     (not std::is_array<remove_reference_t<From>>::value
         and not IsBasicType<From>::value
+        and not IsRewrappable<From>::value  // rewrappable -> overload 4/5
     ) and (
         IsBasicType<To>::value
     ),
@@ -343,6 +351,23 @@ Hookable_Cast_Helper(const From& from) {
     return needful_xtreme_cast(ConstTo, from);
 }
 
+
+//=//// OVERLOAD 3: non-wrapped -> non-basic (pointers, classes, arrays) //=//
+//
+// Why it exists: The general-purpose overload for unwrapped types where the
+// target is non-basic (typically pointer-to-pointer casts).  Uses universal
+// references (FromRef&&) so arrays like `unsigned char[64]` deduce correctly
+// as references.  This is where CastHook validation fires for ordinary
+// pointer casts, enabling debug-build checks (e.g. verifying a Number*
+// really is a Float* before downcasting).
+//
+// 1. Arrays (e.g. `unsigned char[64]`) were once handled by a separate
+//    overload taking `const FromRef&`.  They are now handled uniformly by
+//    the universal reference overload (`FromRef&&`), which deduces arrays
+//    as references (e.g. `FromRef = int(&)[10]`).  The only difference in
+//    the body is that CastHook dispatch uses `decay_t` for arrays (to get
+//    the pointer type) vs. `needful_unwrapped_if_wrapped_type` otherwise.
+//
 template<
     typename To,
     typename FromRef,
@@ -350,42 +375,13 @@ template<
         remove_reference_t<FromRef>, To
     )
 >
-enable_if_t<  // For arrays: decay to pointer
-    std::is_array<remove_reference_t<FromRef>>::value
+enable_if_t<
+    not IsRewrappable<remove_reference_t<FromRef>>::value
         and not std::is_fundamental<To>::value
         and not std::is_enum<To>::value,
     ResultType
 >
-Hookable_Cast_Helper(const FromRef & from) {
-    using ConstTo = needful_constify_t(To);
-
-  #if NEEDFUL_CAST_CALLS_HOOKS
-    using From = decay_t<FromRef>;
-    using ConstFrom = needful_constify_t(From);
-    CastHook<ConstFrom, ConstTo>::Validate_Bits(from);
-  #endif
-
-    return needful_mutable_cast(
-        ResultType,  // passthru const on const mismatch (lenient)
-        needful_xtreme_cast(ConstTo, from)
-    );
-}
-
-template<
-    typename To,
-    typename FromRef,
-    typename ResultType = needful_merge_const_t(  // lenient cast
-        remove_reference_t<FromRef>, To
-    )
->
-enable_if_t<  // For non-arrays: forward as-is
-    not std::is_array<remove_reference_t<FromRef>>::value
-    and not IsResultWrapper<remove_reference_t<FromRef>>::value
-        and not std::is_fundamental<To>::value
-        and not std::is_enum<To>::value,
-    ResultType
->
-Hookable_Cast_Helper(FromRef&& from)
+Hookable_Cast_Helper(FromRef&& from)  // && is why helper is a function! [A]
 {
     using From = remove_reference_t<FromRef>;
     using ConstTo = needful_constify_t(To);
@@ -397,8 +393,13 @@ Hookable_Cast_Helper(FromRef&& from)
     );
 
   #if NEEDFUL_CAST_CALLS_HOOKS
-    using ConstFrom = needful_constify_t(From);
-    CastHook<ConstFrom, ConstTo>::Validate_Bits(std::forward<FromRef>(from));
+    using HookFrom = conditional_t<  // arrays must decay [1]
+        std::is_array<From>::value,
+        decay_t<From>,
+        From
+    >;
+    using ConstFrom = needful_constify_t(HookFrom);
+    CastHook<ConstFrom, ConstTo>::Validate_Bits(static_cast<ConstFrom>(from));
   #endif
 
     return needful_mutable_cast(
@@ -408,43 +409,106 @@ Hookable_Cast_Helper(FromRef&& from)
 }
 
 
+//=//// OVERLOAD 4: semantic wrapper -> re-wrapped result /////////////////=//
+//
+// Why it exists: Semantic wrappers (Option, Result) carry meaning beyond the
+// raw type—their wrapping is part of the data's contract.  Cast must not
+// silently strip them.  Instead, the inner value is cast and re-wrapped in
+// the same template: `cast(Stump*, Result(Stub*))` -> `Result(Stump*)`.
+// This is essential for patterns like `require(cast(T, result_expr))` where
+// the Result wrapper must survive for `%` extraction, and for Option where
+// engaged/disengaged state must be preserved.
+//
 template<
     typename To,
     typename FromWrapperRef,
-    typename ResultType = ResultWrapper<needful_merge_const_t(  // lenient cast
-        remove_reference_t<FromWrapperRef>, To
-    )>
+    typename From = remove_reference_t<FromWrapperRef>,
+    typename InnerFrom = needful_unwrapped_type(From),
+    typename CastResult = needful_merge_const_t(  // lenient cast
+        InnerFrom, To
+    ),
+    typename ResultType = needful_rewrap_type(From, CastResult)
 >
 enable_if_t<
-    IsResultWrapper<remove_reference_t<FromWrapperRef>>::value,
-    ResultWrapper<To>
+    IsRewrappable<From>::value
+        and IsWrapperSemantic<From>::value,
+    ResultType
 >
 Hookable_Cast_Helper(const FromWrapperRef& from_wrapper)
 {
-    using From = typename remove_reference_t<FromWrapperRef>::wrapped_type;
     using ConstTo = needful_constify_t(To);
 
     static_assert(
-        not is_function_pointer<From>::value
+        not is_function_pointer<InnerFrom>::value
         and not is_function_pointer<To>::value,
         "Use f_cast() for function pointer casts"
     );
 
+    const InnerFrom& inner = NEEDFUL_EXTRACT_INNER(InnerFrom, from_wrapper);
+
   #if NEEDFUL_CAST_CALLS_HOOKS
-    using ConstFrom = needful_constify_t(From);
-    CastHook<ConstFrom, ConstTo>::Validate_Bits(from_wrapper.r);
+    using ConstFrom = needful_constify_t(InnerFrom);  // hooks see raw type
+    CastHook<ConstFrom, ConstTo>::Validate_Bits(inner);
+  #endif
+
+    CastResult cast_inner = needful_mutable_cast(  // rewrap, keep semantics
+        CastResult,
+        needful_xtreme_cast(ConstTo, inner)
+    );
+    return ResultType{cast_inner};
+}
+
+
+//=//// OVERLOAD 5: non-semantic wrapper -> extracted result ///////////////=//
+//
+// Why it exists: Non-semantic wrappers (Sink, Need, Exact, Contra, etc.)
+// describe parameter-passing conventions, not data state.  Once you cast,
+// you're done with the convention, so cast strips the wrapper and returns
+// the raw inner value.  The inner value is accessed via reinterpret_cast on
+// the standard-layout first member, bypassing conversion operators that may
+// have side effects (e.g. Sink's corruption semantics).
+//
+template<
+    typename To,
+    typename FromWrapperRef,
+    typename From = remove_reference_t<FromWrapperRef>,
+    typename InnerFrom = needful_unwrapped_type(From),
+    typename ResultType = needful_merge_const_t(  // lenient cast
+        InnerFrom, To
+    )
+>
+enable_if_t<
+    IsRewrappable<From>::value
+        and not IsWrapperSemantic<From>::value,
+    ResultType
+>
+Hookable_Cast_Helper(const FromWrapperRef& from_wrapper)
+{
+    using ConstTo = needful_constify_t(To);
+
+    static_assert(
+        not is_function_pointer<InnerFrom>::value
+        and not is_function_pointer<To>::value,
+        "Use f_cast() for function pointer casts"
+    );
+
+    const InnerFrom& inner = NEEDFUL_EXTRACT_INNER(InnerFrom, from_wrapper);
+
+  #if NEEDFUL_CAST_CALLS_HOOKS
+    using ConstFrom = needful_constify_t(InnerFrom);  // hooks see raw type
+    CastHook<ConstFrom, ConstTo>::Validate_Bits(inner);
   #endif
 
     return needful_mutable_cast(
         ResultType,  // passthru const on const mismatch (lenient)
-        needful_xtreme_cast(ConstTo, from_wrapper.r)
+        needful_xtreme_cast(ConstTo, inner)
     );
 }
 
 #undef needful_lenient_hookable_cast
 #define needful_lenient_hookable_cast(T,expr) \
     (NEEDFUL_DUMMY_INSTANCE(needful::ValistCastBlocker<decltype(expr), T>), \
-        needful::Hookable_Cast_Helper<T>(expr))  // func: universal refs [3]
+        needful::Hookable_Cast_Helper<T>(expr))  // func: universal refs [A]
 
 
 //=//// RIGID CAST FORMS /////////////////////////////////////////////////=//
@@ -504,7 +568,7 @@ struct UpcastHelper {
     using type = needful_mirror_const_t(From, To);
 
     static_assert(
-        needful_is_convertible_v(From, type),
+        needful_is_deep_pointer_convertible_v(From, type),
         "upcast() cannot implicitly convert expression to type T"
     );
 };
@@ -557,7 +621,9 @@ struct UpcastHelper {
         \
         template< /* "downcast" means "reverse is_convertible" [2] */ \
             typename To, \
-            typename = enable_if_t<needful_is_convertible_v(To, From)> \
+            typename = enable_if_t< \
+                needful_is_deep_pointer_convertible_v(To, From) \
+            > \
         > \
         operator To() const \
             { return needful_lenient_##hookability##_cast(To, f); } \
@@ -587,46 +653,128 @@ NEEDFUL_DEFINE_DOWNCAST_HELPERS(UnhookableDowncast, unhookable);
     needful::g_UnhookableDowncast_maker +  // + lower than % [4]
 
 
-//=//// NON-POINTER TO POINTER CAST ////////////////////////////////////////=//
+//=//// INTEGER-LIKE CAST /////////////////////////////////////////////////=//
 //
-// If your intent is to turn a non-pointer into a pointer, this identifies
-// that as the purpose of the cast.  The C++ build can confirm that is what
-// is actually being done.
+// NOTE: Usually p_cast() acts like just a C-style cast, and ii_cast() is
+// mapped to this cast behavior.  It's because using this cast for all simple
+// integer casts in every build slows it down *dramatically*.  See %needful.h
+// for more information, and only use ii_cast() when you know you are
+// dealing with a wrapper...most useful on hot paths.
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// p_cast(T, expr) signals "both sides of this conversion are conceptually
+// integer-like data".  Its goal is zero runtime cost in debug builds, and
+// because it sidesteps Needful wrappers it can actually be faster than a
+// C-style cast (though Needful wrappers are debug-only, so this is only a
+// concern in debug builds... C casts won't run conversions when the wrapper
+// is not there)
+//
+//     int n = p_cast(int, some_enum);    // enum -> int
+//     Byte b = p_cast(Byte, big_int);    // narrowing int -> int
+//     int n = p_cast(int, opt_enum);     // Option(Enum) -> int (unwraps)
+//     Heart h = p_cast(Heart, byte);     // int -> wrapper class
+//
+// WHY NOT JUST USE cast()?
+//
+// cast() is a function (Hookable_Cast_Helper), not a macro expression.
+// Even in simple cases like `cast(int, some_enum)`, the compiler emits a
+// function call in unoptimized debug builds.  This matters in hot paths
+// where integer constants are converted thousands of times per second.
+//
+// cast() *must* be a function because it relies on universal references
+// (&&) for array deduction, needs multiple overloads for wrapper semantics
+// (rewrap-vs-extract), and calls CastHook::Validate_Bits for runtime
+// validation.  None of that machinery can collapse to a bare cast
+// expression.  p_cast can, because integer-like conversions don't need
+// any of it--the C-style cast does the right thing directly.
+//
+// WHAT GUARANTEES DOES p_cast ACTUALLY MAKE?
+//
+// For raw int/enum sources, the guarantee is real: the static_asserts reject
+// pointers (use p_cast), function pointers (use f_cast), and non-convertible
+// class types.  For Needful wrappers, it additionally verifies the deeply
+// unwrapped leaf is integral/enum (needful wrappers are not supposed to have
+// any more "runtime truth" than their raw types).
+//
+// For non-Needful class types, p_cast relaxes to "convertible": if either
+// side is a class constructible/convertible from the other, the cast is
+// allowed.  This means class-to-class casts slip through on convertibility
+// alone.  That's a deliberate trade-off: p_cast won't break when a plain
+// integer gets wrapped in a non-Needful class later.  At that point p_cast
+// becomes commentary--"this is integer-like"--rather than a hard enforcement.
+// That's acceptable; the alternative (refusing class targets and forcing
+// everything to x_cast) gives p_cast() poor invariants.
+//
+// IMPLEMENTATION NOTES:
+//
+// - IntegerCastHelper<T> is a single-type struct (not paired <To,From>), so
+//   the compiler instantiates O(N+M) of them instead of O(N*M).  This avoids
+//   the combinatoric explosion that a paired IntegerCastHelper<To,From> would
+//   cause across pervasive use sites.
+//
+// - NEEDFUL_MATERIALIZE_PRVALUE(expr) binds expr to a same-type const
+//   ref and takes its address.  This forces temporary materialization
+//   so even prvalues get a stack location we can pointer-reinterpret.
+//   The outer *x_cast(const ExtractType*, ...) dereferences through
+//   the reinterpreted pointer—zero cost, no conversion operator call.
 //
 
-template<typename TP, typename V>
-constexpr TP PointerCastHelper(V v) {
-    static_assert(std::is_pointer<TP>::value,
-        "invalid p_cast() - target type must be pointer");
-    static_assert(not std::is_pointer<V>::value,
-        "invalid p_cast() - source type can't be pointer");
-    return reinterpret_cast<TP>(v);
-}
+template<typename T>
+struct IntegerCastHelper {
+    using type = needful_deeply_unwrapped_type(T);
+
+    static_assert(
+        std::is_integral<type>::value or std::is_enum<type>::value
+            or std::is_class<type>::value,  // class fair game, if they convert
+        "invalid p_cast() - source must be integer, enum, or class type"
+    );
+};
+
+#define Needful_Integer_Cast_Validate(T) \
+    NEEDFUL_DUMMY_INSTANCE(needful::IntegerCastHelper<T>::type)
+
+#undef needful_integer_cast
+#define needful_integer_cast(T,expr) \
+    (Needful_Integer_Cast_Validate(T), \
+    needful_xtreme_cast(T, \
+        *needful_xtreme_cast( \
+            const typename needful::IntegerCastHelper< \
+                needful::remove_reference_t<decltype(expr)> \
+            >::type *, \
+            NEEDFUL_MATERIALIZE_PRVALUE(expr))))
+
+
+//=//// POINTER CAST //////////////////////////////////////////////////////=//
+//
+// p_cast(TP, expr) is for conversions where exactly one side is a pointer
+// and the other is not (int -> pointer or pointer -> int).  Zero runtime
+// cost: struct validates at compile time, macro body is a bare C-style cast.
+//
+//     int i = p_cast(int, some_ptr);       // pointer -> int
+//     Foo* p = p_cast(Foo*, some_intptr);   // int -> pointer
+//
+
+template<typename To, typename From>
+struct PointerCastHelper {
+    static constexpr bool to_is_pointer =
+        std::is_pointer<To>::value or std::is_array<To>::value
+            or std::is_same<std::nullptr_t, To>::value;
+    static constexpr bool from_is_pointer =
+        std::is_pointer<From>::value or std::is_array<From>::value
+            or std::is_same<std::nullptr_t, From>::value;
+
+    static_assert(
+        to_is_pointer != from_is_pointer,
+        "invalid p_cast() - exactly one side must be a pointer (or array)"
+    );
+};
 
 #undef needful_pointer_cast
-#define needful_pointer_cast(TP,expr) \
-    needful::PointerCastHelper<TP>(expr)
-
-
-//=//// NON-INTEGRAL TO INTEGRAL CAST /////////////////////////////////////=//
-//
-// If your intent is to turn a non-integral into an integral, this identifies
-// that as the purpose of the cast.  The C++ build can confirmthat is what
-// is actually being done.
-//
-
-template<typename T, typename V>
-constexpr T IntegralCastHelper(V v) {
-    static_assert(std::is_integral<T>::value,
-        "invalid i_cast() - target type must be integral");
-    static_assert(not std::is_integral<V>::value,
-        "invalid i_cast() - source type can't be integral");
-    return reinterpret_cast<T>(v);
-}
-
-#undef needful_integral_cast
-#define needful_integral_cast(T,expr) \
-    needful::IntegralCastHelper<T>(expr)
+#define needful_pointer_cast(T,expr) \
+    (NEEDFUL_DUMMY_INSTANCE(needful::PointerCastHelper< \
+        T, needful::remove_reference_t<decltype(expr)>>), \
+    needful_xtreme_cast(T, (expr)))
 
 
 //=//// FUNCTION POINTER CAST /////////////////////////////////////////////=//
@@ -641,10 +789,10 @@ constexpr T IntegralCastHelper(V v) {
 // Stylized so that it costs nothing at runtime, even in debug builds.
 //
 
-template<typename From, typename To>
+template<typename To, typename From>
 struct FunctionPointerCastHelper {
-    using FromDecayed = decay_t<From>;
     using ToDecayed = decay_t<To>;
+    using FromDecayed = decay_t<From>;
 
     static_assert(
         is_function_pointer<FromDecayed>::value
@@ -658,5 +806,5 @@ struct FunctionPointerCastHelper {
 #undef needful_function_cast
 #define needful_function_cast(T,expr) \
     (reinterpret_cast< \
-        needful::FunctionPointerCastHelper<decltype(expr),T>::type \
+        needful::FunctionPointerCastHelper<T,decltype(expr)>::type \
     >(expr))

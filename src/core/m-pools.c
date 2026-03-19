@@ -121,7 +121,7 @@ void *Alloc_Mem(size_t size)
   #endif
 
   #if DEBUG_MEMORY_ALIGNMENT
-    assert(i_cast(uintptr_t, p) % sizeof(REBI64) == 0);
+    assert(p_cast(uintptr_t, p) % sizeof(REBI64) == 0);
   #endif
 
     return p;
@@ -1363,10 +1363,10 @@ REBLEN Check_Memory_Debug(void)
             seg = Mem_Pools[pool_num].segs;
             for (; seg != nullptr; seg = seg->next) {
                 if (
-                    i_cast(uintptr_t, unit) > i_cast(uintptr_t, seg)
+                    p_cast(uintptr_t, unit) > p_cast(uintptr_t, seg)
                     and (
-                        i_cast(uintptr_t, unit)
-                        < i_cast(uintptr_t, seg) + cast(uintptr_t, seg->size)
+                        p_cast(uintptr_t, unit)
+                        < p_cast(uintptr_t, seg) + cast(uintptr_t, seg->size)
                     )
                 ){
                     if (found) {

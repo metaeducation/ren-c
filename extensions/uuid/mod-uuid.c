@@ -32,6 +32,8 @@
 #ifdef _MSC_VER
 #pragma comment(lib, "rpcrt4.lib")
 #endif
+    #undef None  // NeedfulNone collides with use in winnt.h
+
     #include <windows.h>
 
     #undef OUT  // %minwindef.h defines this, we have a better use for it

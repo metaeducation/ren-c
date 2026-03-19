@@ -442,12 +442,8 @@
 
 //=//// ensure_nullptr() //////////////////////////////////////////////////=//
 //
-// At one time, ensure_nullptr(p) was implemented as ensure(nullptr, p).
-// However, this forced ensure() to use a function template in order to be
-// able to have runtime code ensuring the nullness of a pointer.  That meant
-// some overhead in debug builds, and ensure() wanted to be a compile-time
-// only check... even in debug builds.  So ensure_nullptr() became its own
-// separate construct.
+// Modern Ren-C calls this "Known_Nullptr", but known generally is supposed
+// to be for compile-time knowledge.  Review.
 //
 #if NO_CPLUSPLUS_11 || NO_RUNTIME_CHECKS
     #define ensure_nullptr(expr)  (expr)
@@ -499,8 +495,8 @@
 // switching from signed to unsigned char, this cast does *only* that.
 //
 
-#define s_cast(bytes)   u_cast(char*, ensure(unsigned char*, (bytes)))
-#define b_cast(chars)   u_cast(unsigned char*, ensure(char*, (chars)))
+#define s_cast(bytes)   u_cast(char*, known(unsigned char*, (bytes)))
+#define b_cast(chars)   u_cast(unsigned char*, known(char*, (chars)))
 
 
 //=//// CONST PROPAGATION TOOLS ///////////////////////////////////////////=//

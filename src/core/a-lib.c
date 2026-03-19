@@ -1534,6 +1534,7 @@ void *API_rebDeflateDetectAlloc(
 // wide availability.
 //
 #ifdef TO_WINDOWS
+    #undef None  // NeedfulNone collides with use in winnt.h
     #include <windows.h>
 #else
     #include <errno.h>

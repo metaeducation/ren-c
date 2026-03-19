@@ -157,7 +157,7 @@
     cast(Type, KIND_BYTE(v))
 
 #define FLAG_TYPE(t) \
-    (cast(REBU64, 1) << ensure(Type, (t))) // makes a 64-bit bitflag
+    (cast(REBU64, 1) << known(Type, (t))) // makes a 64-bit bitflag
 
 #if NO_RUNTIME_CHECKS
     #define Type_Of(v) \
@@ -221,16 +221,16 @@
 //
 
 #define Get_Cell_Flag(c,name) \
-    ((ensure(Cell*, (c))->header.bits & CELL_FLAG_##name) != 0)
+    ((known(Cell*, (c))->header.bits & CELL_FLAG_##name) != 0)
 
 #define Not_Cell_Flag(c,name) \
-    ((ensure(Cell*, (c))->header.bits & CELL_FLAG_##name) == 0)
+    ((known(Cell*, (c))->header.bits & CELL_FLAG_##name) == 0)
 
 #define Set_Cell_Flag(c,name) \
-    (m_cast(Cell*, ensure(Cell*, (c)))->header.bits |= CELL_FLAG_##name)
+    (m_cast(Cell*, known(Cell*, (c)))->header.bits |= CELL_FLAG_##name)
 
 #define Clear_Cell_Flag(c,name) \
-    (m_cast(Cell*, ensure(Cell*, (c)))->header.bits &= (~ CELL_FLAG_##name))
+    (m_cast(Cell*, known(Cell*, (c)))->header.bits &= (~ CELL_FLAG_##name))
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -353,7 +353,7 @@ INLINE Value* Reset_Cell_Header_Untracked(
     #define Assert_Cell_Aligned(c) \
       do { \
         STATIC_ASSERT_LVALUE(c);  /* evil macro, make sure used safely */ \
-        if (i_cast(uintptr_t, (c)) % ALIGN_SIZE != 0) { \
+        if (p_cast(uintptr_t, (c)) % ALIGN_SIZE != 0) { \
             printf( \
                 "Cell address %p not aligned to %d bytes\n", \
                 cast(const void*, (c)), \

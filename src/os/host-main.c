@@ -111,7 +111,7 @@
             // In "Core" mode, use a console but do not initialize graphics.
             // (stdio redirection works, blinking console window during start)
             //
-            App_Instance = p_cast(HINSTANCE,
+            App_Instance = i_cast(HINSTANCE,
                 GetWindowLongPtr(GetConsoleWindow(), GWLP_HINSTANCE)
             );
             UNUSED(this_exe_path);
@@ -121,7 +121,7 @@
             // but no blinking console window during start.
             //
             if (not this_exe_path) { // argc was > 1
-                App_Instance = p_cast(HINSTANCE,
+                App_Instance = i_cast(HINSTANCE,
                     GetWindowLongPtr(GetConsoleWindow(), GWLP_HINSTANCE)
                 );
             }

@@ -37,6 +37,8 @@
 //
 
 #ifdef TO_WINDOWS
+    #undef None  // NeedfulNone collides with use in winnt.h
+
     #include <winsock2.h>
     #include <ws2tcpip.h> // needed for ip_mreq definition for multicast
 

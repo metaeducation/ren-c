@@ -1,11 +1,11 @@
 //
-//  file: %needful-utilities.h
+//  file: %needful-utilities.hpp
 //  summary: "Utility macros for C++11 and higher"
 //  homepage: <needful homepage TBD>
 //
 //=/////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2015-2025 hostilefork.com
+// Copyright 2015-2026 hostilefork.com
 //
 // Licensed under the MIT License
 //
@@ -17,18 +17,18 @@
 
 //=//// COMPILE-TIME-ONLY DUMMY CLASS INSTANTIATION ///////////////////////=//
 //
-// The standard guarantees that if a struct/class has no members and only a
-// trivial (defaulted) constructor/destructor, then creating an instance
-// (even as a temporary) is a pure compile-time operation.
+// This uses sizeof() to force the compiler to instantiate a template, in
+// a way that can be used at compile-time.
 //
 // We take advantage of this to create dummy instances of types whose sole
 // job is to do static assertions, without bringing in runtime cost.  This
 // macro documents that we're doing that.
 //
-// 1. Clang complains if you don't cast to void to mark as "used".
+// Note that if for some reason one needs function call semantics for a check,
+// this works with getting the size of that function's return type.
 //
 #define NEEDFUL_DUMMY_INSTANCE(...) \
-    static_cast<void>(__VA_ARGS__{})  /* void cast clang workaround [1] */
+    static_cast<void>(sizeof(__VA_ARGS__))
 
 
 //=//// DUMP TYPE NAME FOR DEBUGGING //////////////////////////////////////=//
@@ -51,6 +51,25 @@
     #define PROBE_CTYPE(...) \
         NEEDFUL_DUMMY_INSTANCE(needful::ProbeTypeHelper<__VA_ARGS__>)
 #endif
+
+
+//=//// MATERIALIZE PRVALUE ///////////////////////////////////////////////=//
+//
+// A prvalue is a pure temporary with no memory location--you can't take
+// its address or reinterpret_cast<> it.  GCC enforces this strictly, so
+// tricks that MSVC and Clang tolerate (like binding a cross-type rvalue
+// reference && to a prvalue for reinterpretation) are rejected.  :-(
+//
+// This macro is a workaround, that forces a prvalue to get a memory location
+// via same-type const& binding.  C++ standard mandates "temporary
+// materialization" for this, giving the prvalue a stack slot whose address we
+// can take.  It can be used e.g. to bypass conversion operators by
+// pointer-reinterpreting to the standard-layout first member.
+//
+#define NEEDFUL_MATERIALIZE_PRVALUE(expr) \
+    (&needful_xtreme_cast( \
+        const needful::remove_reference_t<decltype(expr)>&, \
+        (expr)))
 
 
 //=//// VARIADIC MACRO PARENTHESES REMOVAL ////////////////////////////////=//
@@ -124,14 +143,14 @@ using add_pointer_t = typename std::add_pointer<T>::type;
 template<bool B, typename T = void>  // C++14
 using enable_if_t = typename std::enable_if<B, T>::type;
 
+template<typename... Ts>  // C++17 (polyfill for C++11/14 builds)
+using void_t = void;
+
 template<bool B, typename T, typename F>  // C++14
 using conditional_t = typename std::conditional<B, T, F>::type;
 
 #define needful_is_convertible_v(From,To) /* macro HACK [1] */ \
     std::is_convertible<From, To>::value
-
-#define needful_is_constructible_v(From,To) /* macro HACK [1] */ \
-    std::is_constructible<From, To>::value
 
 template<typename From, typename To>
 class is_explicitly_convertible {  // C++20
@@ -146,6 +165,79 @@ class is_explicitly_convertible {  // C++20
 
 #define needful_is_explicitly_convertible_v(From,To) /* macro HACK [1] */ \
     needful::is_explicitly_convertible<From, To>::value
+
+
+//=//// SAME-LAYOUT INHERITANCE CHECK /////////////////////////////////////=//
+//
+// Checks if Base is an ancestor of Derived in a zero-cost inheritance
+// hierarchy where derivation adds no members.  Both must be standard-layout
+// classes with the same size.
+//
+// This is the foundational invariant that makes the "check C with C++"
+// pattern safe: because the memory representations are identical, casts
+// between pointer levels (Derived** -> Base**) are safe even though C++
+// doesn't allow them implicitly.
+//
+// IsContravariantLayout (in needful-contra.hpp) builds on this same
+// invariant for Sink()/Init() parameter checking.
+//
+
+template<typename Base, typename Derived, typename Enable = void>
+struct IsSameLayoutBase : std::false_type {};
+
+template<typename Base, typename Derived>
+struct IsSameLayoutBase<Base, Derived, enable_if_t<
+    std::is_class<Base>::value
+    and std::is_class<Derived>::value
+    and std::is_base_of<Base, Derived>::value
+>> {
+    static_assert(
+        std::is_standard_layout<Base>::value
+        and std::is_standard_layout<Derived>::value
+        and sizeof(Base) == sizeof(Derived),
+        "Same-layout inheritance requires identical-sized standard layout types"
+    );
+
+    static constexpr bool value = true;
+};
+
+
+//=//// DEEP POINTER CONVERTIBILITY TRAIT /////////////////////////////////=//
+//
+// Standard std::is_convertible<Derived**, Base**> is false because C++
+// doesn't allow covariant pointer-to-pointer conversions.  But in the
+// needful type system, these conversions are safe: derivation adds no
+// members, so the pointer representations are identical at every level.
+//
+// This trait recursively strips matching pointer layers from both types,
+// then delegates to std::is_convertible at the innermost pointer level.
+// The recursion only fires when BOTH sides are still pointers after
+// stripping one layer, ensuring mismatched pointer depths are rejected.
+//
+//   IsDeepPointerConvertible<Derived*, Base*>      => true  (leaf check)
+//   IsDeepPointerConvertible<Derived**, Base**>    => true  (recurse once)
+//   IsDeepPointerConvertible<Derived***, Base***>  => true  (recurse twice)
+//   IsDeepPointerConvertible<Derived**, Base*>     => false (depth mismatch)
+//
+// No separate layout assertion is needed here: std::is_convertible at the
+// leaf level already requires a valid inheritance relationship, and the
+// layout invariant (standard-layout, same sizeof) is enforced by
+// IsSameLayoutBase wherever class types participate in contravariant casts.
+//
+
+template<typename From, typename To, typename Enable = void>
+struct IsDeepPointerConvertible : std::is_convertible<From, To> {};
+
+template<typename From, typename To>
+struct IsDeepPointerConvertible<From*, To*, enable_if_t<
+    std::is_pointer<From>::value and std::is_pointer<To>::value
+>> : IsDeepPointerConvertible<From, To> {};
+
+#define needful_is_deep_pointer_convertible_v(From,To) \
+    needful::IsDeepPointerConvertible<From, To>::value
+
+#define needful_is_constructible_v(From,To) /* macro HACK [1] */ \
+    std::is_constructible<From, To>::value
 
 
 //=//// is_function_pointer TRAIT /////////////////////////////////////////=//

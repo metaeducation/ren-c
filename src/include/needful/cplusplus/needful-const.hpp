@@ -1,11 +1,11 @@
 //
-//  file: %needful-const.h
+//  file: %needful-const.hpp
 //  summary: "Mutability transference from input arguments to return results"
 //  homepage: <needful homepage TBD>
 //
 //=/////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2015-2025 hostilefork.com
+// Copyright 2015-2026 hostilefork.com
 //
 // Licensed under the MIT License
 //
@@ -52,7 +52,7 @@ struct ConstifyHelper<T*, TopLevel, void> {  // pointed-to things, any level
 template<typename T, bool TopLevel>
 struct ConstifyHelper<T* const, TopLevel, void> {  // pointer *itself* is const
     using consted = const T* const;
-    using unconsted = remove_const_t<T>* const;
+    using unconsted = remove_const_t<T>*;  // was *const, caused problems (?)
 };
 
 template<typename Ret, typename... Args>
@@ -61,9 +61,23 @@ struct ConstifyHelper<Ret(*)(Args...), true, void> {  // function pointers
     using unconsted = Ret(*)(Args...);
 };
 
-// For recursion inside wrappers, use TopLevel = false
-template<typename T, bool TopLevel>
-struct ConstifyHelper<T, TopLevel, enable_if_t<HasWrappedType<T>::value>>
+// For recursion inside wrappers, use TopLevel = false.
+//
+// 1. Rewrappable wrappers (template instantiations like OptionWrapper<T>)
+//    can have their inner type replaced via RewrapHelper, so constifying
+//    recurses into the inner type and rewraps the result.
+//
+// 2. Non-rewrappable wrappers (plain structs like Heart that expose
+//    wrapped_type via NEEDFUL_DECLARE_WRAPPED_FIELD but aren't templates)
+//    can't be decomposed by RewrapHelper.  For these, constifying just
+//    means adding/removing top-level const on the struct itself--the inner
+//    type is an implementation detail that doesn't affect the wrapper's
+//    own constness.
+//
+template<typename T, bool TopLevel>  // rewrappable wrappers [1]
+struct ConstifyHelper<T, TopLevel, enable_if_t<
+    HasWrappedType<T>::value and IsRewrappable<T>::value
+>>
 {
   private:
     using wrapped_consted = typename ConstifyHelper<
@@ -77,6 +91,15 @@ struct ConstifyHelper<T, TopLevel, enable_if_t<HasWrappedType<T>::value>>
   public:
     using consted = needful_rewrap_type(T, wrapped_consted);
     using unconsted = needful_rewrap_type(T, wrapped_unconsted);
+};
+
+template<typename T, bool TopLevel>  // non-rewrappable wrappers [2]
+struct ConstifyHelper<T, TopLevel, enable_if_t<
+    HasWrappedType<T>::value and not IsRewrappable<T>::value
+>>
+{
+    using consted = const T;
+    using unconsted = remove_const_t<T>;
 };
 
 #define needful_constify_t(T) \

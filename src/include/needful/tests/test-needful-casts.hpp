@@ -77,8 +77,9 @@ inline void test_cast_macro_commas()
     void(*fp)() = nullptr;
     void *vp = nullptr;
 
+    OUTER_MACRO(needful_integer_cast(int, 10));
     OUTER_MACRO(needful_pointer_cast(int*, i));
-    OUTER_MACRO(needful_integral_cast(intptr_t, ip));
+    OUTER_MACRO(needful_pointer_cast(intptr_t, ip));
     OUTER_MACRO(needful_function_cast(void(*)(int), fp));
     OUTER_MACRO(needful_valist_cast(va_list*, vp));
 
