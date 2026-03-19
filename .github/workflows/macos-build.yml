@@ -103,6 +103,25 @@ jobs:
     steps:  # (no indentatation needed below; so indent the minimum!)
 
 
+  #====# INSTALL BASH 4+ #====================================================#
+
+    # Bash 4 is GPLv3 not GPLv2, and so Apple doesn't ship it.  This means
+    # features like `declare -A` associative arrays are not available.  Since
+    # homebrew is preinstalled just use it.
+
+    - name: Install Bash 4+ and add to PATH
+      run: |
+        brew install bash
+        echo "/usr/local/bin" >> $GITHUB_PATH
+
+    - name: Check that Bash 4+ is available
+      run: |
+        if [ "${BASH_VERSINFO:-0}" -lt 4 ]; then
+          echo "Bash 4+ required. Current version: $BASH_VERSION"
+          exit 1
+        fi
+
+
   #====# CHECKOUT STEPS #=====================================================#
 
     # https://github.com/actions/checkout
