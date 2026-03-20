@@ -49,7 +49,8 @@ bind construct [
 
     let dump-one: proc [item] [
         switch:type item [
-            refinement?/  ; treat as label, /a no shift and shorter than "a"
+            integer!  ; treat as label
+            rune!
             text! [  ; good for longer labeling when you need spaces/etc.
                 let trunc
                 print unspaced [
@@ -67,7 +68,7 @@ bind construct [
             ]
 
             panic:blame [
-                "Item not TEXT!, INTEGER!, WORD!, TUPLE!, PATH!, GROUP!:" :item
+                "Item not [INTEGER! RUNE! TEXT! WORD! TUPLE! GROUP!]" item
             ] $value
         ]
     ]
