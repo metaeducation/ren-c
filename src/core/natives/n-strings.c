@@ -110,6 +110,7 @@ DECLARE_NATIVE(LATIN1_Q)
 //      return: [
 //          <null> "e.g. join text! []"
 //          any-utf8? any-list? any-sequence? blob!
+//          splice! pack!  "if requested by datatype!"
 //      ]
 //      base "If no base element and no material in rest to join, gives NULL"
 //          [datatype! any-utf8? any-list? any-sequence? blob!]
@@ -133,10 +134,17 @@ DECLARE_NATIVE(JOIN)
     Heart heart;
     if (Is_Datatype(ARG(BASE))) {
         base = nullptr;
-        Option(Heart) datatype_heart = Datatype_Heart(ARG(BASE));
-        if (not datatype_heart)
+        Option(Type) datatype_type = Datatype_Type(ARG(BASE));
+        if (datatype_type == TYPE_PACK or datatype_type == TYPE_SPLICE)
+            heart = HEART_BLOCK;
+        else if (
+            not datatype_type
+            or ii_cast(TypeEnum, datatype_type) > MAX_TYPE_ELEMENT
+        ){
             panic (PARAM(BASE));
-        heart = unwrap datatype_heart;
+        }
+        else
+            heart = ii_cast(Heart, datatype_type);
     }
     else {
         base = Element_ARG(BASE);
@@ -775,19 +783,23 @@ DECLARE_NATIVE(JOIN)
     if (ARG(TAIL) and delimiter)
         Copy_Cell(PUSH(), unwrap delimiter);
 
-    Sink(Element) out = OUT;
     if (Any_Sequence_Heart(heart)) {
         trap (
-          Pop_Sequence(out, heart, STACK_BASE)
+          Pop_Sequence(OUT, heart, STACK_BASE)
         );
     }
     else {
         Source* a = Pop_Managed_Source_From_Stack(STACK_BASE);
-        Init_List(out, heart, a);
+        if (joining_datatype and Datatype_Type(ARG(BASE)) == TYPE_SPLICE)
+            Init_Splice(OUT, a);
+        else if (joining_datatype and Datatype_Type(ARG(BASE)) == TYPE_PACK)
+            Init_Pack(OUT, a);
+        else
+            Init_List(OUT, heart, a);
     }
 
     if (not joining_datatype)
-        Tweak_Cell_Binding(out, Cell_Binding(unwrap base));
+        Tweak_Cell_Binding(As_Element(OUT), Cell_Binding(unwrap base));
 
     return BOUNCE_OUT;
 

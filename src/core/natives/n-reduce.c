@@ -115,26 +115,24 @@ DECLARE_NATIVE(HOLE_Q)
 }
 
 
-// PACK piggy-backs on REDUCE's implementation.  But REDUCE ignores VOID!
-// (at least by default--maybe someday a refinement will control it being able
-// to see them...but it's too annoying to pass voids to predicates in the
-// general case).  So it can't be just REDUCE:PREDICATE with LIFT, it has to
-// slip in a flag to tell REDUCE to behave like PACK.
+// REDUCE is intended for things like PACK, that want a 1:1 expression to
+// result relationship.  This means not discarding VOID! automatically...but
+// also naming-wise it would seem strange if `reduce [x]` could produce a long
+// block like `[1 2 3 4 5]` if X is SPLICE!, that doesn't seem like "reducing"!
 //
-// Note: Since REDUCE and PACK are FRAME!-compatible, there could be a special
-// value of the :PREDICATE refinement that cued PACK! behavior.  One might
-// even say that some trick like "pass a quoted FRAME! and you get VOID!"
-// could be a back-door to the functionality, vs. bloating the frame with an
-// extra refinement.  For now avoiding weird magic, or exposing the feature
-// via something users could trip over accidentally.
+// Hence the default behavior with no predicate will error if an expression
+// has more or less than one result.  But for maximum flexibility, a predicate
+// function is allowed to return VOID! or an arbitrary SPLICE!.  We use a
+// flag on the cell being processed to indicate if it came from a predicate
+// evaluation or not.
 //
-#define LEVEL_FLAG_REDUCE_IS_ACTUALLY_PACK  LEVEL_FLAG_MISCELLANEOUS
+#define CELL_FLAG_SUBOUT_NOTE_FROM_PREDICATE  CELL_FLAG_NOTE
 
 
 //
 //  /reduce: native [
 //
-//  "Evaluates expressions, keeping each result in a block, discards voids"
+//  "Evaluates N expressions to produce N results (but discards BLANK!)"
 //
 //      return: [<null> element?]
 //      value "Lists evaluate each item, single values evaluate"
@@ -207,10 +205,9 @@ DECLARE_NATIVE(REDUCE)
 
 } next_reduce_step: {  ///////////////////////////////////////////////////////
 
-  // 1. !!! Skipping BLANK! saves time here, but raises questions regarding
-  //    RebindableSyntax...what if BLANK! has been rethought not to make
-  //    voids?  It's actually semantically important for PACK (which reuses
-  //    this code) to skip the blanks, so this needs further thought.
+  // 1. When you write e.g. `pack [1 + 2, 3 + 4]` that should be a 2-element
+  //    PACK!, not a 3-element one with a lifted VOID! in the middle.  So
+  //    we don't want an evaluation step on the BLANK!.
   //
   // 2. We want the output newline status to mirror newlines of the start
   //    of the eval positions.  But when the evaluation callback happens, we
@@ -222,11 +219,11 @@ DECLARE_NATIVE(REDUCE)
 
     if (Is_Blank(At_Level(SUBLEVEL))) {
         Fetch_Next_In_Feed(SUBLEVEL->feed);
-        goto next_reduce_step;  // PACK can't let BLANK! eval to VOID! [1]
+        goto next_reduce_step;  // don't want BLANK! to eval to VOID! [1]
     }
 
     if (Get_Cell_Flag(At_Level(SUBLEVEL), NEWLINE_BEFORE))
-        Set_Cell_Flag(v, NEWLINE_BEFORE);  // cache newline flag [1]
+        Set_Cell_Flag(v, NEWLINE_BEFORE);  // cache newline flag [2]
     else
         Clear_Cell_Flag(v, NEWLINE_BEFORE);
 
@@ -237,25 +234,16 @@ DECLARE_NATIVE(REDUCE)
 
 } reduce_step_result_in_subout: { ////////////////////////////////////////////
 
-  // 1. If not doing (pack [...]) semantics, we skip voids.  Consider:
-  //
-  //        >> reduce:predicate [1 + 2, if 3 = 4 [5], 6 + 7] negate/
-  //        == [-3 -7]
-  //
-  //    NEGATE doesn't necessarily accept voids, but we'd still like to be
-  //    able to vanish the light void that IF makes.
+    if (Is_Cell_A_Veto_Hot_Potato(SUBOUT))  // predicates are not offered veto
+        goto vetoed;  // veto means stop processing and return NULL
 
-    if (Get_Level_Flag(LEVEL, REDUCE_IS_ACTUALLY_PACK)) {
-        Copy_Lifted_Cell(PUSH(), SUBOUT);
-        Sync_Toplevel_Baseline_After_Pushes(SUBLEVEL);
-        goto next_reduce_step;
-    }
-
-    if (not predicate)  // default is no processing
+    if (not predicate)
         goto process_subout;
 
-    if (Is_Void(SUBOUT))
-        goto next_reduce_step;  // don't pass voids to predicate [1]
+    if (Frame_Phase(unwrap predicate) == Frame_Phase(LIB(LIFT))) {
+        Lift_Cell(SUBOUT);  // optimize this case (used by PACK)
+        goto process_subout;  // (likely better to optimize all intrinsics!)
+    }
 
     SUBLEVEL->executor = &Skip_Me_Executor;
     STATE = ST_REDUCE_RUNNING_PREDICATE;
@@ -267,24 +255,27 @@ DECLARE_NATIVE(REDUCE)
     Copy_Cell(Level_Out(TOP_LEVEL->prior), Level_Out(TOP_LEVEL));
     Drop_Level(TOP_LEVEL);
 
+    if (Is_Cell_A_Veto_Hot_Potato(SUBOUT))
+        goto vetoed;  // veto means stop processing and return NULL
+
+    Set_Cell_Flag(SUBOUT, SUBOUT_NOTE_FROM_PREDICATE);
+
     goto process_subout;
 
 } process_subout: {  /////////////////////////////////////////////////////////
 
-  // 1. The sublevel that is pushed to run reduce evaluations uses the data
-  //    stack position captured in BASELINE to tell things like whether a
-  //    function dispatch has pushed refinements, etc.  When the REDUCE
-  //    underneath it pushes a value to the data stack, that level must be
-  //    informed the stack element is "not for it" before the next call.
+  // 1. See SUBOUT_NOTE_FROM_PREDICATE about why we only allow expressoins
+  //    to be more or less than 1 result if they come from predicate eval.
   //
   // 2. See above section for how we remembered the newline that was on the
   //    source originally, and cache it on the input argument cell.
 
-    if (Is_Void(SUBOUT))
-        goto next_reduce_step;  // void results are skipped by reduce
-
-    if (Is_Cell_A_Veto_Hot_Potato(SUBOUT))
-        goto vetoed;  // veto means stop processing and return NULL
+    if (
+        Any_Void(SUBOUT)
+        and Get_Cell_Flag(SUBOUT, SUBOUT_NOTE_FROM_PREDICATE)  // [1]
+    ){
+        goto next_reduce_step;
+    }
 
     require (
       Stable* subout = Decay_If_Unstable(SUBOUT)
@@ -292,6 +283,12 @@ DECLARE_NATIVE(REDUCE)
     if (Is_Splice(subout)) {
         const Element* tail;
         const Element* at = List_At(&tail, subout);
+        if (
+            at + 1 != tail
+            and Not_Cell_Flag(SUBOUT, SUBOUT_NOTE_FROM_PREDICATE)  // [1]
+        ){
+            panic ("SPLICE! used in REDUCE w/no predicate must be 1 item");
+        }
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);  // [2]
         for (; at != tail; ++at) {
             Copy_Cell(PUSH(), at);  // Note: no binding on antiform SPLICE!
@@ -300,9 +297,11 @@ DECLARE_NATIVE(REDUCE)
                 newline = false;
             }
         }
+        Sync_Toplevel_Baseline_After_Pushes(SUBLEVEL);
+        goto next_reduce_step;
     }
     else if (Is_Antiform(subout))
-        panic (Error_Bad_Antiform(subout));  // [4]
+        panic (Error_Bad_Antiform(subout));
     else {
         Move_Cell(PUSH(), As_Element(subout));
 
@@ -352,7 +351,7 @@ DECLARE_NATIVE(REDUCE)
 //
 DECLARE_NATIVE(PACK)
 //
-// PACK piggy-backs on REDUCE.  See LEVEL_FLAG_REDUCE_IS_ACTUALLY_PACK.
+// PACK piggy-backs on REDUCE (it's REDUCE with PREDICATE of LIFT)
 //
 // 1. A PINNED! pack will just lifts the items as-is:
 //
@@ -388,8 +387,7 @@ DECLARE_NATIVE(PACK)
 
         assert(Is_Block(block));
         assert(Is_Light_Null(LOCAL(PREDICATE)));
-        Init_Null_Signifying_Unspecialized(LOCAL(PREDICATE));
-        Set_Level_Flag(LEVEL, REDUCE_IS_ACTUALLY_PACK);
+        Copy_Cell(LOCAL(PREDICATE), LIB(LIFT));
     }
 
     Bounce b = Irreducible_Bounce(

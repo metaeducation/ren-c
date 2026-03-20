@@ -1,10 +1,5 @@
 ; functions/control/reduce.r
 ([1 2] = reduce [1 1 + 1])
-(
-    success: 'false
-    reduce [elide success: 'true]
-    true? success
-)
 ([] = reduce [])
 ("1 + 1" = reduce "1 + 1")
 (error? first reduce [rescue [1 / 0]])
@@ -34,30 +29,29 @@
     }
 )
 
-; Invisibles tests
+; Antiforms no longer tolerated unless passed to predicate
 [
-    ([] = reduce [comment <ae>])
-    ([304 1020] = reduce [comment <AE> 300 + 4 1000 + 20])
-    ([304 1020] = reduce [300 + 4 comment <AE> 1000 + 20])
-    ([304 1020] = reduce [300 + 4 1000 + 20 comment <AE>])
-]
+    ~???~ !! (reduce [comment <ae>])
+    ~???~ !! (reduce [opt ~null~])
 
-([3 11] = reduce [1 + 2 elide 3 + 4 5 + 6])
-([1] = reduce [1 elide <vaporize>])
+    (['1 ~] = reduce:predicate [1 elide <vaporize>] lift/)
+
+    (
+        success: 'false
+        reduce:predicate [elide success: 'true] identity/
+        true? success
+    )
+]
 
 
 ~bad-antiform~ !! (
     reduce [null]
 )
-([] = reduce [opt null])
 
 ~bad-antiform~ !! (
     reduce [~null~]
 )
-([] = reduce [opt ~null~])
 
-
-([] = reduce [^void])
 
 
 ; === PREDICATES ===
@@ -65,9 +59,6 @@
 ; There was a bug pertaining to trying to set the new line flag on the output
 ; in the case of a non-existent null, test that.
 [
-    ([] = reduce [
-        opt null
-    ])
     ([ZOMG <!!!> 1020 #wow] = apply reduce/ [
         ['ZOMG null 1000 + 20 #wow]
         predicate: lambda [x] [any [x, <!!!>]]
@@ -76,14 +67,14 @@
 
 ~expect-arg~ !! (reduce:predicate [null] cascade [null?/ non/])
 
-; Voids not offered to predicates
-; https://forum.rebol.info/t/should-void-be-offered-to-predicates-for-reduce-any-all-etc/1872
-;
-(['3 '300] = reduce:predicate [
+(['3 ~ '300] = reduce:predicate [
     1 + 2 ^void 100 + 200
 ] lift/)
 
-([-3 -300] = reduce:predicate [1 + 2 if null [10 + 20] 100 + 200] negate/)
+([-3 -300] = reduce // [
+    [1 + 2 if null [10 + 20] 100 + 200]
+    predicate: func [^x] [if void? ^x [return ~] return negate x]
+])
 ([3 300] = reduce:predicate [1 + 2 if null [10 + 20] 100 + 200] opt/)
 
 ([3 ~null~ 300] = reduce:predicate [1 + 2 if ok [null] 100 + 200] reify/)
@@ -92,11 +83,7 @@
 ([3 ~null~ 300] = reduce:predicate [1 + 2 null 100 + 200] reify/)
 ([3 300] = reduce:predicate [1 + 2 null 100 + 200] opt/)
 
-; REDUCE* is a specialization of REDUCE with OPT
-;
-([3 300] = reduce* [1 + 2 null 100 + 200])
-
-~bad-antiform~ !! (reduce:predicate [1 + 2 3 + 4] lambda [x] [x * 10])
+~expect-arg~ !! (reduce:predicate [1 + 2 null 3 + 4] lambda [x] [x * 10])
 ([30 70] = reduce:predicate [1 + 2 3 + 4] func [x] [return x * 10])
 
 ([~okay~ ~null~] = reduce:predicate [2 + 2 3 + 4] cascade [even?/ reify/])
@@ -128,9 +115,13 @@
     )
 ]
 
-; SPREAD is honored by REDUCE
+; SPREAD is honored by REDUCE only if 1 item or a predicate used
 [
-    ([1 2 3 4] = reduce [1 if ok [spread [2 3]] 4])
+    ~???~ !! (reduce [1 if ok [spread []] 2])
+    ([1 2] = reduce:predicate [1 if ok [spread []] 2] identity/)
+    ([1 2 3] = reduce [1 if ok [spread [2]] 3])
+    ~???~ !! (reduce [1 if ok [spread [2 3]] 4])
+    ([1 2 3 4] = reduce:predicate [1 if ok [spread [2 3]] 4] identity/)
 ]
 
 ; VETO can be used in REDUCE
@@ -138,7 +129,7 @@
     (null = reduce [1 + 2 veto])
     (null = reduce [1 + 2 lib.veto])
 
-    ; !!! Should predicates be offered VETO?
+    ; predicates are not offered VETO
     ;
-    ([~(veto)~ ~(veto)~] = reduce:predicate [veto veto] lift/)
+    (null = reduce:predicate [veto veto] lift/)
 ]

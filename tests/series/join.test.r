@@ -7,6 +7,20 @@
 ;
 ; https://forum.rebol.info/t/rejoin-ugliness-and-the-usefulness-of-tests/248
 
+; Invisibles tests (REDUCE no longer vaporizes COMMENT)
+[
+    ([] = join block! [comment <ae>])
+    ([304 1020] = join block! [comment <AE> 300 + 4 1000 + 20])
+    ([304 1020] = join block! [300 + 4 comment <AE> 1000 + 20])
+    ([304 1020] = join block! [300 + 4 1000 + 20 comment <AE>])
+
+    ([3 11] = join block! [1 + 2 elide 3 + 4 5 + 6])
+    ([1] = join block! [1 elide <vaporize>])
+]
+
+([] = join block! [opt null])
+([] = join block! [^void])
+
 ('a/b/c = join 'a/b '/c)
 ('a/b/c = join path! [a/b /c])
 ('a/b/c/d = join path! reduce ['a/b '/c '/d])
@@ -91,3 +105,8 @@
 ;
 (null = join text! [])
 ([] = join block! [])
+
+; Make SPLICE! or PACK! via JOIN...allows erasure but doesn't lift pack items
+;
+(~[10 20]~ = join splice! [1 * 10 comment "hi" 2 * 10])
+('~('10 '20)~ = lift join pack! [lift 1 * 10 comment "hi" lift 2 * 10])

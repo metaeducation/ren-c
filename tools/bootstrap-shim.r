@@ -651,16 +651,16 @@ join: func3 [
         ]
     ]
 
-    if datatype? base [
+    if datatype? base [  ; note: bootstrap REDUCE erases VOID! atm
         if base = blob! [
             assert [block? value]
             return to blob! value
         ]
-        any [base = path!, base = tuple!] then [
+        any [base = path!, base = tuple!, base = block!] then [
             assert [block? value]
             return to base reduce value
         ]
-        panic ["JOIN of DATATYPE! only [BLOB! TUPLE! PATH!] in bootstrap"]
+        panic ["JOIN DATATYPE! [BLOB! TUPLE! PATH! BLOCK!] in bootstrap"]
     ]
     if void? :value [
         return copy base

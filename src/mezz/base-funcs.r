@@ -418,12 +418,6 @@ vacant?: redescribe [
     match error! enrescue code
 ]
 
-/reduce*: redescribe [  ; !!! dialected calls, could be REDUCE/OPT
-    "REDUCE a block but vaporize NULL Expressions"
-](
-    specialize reduce/ [predicate: opt/]
-)
-
 /for-next: redescribe [
     "Evaluates a block for each position until the end, using NEXT to skip"
 ](

@@ -164,7 +164,7 @@ bind construct [
             input-name: spec.'1  ; should pick up binding of instance
             assert [word? input-name]  ; can call it almost anything you want
             let [description types]: if block? spec.2 [  ; no description
-                pack [none spec.2]
+                pack [null spec.2]
                 elide spec: my skip 2
             ] else [
                 pack [ensure text! spec.2, ensure block! spec.3]
@@ -174,8 +174,8 @@ bind construct [
                 types = [any-series?]
                 types = [any-list?]
             ]]
-            spread reduce [
-                input-name description types  ; description may be NONE
+            join splice! [
+                input-name opt description types
             ]
         )
 
