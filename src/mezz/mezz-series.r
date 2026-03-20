@@ -214,8 +214,8 @@ bind construct [
     ;     >> parse "1 1 1" [some ['1 [space | <end>]]]
     ;     == 1
     ;
-    if match [integer! word!] opt prefix [prefix: to-text prefix]
-    if match [integer! word!] opt suffix [suffix: to-text suffix]
+    if match [integer! word!] cond prefix [prefix: to-text prefix]
+    if match [integer! word!] cond suffix [suffix: to-text suffix]
 
     ; TO MAP! will create a map with no duplicates from the input if it
     ; is a BLOCK! (though differing cases of the same key will be preserved).
