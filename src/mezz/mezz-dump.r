@@ -17,9 +17,9 @@ dump: vanishable func [
     "Show the name of a value or expressions with the value (See Also: --)"
 
     return: [void!]
-    @(value) [any-stable?]
-    @extra "Optional variadic data for SET-WORD!, e.g. `dump x: 1 + 2`"
-        [element? <variadic>]
+    @value [any-element?]
+    extra "Optional variadic data for SET-WORD!, e.g. `dump x: 1 + 2`"
+        [any-value? <variadic>]
     :prefix "Put a custom marker at the beginning of each output line"
         [text!]
 ](
@@ -35,7 +35,7 @@ bind construct [
         eval f
     ]
 
-    let val-to-text: func [return: [text!] ^val [any-stable?]] [
+    let val-to-text: func [return: [text!] ^val [any-value?]] [
         return case [
             antiform? ^val [unspaced [mold lift ^val _ _ "; anti"]]
             object? val [unspaced ["make object! [" (summarize-obj val) "]"]]
@@ -59,8 +59,12 @@ bind construct [
                 ]
             ]
 
-            word! tuple! group! [
-                print [@(setify item) val-to-text get:groups:any item]
+            word! tuple! [  ; GET:GROUPS doesn't work on ^(...) at this time
+                print [@(setify item) val-to-text get:groups meta item]
+            ]
+
+            group! [  ; could use GET:GROUPS, consider unification
+                print [@(setify item) val-to-text eval item]
             ]
 
             rune! [
@@ -76,16 +80,16 @@ bind construct [
     let swp
     case [
         swp: match [set-word? set-tuple?] value [  ; `dump x: 1 + 2`
-            let [pos ^result]: evaluate:step extra
-            set swp ^result
-            print [swp, ^result]
+            let [pos ^result]: take extra  ; variadic TAKE does eval step
+            set unchain swp ^result
+            print [@swp, ^result]
         ]
 
         let b: match block! value [
             until [tail? b] [
                 if swp: match [set-word? set-tuple?] :b.1 [  ; `dump [x: 1 + 2]`
                     [b result]: evaluate:step b
-                    print [swp, result]
+                    print [@swp, result]
                 ] else [
                     dump-one b.1
                     b: next b
