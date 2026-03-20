@@ -851,7 +851,15 @@ sys.util/make-scheme [
         ][
             if value = [HEAD] [  ; used by INFO?
                 let headers: copy ""
-                call:output [curl --fail -sI (port.spec.ref)] headers
+                call:output [curl --fail -sI (port.spec.ref)] headers except [
+                    ;
+                    ; We need to report the finer points of this error; e.g.
+                    ; was the URL malformed or was it a 404 etc.  By passing
+                    ; --fail we sort of lump this all together w/the exitcode
+                    ; from curl.
+                    ;
+                    return fail "Could not make HEAD request"
+                ]
                 let info: parse headers [gather [  ; note: case-insensitive
                     some [
                         "Content-Length:" _ emit size: integer!
