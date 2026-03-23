@@ -1373,18 +1373,18 @@ INLINE Stable* Constify(Stable* v) {
 //
 
 #define DECLARE_VALUE(name) \
-    Value name##_atom; \
-    Value* const name = FORCE_TRACK_0(&name##_atom); \
+    Value name##_struct; \
+    Value* const name = FORCE_TRACK_0(&name##_struct); \
     Force_Erase_Cell_Untracked(name)  // single assignment of 0 to header
 
 #define DECLARE_STABLE(name) \
-    Stable name##_value; \
-    Stable* const name = FORCE_TRACK_0(&name##_value); \
+    Stable name##_struct; \
+    Stable* const name = FORCE_TRACK_0(&name##_struct); \
     Force_Erase_Cell_Untracked(name)  // single assignment of 0 to header
 
 #define DECLARE_ELEMENT(name) \
-    Element name##_element; \
-    Element* const name = FORCE_TRACK_0(&name##_element); \
+    Element name##_struct; \
+    Element* const name = FORCE_TRACK_0(&name##_struct); \
     Force_Erase_Cell_Untracked(name)  // single assignment of 0 to header
 
 
