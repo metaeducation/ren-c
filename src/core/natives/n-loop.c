@@ -1666,7 +1666,7 @@ DECLARE_NATIVE(EVERY)
 //      @(vars) "Word or block of words to set each time, no new var if $word"
 //          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      data "The series to traverse (modified)"
-//          [<opt> any-series?]  ; !!! can't do QUOTED!
+//          [<opt> none? any-series?]  ; !!! can't do QUOTED!
 //      body [<const> block! frame!]  ; [A]
 //  ]
 //
@@ -1686,7 +1686,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     Count removals = 0;
 
-    if (not ARG(DATA)) {
+    if (not ARG(DATA) or Is_None(unwrap ARG(DATA))) {
         Init_None(OUT);
         goto return_pack;
     }

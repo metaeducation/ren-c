@@ -1628,7 +1628,7 @@ DECLARE_NATIVE(ENVELOP)
 //
 //  "Efficient destructive merging operation that reuses appended memory"
 //
-//      return: [none? block! quoted!]
+//      return: [none? block!]  ; not QUOTED! [1]
 //      items1 [
 //          word! tuple!  "variable to fetch and update with result"
 //          none?  "empty value, will be ignored"
@@ -1642,21 +1642,26 @@ DECLARE_NATIVE(GLOM)
 //
 // GLOM was designed to bubble up `pending` values (e.g. collected values) in
 // UPARSE, which are lists...but often they will be empty.  So creating lots of
-// empty blocks was undesirable.  Allowing accumulators to start at hole
+// empty blocks was undesirable.  Allowing accumulators to start at NONE
 // and be willing to start by taking over a bubbled up BLOCK! was desirable.
-// Using QUOTED! as a light container for one item also has benefits.
 //
-// https://rebol.metaeducation.com/t/consuming-append-like-operator/1647
+// Because it wants to co-opt identity from either argument, BLOCK! has to be
+// the currency.  But rather than taking SPLICE! if you are adding an element,
+// it takes QUOTED! as they are more lightweight than single-element splices
+// can be (at time of writing).
 //
 // GLOM only works with mutable arrays, as part of its efficiency.  Diminish
 // the smaller array that we are not returning so GC will reclaim its memory
 // (even if there are outstanding references--it will canonize them to a
 // canon freed Stub when it does the sweeping).
 //
-// 1. If the accumulator or result are blocks, there's no guarantee they are
-//    at the head.  Series_Index() might be nonzero.  GLOM could prohibit that
-//    or just take advantage of it if it's expedient (e.g. avoid a resize by
-//    moving the data within an array and returning a 0 index).
+// 1. Once GLOM would return a QUOTED! as a light single-item container if you
+//    did something like (glom none 'x).  That burdened clients who were doing
+//    things like REMOVE-EACH on the result (and the function calls to branch
+//    that handling were way more costly than one measly Stub).  So the key is
+//    taking QUOTED! as an argument, but not returning it:
+//
+//    https://rebol.metaeducation.com/t/optimizing-quoted-as-container/2609
 {
     INCLUDE_PARAMS_OF_GLOM;
 
@@ -1697,16 +1702,21 @@ DECLARE_NATIVE(GLOM)
             panic (Error_Invalid_Arg(LEVEL, param));
     }
 
-} handle_hole_cases: {
+} handle_none_cases: {
 
-    if (Is_None(ARG(ITEMS1))) {
-        Copy_Cell(OUT, ARG(ITEMS2));  // one is a hole, two may or may not be
-        goto return_out;
+  // 1. If the accumulator or result are blocks, there's no guarantee they are
+  //    at the head.  Series_Index() might be nonzero.  GLOM could prohibit it
+  //    or just take advantage of it if it's expedient (e.g. avoid a resize by
+  //    moving the data within an array and returning a 0 index).
+
+    if (Is_None(ARG(ITEMS1))) {  // one is a none, two may or may not be
+        Copy_Cell(OUT, ARG(ITEMS2));
+        goto return_out_make_block_if_quoted;
     }
 
-    if (Is_None(ARG(ITEMS2))) {  // two isn't a hole, but one is
+    if (Is_None(ARG(ITEMS2))) {  // one isn't a none, but two is
         Copy_Cell(OUT, ARG(ITEMS1));
-        goto return_out;
+        goto return_out_make_block_if_quoted;
     }
 
     Element* one = Element_ARG(ITEMS1);  // may not be at head [1]
@@ -1779,10 +1789,28 @@ DECLARE_NATIVE(GLOM)
     Diminish_Stub(a1);
     goto return_out;
 
-}}} return_out: {  ///////////////////////////////////////////////////////////
+}}} return_out_make_block_if_quoted: {  //////////////////////////////////////
+
+  // See notes at top of function: we no longer treat QUOTED! as a single
+  // item container result from GLOM for client convenience.
+
+    if (Is_Cell_Quoted(As_Stable(OUT))) {
+        dont(Alloc_Singular(STUB_MASK_MANAGED_SOURCE));  // would be locked
+        Source* a = Make_Source_Managed(1);
+        Set_Flex_Len(a, 1);
+        Element* item = Copy_Cell(Stub_Cell(a), As_Element(OUT));
+        Unquote_Quoted_Cell(item);
+        Init_Block(OUT, a);
+    }
+
+    goto return_out;
+
+} return_out: { //////////////////////////////////////////////////////////////
 
   // If we were passed a variable that we fetched, we also need to do the
   // update of that variable with whatever we put in OUT.
+
+    assert(Is_None(As_Stable(OUT)) or Is_Block(As_Stable(OUT)));
 
     if (not Is_Cell_Erased(SCRATCH)) {
         Element* items1 = Copy_Cell(  // restore original for writeback

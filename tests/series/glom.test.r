@@ -7,6 +7,9 @@
 ([a] = glom [a] ~[]~)
 ([a] = glom ~[]~ [a] )
 
+([a] = glom the 'a ~[]~)
+([a] = glom ~[]~ the 'a)
+
 ([a [b c]] = glom [a] quote [b c])
 ([a b c] = glom [a] [b c])
 

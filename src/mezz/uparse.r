@@ -1077,7 +1077,8 @@ default-combinators: make map! [
     ; 4. We could keep a quasi-block as a SPLICE! and not flatten it here,
     ;    but the problem would be if someone made a splice and then changed
     ;    the underlying array later.  So we go ahead and flatten it into
-    ;    individual quoted items.
+    ;    individual quoted items.  REVIEW: Add support for SPLICE to GLOM,
+    ;    at least second argument?
 
     'collect combinator [
         "Return a block of collected values from usage of the KEEP combinator"
@@ -1089,25 +1090,16 @@ default-combinators: make map! [
     ][
         [^ input pending]: trap parser input
 
-        case [  ; COLLECT looks for QUOTED! [B]
-            none? pending []
-
-            (quoted? pending) and (quoted? unquote pending) [
-                result: envelop [] unquote unquote pending
-                pending: none
-            ]
-        ] else [
-            result: collect [  ; new array usually not needed [2]
-                remove-each 'item pending [
-                    if quoted? item [
-                        keep unquote item
-                        okay
-                    ]
+        result: collect [  ; COLLECT looks for QUOTED! [B]
+            remove-each item pending [
+                if quoted? item [
+                    keep unquote item
+                    okay
                 ]
             ]
         ]
 
-        return any [result, copy []]
+        return result
     ]
 
     'keep combinator [
@@ -1131,7 +1123,7 @@ default-combinators: make map! [
                 glom $pending quote quote decayed
             ]
             splice? decayed [  ; flatten splice; saving it would be risky [4]
-                for-each 'item unsplice decayed [
+                for-each item unsplice decayed [
                     glom $pending quote quote item
                 ]
             ]
@@ -1200,24 +1192,15 @@ default-combinators: make map! [
     ][
         [^ input pending]: trap parser input
 
-        case [  ; default combinators GATHER owns FENCE! [B]
-            none? pending []
-
-            (quoted? pending) and (fence? unquote pending) [
-                result: construct unquote pending
-                pending: none
-            ]
-        ] else [
-            result: construct collect [
-                remove-each 'item pending [
-                    if fence? item [
-                        keep spread item, okay
-                    ]
+        result: construct collect [  ; by default GATHER owns FENCE! [B]
+            remove-each item pending [
+                if fence? item [
+                    keep spread item, okay
                 ]
             ]
-        ]
+        ]  ; !!! empty object, vs a FAILURE! if empty COLLECT spec
 
-        return any [result {}]  ; !!! empty object, vs a FAILURE! ?
+        return result
     ]
 
     'emit combinator [
