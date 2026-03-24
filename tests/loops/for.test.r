@@ -245,3 +245,12 @@
     ~expect-arg~ !! (for-each 'x '~ [panic])
     ~unspecified-arg~ !! (for-each 'x ~ [panic])
 ]
+
+; CONTINUE / CONTINUE* should not produce raw null or void as loop product
+[
+    ('~()~ = lift for-each 'x [1 2 3] [continue ~])
+    ('~()~ = lift for-each 'x [1 2 3] [continue ~()~])
+
+    ('~(~null~)~ = lift for-each 'x [1 2 3] [continue null])
+    ('~(~null~)~ = lift for-each 'x [1 2 3] [continue heavy null])
+]

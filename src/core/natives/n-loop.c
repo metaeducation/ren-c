@@ -104,6 +104,7 @@ bool Loop_Body_Threw_And_Cant_Catch_Continue(
         and Frame_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
+        Force_Cell_Heavy(out);  // void and light null reserved signals
         return false;  // *did* catch
     }
 
