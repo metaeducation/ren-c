@@ -84,7 +84,7 @@ pi: final 3.14159265358979323846
     skip: default [1]
     if 1 > skip [cause-error 'script 'out-of-range skip]
     let spot: series
-    iterate-skip @series skip [
+    iterate-skip $series skip [
         if (comparator // [first series first spot]) [spot: series]
     ]
     return spot

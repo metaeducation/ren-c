@@ -358,7 +358,7 @@ bind construct [
 
     index: default [1]
     let out: make (type of series) len
-    iterate-skip @series width [
+    iterate-skip $series width [
         append out opt (try pick series index)
     ]
     return out
