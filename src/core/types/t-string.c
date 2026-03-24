@@ -362,6 +362,7 @@ DECLARE_NATIVE(TO_TEXT)
                 STRMODE_ALL_CODEPOINTS
             )
         );
+        return BOUNCE_OUT;
     }
 
     return rebValue("to text! @", ARG(VALUE));
