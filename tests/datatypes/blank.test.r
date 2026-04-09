@@ -6,9 +6,9 @@
 (rune! = type of space)
 
 (space = _)
-(space = ')
+(space = '_)
 
-(null? to opt null 1)  ; TO's universal protocol for space 1st argument
+(null? to cond null 1)
 
 ("_" = mold space)
 

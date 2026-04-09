@@ -30,21 +30,26 @@
 //
 //  /type-of: pure native [
 //
-//  "Give back the type of a value (all quoted values return QUOTED!)"
+//  "Type of a stable value (all quoted values return QUOTED!)"
 //
-//      return: [datatype! failure!]
-//      value "TYPE OF NULL gives an FAILURE!, say TRY TYPE OF NULL if meant"
-//          [<null> any-stable?]
+//      return: [datatype!]  ; !!! propagate FAILURE! if input is FAILURE! ?
+//      value [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(TYPE_OF)
+//
+// 1. Early thinking was that TYPE OF would give a FAILURE! on NULL, and you
+//    would use `try type of x` to get a null if it was null.  This was deemed
+//    too prescriptive since NULL is now a LOGIC!.  Allowing TYPE OF on all
+//    stable values is in line with allowing conditional tests on all stable
+//    values; this creates some risk but also feature contrast with something
+//    that won't decay like VOID! or TRASH!.  (type of cond x) can also be
+//    used for NULL-in-NULL-out if that is desired.
 {
     INCLUDE_PARAMS_OF_TYPE_OF;
 
     Stable* v = ARG(VALUE);
-
-    if (Is_Null(v))
-        return fail (Error_Type_Of_Null_Raw());  // caller can TRY if meant
+    possibly(Is_Null(v));  // returns LOGIC! [1]
 
     return COPY_TO_OUT(Datatype_Of(v));
 }
@@ -56,17 +61,16 @@ DECLARE_NATIVE(TYPE_OF)
 //  "Give back a cell's heart (e.g. HEART OF ~FOO~ or ''FOO is WORD!)"
 //
 //      return: [datatype!]
-//      value "Antiforms not accepted, use (heart of lift value) if needed"
-//          [element?]
+//      value [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(HEART_OF)
 {
     INCLUDE_PARAMS_OF_HEART_OF;
 
-    Element* elem = ARG(VALUE);
+    Stable* v = ARG(VALUE);
 
-    Option(Heart) heart = Heart_Of(elem);
+    Option(Heart) heart = Heart_Of(v);
     if (heart)
         return COPY_TO_OUT(Datatype_From_Heart(unwrap heart));
 

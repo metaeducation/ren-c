@@ -15,7 +15,7 @@
 (logic? okay)
 (not logic? 1020)
 
-~type-test-null~ !! (integer? null)
+(null = integer? null)  ; was once illegal to type test nulls, now legal
 (null = integer? cond null)
 
 (not null? 1)

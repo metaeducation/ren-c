@@ -63,10 +63,6 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
 
     Option(Type) type = Type_Of(v);
 
-    if (Is_Null(v)) {  // stop casual use of (integer? var) when null
-        return fail (Error_Type_Test_Null_Raw());  // !!! Review: dumb idea?
-    }
-
     if (LEVEL->executor != &Intrinsic_Executor) {
         bool check_datatype = ARG(TYPE);
         if (check_datatype) {
