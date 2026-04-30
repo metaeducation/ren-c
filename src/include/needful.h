@@ -1294,14 +1294,4 @@ void Needful_Panic_Abruptly(const char* error) {
 #endif
 
 
-/****[[ TEMPORARY: NEEDFUL TESTS ]]*******************************************
-**
-** This is a temporary measure to allow the tests to be run without having
-** a separate build step to do so, just to start getting the tests written.
-*/
-
-#if NEEDFUL_CPP_ENHANCEMENTS && !defined(NDEBUG)
-    #include "needful-cpp/tests/all-needful-tests.hpp"
-#endif
-
 #endif  /* !defined(NEEDFUL_H_INCLUDED) */
