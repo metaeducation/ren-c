@@ -1,7 +1,7 @@
 /*
 **  file: %needful.h
 **  summary: "Single-header C library with Rust-grade safety when built as C++"
-**  homepage: <needful homepage TBD>
+**  homepage: https://needful.metaeducation.com
 **
 ******************************************************************************
 **
@@ -80,30 +80,15 @@
 **
 ****[[ NOTES ]]***************************************************************
 **
-** A. In C, bare `0` is a "null pointer constant" and converts implicitly to
-**    any pointer type.  But the comma operator strips that status: `(expr, 0)`
-**    is just an integer expression that happens to evaluate to 0, so
-**    assigning it to a pointer is an int-to-pointer conversion.  GCC and
-**    Clang warn about this:
+** A. Needful globally disables `-Wint-conversion` in C mode.  This is needed
+**    because `fail(...)` and `none` expand to comma expressions, and the
+**    comma operator strips the "null pointer constant" status of 0, causing
+**    GCC/Clang to warn on every `return fail(...)` in pointer-returning
+**    functions.  The C++ enhanced build catches any real type mistakes.
 **
-**       Something* f(void) { return 0; }          // fine: 0 is NPC
-**       Something* f(void) { return (expr, 0); }  // warned: not NPC
+**    See: https://needful.metaeducation.com/faq#int-conversion-warning
 **
-**    This matters for Needful because `fail(...)` expands to a comma
-**    expression ending in 0, and `none` can do the same.  So any function
-**    returning Result(Something*) or Option(Something*) would trigger
-**    `-Wint-conversion` on every `return fail(...)` or `return none`.
-**
-**    Needful disables the warning globally in C mode.  This is safe:
-**
-**      - The only code producing these conversions is Needful's own macros.
-**      - The C++ enhanced build catches any real type mistakes.
-**      - `nocast` provides the targeted int-to-pointer behavior in C++ when
-**        building without the full enhancements.
-**
-**    If you want the warning back for non-Needful code, you can set
-**    `#define NEEDFUL_DISABLE_INT_WARNING 0` and add your own
-**    pragma push/pop around call sites that use fail() or none.
+**    To restore the warning, set `#define NEEDFUL_DISABLE_INT_WARNING 0`.
 */
 
 #ifndef NEEDFUL_H_INCLUDED  /* "include guard" allows multiple #includes */
@@ -117,6 +102,8 @@
 
 
 /****[[ nocast: LEAST-ANNOYING-TO-C-PROGRAMMERS CAST OF malloc() etc. ]]******
+**
+** Docs: https://needful.metaeducation.com/nocast
 **
 ** If you wish to build C codebases as C++, crucial incompatibilities exist
 ** because C allows void* to be assigned to any pointer type:
@@ -215,6 +202,8 @@
 
 /***[[ nocast_0: Generically Make 0 Of Any Type ]]****************************
 **
+** Docs: https://needful.metaeducation.com/nocast#needful_nocast_0
+**
 ** Parts of Needful rely on being able to create a zero of any type T.  For
 ** primitive types this can be done with template magic.  But if you make any
 ** C++ classes to instrument your C code that use things like Option(MyType)
@@ -239,6 +228,8 @@
 
 /***[[ Need(T): NEVER NULL OR ZEROED TYPE, NON-BOOL COERCIBLE ]]**************
 **
+** Docs: https://needful.metaeducation.com/need
+**
 ** Need(T) is a way to indicate that a pointer or value of type T is required.
 ** The key reason for its existence is to protect against meaningless tests
 ** for "truthiness" that would coerce to bool:
@@ -261,6 +252,8 @@
 
 
 /***[[ Option(T): EXPLICITLY DISENGAGE-ABLE TYPE ]]***************************
+**
+** Docs: https://needful.metaeducation.com/option
 **
 ** Option() provides targeted functionality in the vein of Rust's `Option`
 ** and C++'s `std::optional`:
@@ -349,6 +342,8 @@ typedef enum {
 
 
 /****[[ Result(T): MULTIPLEXED ERROR AND RETURN RESULT ]]*********************
+**
+** Docs: https://needful.metaeducation.com/result
 **
 ** These macros provide a C/C++-compatible mechanism for propagating and
 ** handling errors in a style similar to Rust's `Result<T, E>`, all without
@@ -496,6 +491,9 @@ typedef enum {
 
 #if defined(NEEDFUL_DECLARE_RESULT_HOOKS) && NEEDFUL_DECLARE_RESULT_HOOKS
 
+#include <stdio.h>   /* fprintf, fflush, stderr */
+#include <stdlib.h>  /* exit */
+
 const char* g_needful_failure;  /* can only define once in project */
 
 const char* Needful_Test_And_Clear_Failure() {
@@ -527,7 +525,9 @@ void Needful_Panic_Abruptly(const char* error) {
 #endif  /* NEEDFUL_DECLARE_RESULT_HOOKS */
 
 
-/****[[ Sink(T): INDICATE FUNCTION OUTPUT PARAMETERS ]]***********************
+/****[[ Sink(T) / Init(T): INDICATE FUNCTION OUTPUT PARAMETERS ]]***********
+**
+** Docs: https://needful.metaeducation.com/contra
 **
 ** The idea behind a Sink() is to be able to mark on a function's interface
 ** when a function argument passed by pointer is intended as an output.
@@ -550,6 +550,8 @@ void Needful_Panic_Abruptly(const char* error) {
 
 
 /****[[ known(T,expr): CHEAP COMPILE-TIME MACRO TYPE ASSURANCE ]]************
+**
+** Docs: https://needful.metaeducation.com/known
 **
 ** Macros do not have type checking, which makes them dangerous.  So it is
 ** considered better to use inline functions if something is conceptually
@@ -618,6 +620,8 @@ void Needful_Panic_Abruptly(const char* error) {
 
 
 /****[[ VISIBLE (AND HOOKABLE!) ERGONOMIC CASTS ]]****************************
+**
+** Docs: https://needful.metaeducation.com/cast
 **
 ** These macros for casting provide *easier-to-spot* variants of parentheses
 ** cast (so you can see where the casts are in otherwise-parenthesized
@@ -973,6 +977,8 @@ void Needful_Panic_Abruptly(const char* error) {
 
 
 /****[[ COMMENTS WITH TEETH ]]************************************************
+**
+** Docs: https://needful.metaeducation.com/comments
 **
 ** The idea beind shorthands like `possibly()` is to replace comments that are
 ** carrying information about something that *might* be true:
