@@ -68,7 +68,7 @@
     #include "sys-core.h"
 #endif
 
-#include "needful/needful.h"  // provides cast(), UNUSED(), etc.
+#include "needful.h"  // provides cast(), UNUSED(), etc.
 
 #include "c-extras.h"  // provides INLINE, nullptr, etc.
 

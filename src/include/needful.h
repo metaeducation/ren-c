@@ -1277,7 +1277,7 @@ void Needful_Panic_Abruptly(const char* error) {
         #error "NEEDFUL_CPP_ENHANCEMENTS requires C++11 or later"
     #endif
 
-    #include "cplusplus/cplusplus-needfuls.hpp"
+    #include "needful-cpp/cplusplus-needfuls.hpp"
 #else
     #if NEEDFUL_OPTION_USES_WRAPPER
         #error "NEEDFUL_OPTION_USES_WRAPPER requires NEEDFUL_CPP_ENHANCEMENTS"
@@ -1301,7 +1301,7 @@ void Needful_Panic_Abruptly(const char* error) {
 */
 
 #if NEEDFUL_CPP_ENHANCEMENTS && !defined(NDEBUG)
-    #include "tests/all-needful-tests.hpp"
+    #include "needful-cpp/tests/all-needful-tests.hpp"
 #endif
 
 #endif  /* !defined(NEEDFUL_H_INCLUDED) */

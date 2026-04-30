@@ -5,8 +5,8 @@ extern char **environ;  // not guaranteed to be defined by unistd.h
 
 #ifdef USING_LIBREBOL  // need %sys-core.h variation for IMPLEMENT_GENERIC()
     #include <assert.h>
-    #include "needful/needful.h"
-     #include "c-extras.h"  // for EXTERN_C, nullptr, etc.
+    #include "needful.h"
+    #include "c-extras.h"  // for EXTERN_C, nullptr, etc.
 
     #include "rebol.h"
     typedef RebolValue Value;

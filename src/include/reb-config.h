@@ -61,7 +61,7 @@
 // just say it's the responsibility of whoever's doing the compiling to supply
 // it on the command line, as you have to for MSVC anyway.
 //
-// (See notes on definition in %needful/needful.h)
+// (See notes on definition in %needful.h)
 
 #if !defined(CPLUSPLUS_11)
   #if defined(__cplusplus) && __cplusplus >= 201103L

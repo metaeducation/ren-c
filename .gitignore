@@ -30,6 +30,12 @@
 # This is kept in the users home directory:  ~/.gitignore_global
 #
 
+# If you build with NEEDFUL_CPP_ENHANCEMENTS, then the needful.h committed into
+# the repository isn't enough.  You need to separately enlist in needful-cpp/
+# to get the necessary files.  That enlistment should be kept peer to where
+# needful.h is located, so it must be ignored.
+
+src/include/needful-cpp/
 
 # It is possible to build Rebol in any directory via an "out-of-source build"
 # https://softwareengineering.stackexchange.com/questions/365460/

@@ -66,7 +66,7 @@
   #endif
 
     #include "assert.h"
-    #include "needful/needful.h"
+    #include "needful.h"
     #include "c-extras.h"
 
     #include <stdio.h>

@@ -197,7 +197,7 @@ typedef RebolHandleCleaner HandleCleaner;
 // define your macros after including system headers, not before...
 //
 
-#include "needful/needful.h"
+#include "needful.h"
 
 
 //=//// SOME EXTRA C THINGS ///////////////////////////////////////////////=//

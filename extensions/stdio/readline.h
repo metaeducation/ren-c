@@ -36,7 +36,7 @@
 // detection (MSVC doesn't do this correctly).  We do not do it here because
 // of lack of include guards, but maybe we should put include guards in?
 //
-/* #include %needful/needful.h */
+/* #include %needful.h */
 
 
 #if (! TO_WINDOWS) && (TO_EMSCRIPTEN || defined(NO_TTY_ATTRIBUTES))

@@ -59,7 +59,7 @@
 #include "rebol.h"
 typedef RebolValue Value;
 
-#include "needful/needful.h"
+#include "needful.h"
 #include "c-extras.h"  // for EXTERN_C, nullptr, etc.
 
 
