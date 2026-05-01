@@ -616,7 +616,7 @@
 //    Since that would error, provide a generalized mechanism for optionally
 //    slipping decorators before the template<> definition.
 //
-#if NEEDFUL_CPP_ENHANCEMENTS  // requires needful_mirror_const_t
+#if NEEDFUL_CPP_ENHANCED  // requires needful_mirror_const_t
     #define MUTABLE_IF_C(ReturnType, ...) \
         template<typename T> \
         __VA_ARGS__ needful_mirror_const_t(T, ReturnType)

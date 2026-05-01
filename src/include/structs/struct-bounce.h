@@ -87,7 +87,7 @@ INLINE bool Is_Api_Value(const Value* v);
         Bounce(needful::Result0Struct) : b {nullptr} {}  // to accept `fail`
       #endif
 
-      #if NEEDFUL_CPP_ENHANCEMENTS
+      #if NEEDFUL_CPP_ENHANCED
         Bounce(needful::Nocast0Struct) : b {nullptr} {}  // Result(T) uses this
       #else
         explicit Bounce(int z) : b {nullptr} {

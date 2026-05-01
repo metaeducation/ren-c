@@ -676,18 +676,18 @@ Special internal defines used by RT, not Host-Kit developers:
 // mostly just to prove you could: most of the reason to build with C++ is to
 // get the compile-time checks that Needful provides.  And some other C++
 // features layer on top of Needful, and writing versions of them which are
-// conditional on NEEDFUL_CPP_ENHANCEMENTS being off would be a hassle.
+// conditional on NEEDFUL_CPP_ENHANCED being off would be a hassle.
 //
 // However, it may be desirable to turn off some of the more expensive parts
 // of needful in some situations.
 //
-#if !defined(NEEDFUL_CPP_ENHANCEMENTS)
-    #define NEEDFUL_CPP_ENHANCEMENTS  CPLUSPLUS_11
+#if !defined(NEEDFUL_CPP_ENHANCED)
+    #define NEEDFUL_CPP_ENHANCED  CPLUSPLUS_11
 #endif
 
 #define NEEDFUL_DOES_CORRUPTIONS  RUNTIME_CHECKS
 
-#if (! NEEDFUL_CPP_ENHANCEMENTS)
+#if (! NEEDFUL_CPP_ENHANCED)
     #define CHECK_CELL_SUBCLASSES  0
     #define DEBUG_EXTRA_HEART_CHECKS  0
     #define DEBUG_EXTANT_STACK_POINTERS  0
@@ -843,7 +843,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // you'd expect things to be slow anyway.)
 //
 #if !defined(DEBUG_CHECK_CASTS)
-  #if defined(__SANITIZE_ADDRESS__) && NEEDFUL_CPP_ENHANCEMENTS
+  #if NEEDFUL_CPP_ENHANCED
     #define DEBUG_CHECK_CASTS  RUNTIME_CHECKS
   #else
     #define DEBUG_CHECK_CASTS  0  // requires C++
@@ -879,7 +879,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // null when it shouldn't be.
 //
 #if !defined(NEEDFUL_OPTION_USES_WRAPPER)
-  #if !defined(__SANITIZE_ADDRESS__) && NEEDFUL_CPP_ENHANCEMENTS
+  #if !defined(__SANITIZE_ADDRESS__) && NEEDFUL_CPP_ENHANCED
     #define NEEDFUL_OPTION_USES_WRAPPER  RUNTIME_CHECKS
   #else
     #define NEEDFUL_OPTION_USES_WRAPPER  0  // don't use in sanitized build
@@ -887,7 +887,7 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 #if !defined(NEEDFUL_NEED_USES_WRAPPER)
-  #if !defined(__SANITIZE_ADDRESS__) && NEEDFUL_CPP_ENHANCEMENTS
+  #if !defined(__SANITIZE_ADDRESS__) && NEEDFUL_CPP_ENHANCED
     #define NEEDFUL_NEED_USES_WRAPPER  RUNTIME_CHECKS
   #else
     #define NEEDFUL_NEED_USES_WRAPPER  0  // don't use in sanitized build

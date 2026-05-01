@@ -5,7 +5,7 @@
 **
 ******************************************************************************
 **
-** Copyright 2015-2026 hostilefork.com
+** Copyright 2015-2026 metaeducation.com
 **
 ** Licensed under the MIT License
 **
@@ -19,10 +19,10 @@
 ** tools beyond the compiler you already have.
 **
 ** The key trick: every Needful construct compiles as a transparent no-op
-** in C.  But flip one switch (`#define NEEDFUL_CPP_ENHANCEMENTS 1`) and
-** rebuild as C++11, and those same constructs light up with compile-time
-** type enforcement that catches real bugs.  Your C code stays C.  The C++
-** compiler just *checks* it harder.
+** in C.  But flip one switch (`#define NEEDFUL_CPP_ENHANCED  1`) and rebuild
+** as C++11, and those same constructs light up with compile-time type
+** enforcement that catches real bugs.  Your C code stays C.  The C++ compiler
+** just *checks* it harder.
 **
 ****[[ WHAT YOU GET ]]*********************************************************
 **
@@ -68,7 +68,7 @@
 **      All macros expand to trivial C--your build won't even notice.
 **
 **   2. When ready, add the C++ enhancement files to Needful's directory
-**      and `#define NEEDFUL_CPP_ENHANCEMENTS 1`.  Build as C++11 or later.
+**      and `#define NEEDFUL_CPP_ENHANCED  1`.  Build as C++11 or later.
 **      Every macro grows teeth: type mismatches become compile errors.
 **
 **   3. You can run both build modes in CI: the C build for production,
@@ -134,7 +134,7 @@
 **
 **     SomeEnum e = nocast 0;  // works in both C and C++
 **
-** NOTE: When not using NEEDFUL_CPP_ENHANCEMENTS, compiling needful.h with C++
+** NOTE: When not using NEEDFUL_CPP_ENHANCED, compiling needful.h with C++
 ** can typically just use the C versions of the definitions.  But C++ compilers
 ** can't accomplish the behavior of nocast without some special mechanics, so
 ** we have to #ifdef __cplusplus here.
@@ -730,7 +730,7 @@ void Needful_Panic_Abruptly(const char* error) {
 ** The enhanced version in C++ builds enforces the Base/Derived relationship,
 ** while this crude version just matches the C semaantics and does not.
 **
-** If using NEEDFUL_CPP_ENHANCEMENTS, the mutable cast can work on "wrapped"
+** If using NEEDFUL_CPP_ENHANCED, the mutable cast can work on "wrapped"
 ** types as well, removing constness through the wrapper.  See the enhanced
 ** feature NEEDFUL_DECLARE_WRAPPED_FIELD() for more details.
 */
@@ -1252,50 +1252,50 @@ void Needful_Panic_Abruptly(const char* error) {
 ** given above, and redefine them with actual machinery to give them teeth!
 */
 
-#if !defined(NEEDFUL_CPP_ENHANCEMENTS)
-    #define NEEDFUL_CPP_ENHANCEMENTS  0  // Note: can still be compiled as C++
+#if !defined(NEEDFUL_CPP_ENHANCED)
+    #define NEEDFUL_CPP_ENHANCED  0  // Note: can still be compiled as C++
 #endif
 
 #if !defined(NEEDFUL_NEED_USES_WRAPPER)
-  #define NEEDFUL_NEED_USES_WRAPPER  NEEDFUL_CPP_ENHANCEMENTS
+  #define NEEDFUL_NEED_USES_WRAPPER  NEEDFUL_CPP_ENHANCED
 #endif
 
 #if !defined(NEEDFUL_OPTION_USES_WRAPPER)
-  #define NEEDFUL_OPTION_USES_WRAPPER  NEEDFUL_CPP_ENHANCEMENTS
+  #define NEEDFUL_OPTION_USES_WRAPPER  NEEDFUL_CPP_ENHANCED
 #endif
 
 #if !defined(NEEDFUL_RESULT_USES_WRAPPER)
-  #define NEEDFUL_RESULT_USES_WRAPPER  NEEDFUL_CPP_ENHANCEMENTS
+  #define NEEDFUL_RESULT_USES_WRAPPER  NEEDFUL_CPP_ENHANCED
 #endif
 
 #if !defined(NEEDFUL_CONTRAS_USE_WRAPPER)
-  #define NEEDFUL_CONTRAS_USE_WRAPPER  NEEDFUL_CPP_ENHANCEMENTS
+  #define NEEDFUL_CONTRAS_USE_WRAPPER  NEEDFUL_CPP_ENHANCED
 #endif
 
 #if !defined(NEEDFUL_CAST_CALLS_HOOKS)
-  #define NEEDFUL_CAST_CALLS_HOOKS  NEEDFUL_CPP_ENHANCEMENTS
+  #define NEEDFUL_CAST_CALLS_HOOKS  NEEDFUL_CPP_ENHANCED
 #endif
 
-#if NEEDFUL_CPP_ENHANCEMENTS
+#if NEEDFUL_CPP_ENHANCED
     #if !defined(__cplusplus)
-        #error "NEEDFUL_CPP_ENHANCEMENTS requires building your code as C++"
+        #error "NEEDFUL_CPP_ENHANCED requires building your code as C++"
     #elif (__cplusplus < 201103L) && (!defined(_MSC_VER) || _MSC_VER < 1900)
-        #error "NEEDFUL_CPP_ENHANCEMENTS requires C++11 or later"
+        #error "NEEDFUL_CPP_ENHANCED requires C++11 or later"
     #endif
 
-    #include "needful-cpp/cplusplus-needfuls.hpp"
+    #include "needful-enhanced/cplusplus-needfuls.hpp"
 #else
     #if NEEDFUL_OPTION_USES_WRAPPER
-        #error "NEEDFUL_OPTION_USES_WRAPPER requires NEEDFUL_CPP_ENHANCEMENTS"
+        #error "NEEDFUL_OPTION_USES_WRAPPER requires NEEDFUL_CPP_ENHANCED"
     #endif
     #if NEEDFUL_RESULT_USES_WRAPPER
-        #error "NEEDFUL_RESULT_USES_WRAPPER requires NEEDFUL_CPP_ENHANCEMENTS"
+        #error "NEEDFUL_RESULT_USES_WRAPPER requires NEEDFUL_CPP_ENHANCED"
     #endif
     #if NEEDFUL_CONTRAS_USE_WRAPPER
-        #error "NEEDFUL_CONTRAS_USE_WRAPPER requires NEEDFUL_CPP_ENHANCEMENTS"
+        #error "NEEDFUL_CONTRAS_USE_WRAPPER requires NEEDFUL_CPP_ENHANCED"
     #endif
     #if NEEDFUL_CAST_CALLS_HOOKS
-        #error "NEEDFUL_CAST_CALLS_HOOKS requires NEEDFUL_CPP_ENHANCEMENTS"
+        #error "NEEDFUL_CAST_CALLS_HOOKS requires NEEDFUL_CPP_ENHANCED"
     #endif
 #endif
 

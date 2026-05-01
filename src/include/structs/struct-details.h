@@ -274,7 +274,7 @@ typedef struct {
     typedef Stub Phase;
 #endif
 
-#if NEEDFUL_CPP_ENHANCEMENTS
+#if NEEDFUL_CPP_ENHANCED
 namespace needful {
     template<typename From>
     struct IsConvertibleAsserter<From, const Phase*> {
