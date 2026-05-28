@@ -73,7 +73,7 @@ INLINE bool Is_Bounce_Wild(Bounce b) {
 }
 
 #define Is_Bounce_A_Level(b) \
-    (FIRST_BYTE(x_cast(const void*, known(Bounce, (b)))) == BASE_BYTE_LEVEL)
+    (FIRST_BYTE(c_cast(const void*, known(Bounce, (b)))) == BASE_BYTE_LEVEL)
 
 INLINE Level* Level_From_Bounce(Bounce b) {
     assert(Is_Bounce_A_Level(b));
@@ -103,7 +103,7 @@ INLINE Value* Value_From_Bounce(Bounce b) {
 //
 
 #define C_TOPLEVEL_OUT  'T'
-#define BOUNCE_TOPLEVEL_OUT  x_cast(Bounce, &g_bounce_toplevel_out)
+#define BOUNCE_TOPLEVEL_OUT  c_cast(Bounce, &g_bounce_toplevel_out)
 
 
 // Continuations are used to mitigate the problems that occur when the C stack
@@ -125,14 +125,14 @@ INLINE Value* Value_From_Bounce(Bounce b) {
 // see the stack at points that are "cooperatively" yielded via continuation.
 //
 #define Bounce_Continue(L) \
-    x_cast(Bounce, known(Level*, (L)))
+    c_cast(Bounce, known(Level*, (L)))
 
 
 // For starters, a simple signal for suspending stacks in order to be able to
 // try not using Asyncify (or at least not relying on it so heavily)
 //
 #define C_SUSPEND  'S'
-#define BOUNCE_SUSPEND  x_cast(Bounce, &g_bounce_suspend)
+#define BOUNCE_SUSPEND  c_cast(Bounce, &g_bounce_suspend)
 
 
 // Intrinsic typecheckers want to be able to run in the same Level as an
@@ -143,10 +143,10 @@ INLINE Value* Value_From_Bounce(Bounce b) {
 // e.g. those that can't just resolve to a state in the output cell.
 //
 #define C_OKAY  'k'
-#define BOUNCE_OKAY  x_cast(Bounce, &g_bounce_okay)
+#define BOUNCE_OKAY  c_cast(Bounce, &g_bounce_okay)
 
 
 // This signals that the evaluator is in a "thrown state".
 //
 #define C_THROWN  'T'
-#define BOUNCE_THROWN  x_cast(Bounce, &g_bounce_thrown)
+#define BOUNCE_THROWN  c_cast(Bounce, &g_bounce_thrown)

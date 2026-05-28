@@ -147,8 +147,8 @@ INLINE const Element* List_Item_At(const Cell* cell) {
         (out), (flags), known(Source*, (array)), (index), (binding))
 
 #define Init_List_At(out,heart,array,index) \
-    x_cast(Element*, Init_List_At_Core( \
-        rigid_x_cast_known(Init(Element), (out)), \
+    c_cast(Element*, Init_List_At_Core( \
+        rigid_c_cast_known(Init(Element), (out)), \
         FLAG_HEART_AND_LIFT(heart), \
         (array), \
         (index), \
@@ -227,8 +227,8 @@ INLINE Element* Init_Relative_Block_At(
 //
 
 #define Init_Splice(out,a) \
-    x_cast(Stable*, Init_List_At_Core( \
-        rigid_x_cast_known(Init(Stable), (out)), \
+    c_cast(Stable*, Init_List_At_Core( \
+        rigid_c_cast_known(Init(Stable), (out)), \
         FLAG_TYPE(TYPE_SPLICE) | FLAG_HEART(HEART_BLOCK_SIGNIFYING_SPLICE), \
         (a), 0, UNBOUND))
 
@@ -285,14 +285,14 @@ INLINE Element* Unsplice_Cell(Stable* v) {
 //
 
 #define Init_Pack(out,array) \
-    x_cast(Value*, Init_List_At_Core( \
-        rigid_x_cast_known(Init(Value), (out)), \
+    c_cast(Value*, Init_List_At_Core( \
+        rigid_c_cast_known(Init(Value), (out)), \
         FLAG_TYPE(TYPE_PACK) | FLAG_HEART(HEART_GROUP_SIGNIFYING_PACK), \
         (array), 0, UNBOUND))
 
 #define Init_Lifted_Pack(out,array) \
-    x_cast(Element*, Init_List_At_Core( \
-        rigid_x_cast_known(Init(Element), (out)), \
+    c_cast(Element*, Init_List_At_Core( \
+        rigid_c_cast_known(Init(Element), (out)), \
         FLAG_TYPE(TYPE_QUASIFORM) | FLAG_HEART(HEART_GROUP_SIGNIFYING_PACK), \
         (array), 0, UNBOUND))
 

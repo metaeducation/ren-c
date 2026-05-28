@@ -159,13 +159,13 @@ INLINE Option(Details*) Try_Frame_Details(const Cell* c) {
 typedef Phase Lens;  // !!! Create separate type?
 
 #define Lens_Self(paramlist) \
-    x_cast(Lens*, known(ParamList*, (paramlist)))  // shows all unsealed [2]
+    c_cast(Lens*, known(ParamList*, (paramlist)))  // shows all unsealed [2]
 
 #define Lens_Inputs(paramlist) \
-    x_cast(Lens*, Phase_Paramlist(paramlist))  // just inputs [3]
+    c_cast(Lens*, Phase_Paramlist(paramlist))  // just inputs [3]
 
 #define Lens_Unsealed(details) \
-    x_cast(Lens*, known(Details*, (details)))  // shows all unsealed [4]
+    c_cast(Lens*, known(Details*, (details)))  // shows all unsealed [4]
 
 INLINE void Tweak_Frame_Lens(Stable* v, Lens* lens) {
     assert(Heart_Of(v) == HEART_FRAME);  // may be protected (e.g. archetype)

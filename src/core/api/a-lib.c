@@ -3428,7 +3428,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
     );
 
     Bounce b = Irreducible_Bounce(
-        x_cast(Bounce, Apply_Cfunc(*cfunc, context))
+        c_cast(Bounce, Apply_Cfunc(*cfunc, context))
     );
     if (b == BOUNCE_TOPLEVEL_OUT)  // final value in OUT cell
         goto typecheck_out;

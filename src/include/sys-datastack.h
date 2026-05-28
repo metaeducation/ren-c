@@ -95,7 +95,7 @@
 //    and the conversion operator is not considered.
 //
 //    Thus for Sink(Element*) to be willing to receive OnStackPointer(Value*)
-//    we go through void*: `x_cast(Element*, x_cast(void*, onstackpointer))`
+//    we go through void*: `c_cast(Element*, c_cast(void*, onstackpointer))`
 //
 // 2. The wrapped type T may be a wrapper, and its by-value semantics may be
 //    strange and corrupt data (see Sink(T) and Init(T)).  So we use reference
@@ -105,7 +105,7 @@
 //
 // 3. C++ doesn't allow templated conversion operators, so the best we can do
 //    is to build cast operations that do their own logic and then use casting
-//    to void as an escape hatch: `x_cast(Cell*, x_cast(void*, ...))`.  This
+//    to void as an escape hatch: `c_cast(Cell*, c_cast(void*, ...))`.  This
 //    is useful when you've figured out by other means the cast is good.
 //
 
@@ -145,7 +145,7 @@
             ++g_ds.num_refs_extant;
         }
 
-        template <  // allow sibling Cell* types (e.g. Slot*) via x_cast()
+        template <  // allow sibling Cell* types (e.g. Slot*) via c_cast()
             typename U,
             typename std::enable_if<
                 std::is_convertible<U, const Cell*>::value
@@ -153,7 +153,7 @@
                 and not std::is_convertible<W, U>::value
             >::type* = nullptr
         >
-        explicit OnStackPointer (const U& u) : p (x_cast(W, u)) {
+        explicit OnStackPointer (const U& u) : p (c_cast(W, u)) {
             assert(p != nullptr);
             ++g_ds.num_refs_extant;
         }
@@ -165,7 +165,7 @@
                 and not std::is_same<W, U>::value
             >::type* = nullptr
         >
-        explicit OnStackPointer (const U& u) : p (x_cast(W, u)) {
+        explicit OnStackPointer (const U& u) : p (c_cast(W, u)) {
             assert(p != nullptr);
             ++g_ds.num_refs_extant;
         }
@@ -201,7 +201,7 @@
         const T& operator->() const { return p; }  // wrapped, REFERENCE! [2]
 
         explicit operator void* () const {  // escape hatch [3]
-            return x_cast(void*, p);  // let p's conversion do the work
+            return c_cast(void*, p);  // let p's conversion do the work
         }
 
         bool operator==(const OnStackPointer &other)

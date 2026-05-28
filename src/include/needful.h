@@ -803,26 +803,22 @@ void Needful_Panic_Abruptly(const char* error) {
 #endif
 
 
-/****[[ x_cast(): "WHAT PARENTHESES-CAST WOULD DO" ]]*************************
+/****[[ c_cast(): "WHAT PARENTHESES-CAST WOULD DO" ]]*************************
 **
 ** The parentheses-cast is the only cast in C, so it is maximally permissive.
 ** In C++, it defaults to giving warnings if you cast away constness...but
 ** any standards-compliant compiler must let you disable that warning.
 **
 ** If you are in a situation where the Needful casts are not working for you,
-** the "xtreme" cast is a way to fall back on the C cast while still being
+** the c_cast() is a way to fall back on the C cast while still being
 ** more visible as a cast in a code than parentheses.
-**
-** 1. The choice of the name "xtreme" is because `x_cast()` seems like the
-**    right name for it, whereas `c_cast()` would suggest something with
-**    constness (if m_cast() is for mutability).
 */
 
-#define needful_xtreme_cast(T,...) \
+#define needful_c_cast(T,...) \
     ((T)(__VA_ARGS__))
 
 
-/****[[ x_cast_known: WORKAROUND cast(T, known(T, ...)) ISSUE ]]**************
+/****[[ c_cast_known: WORKAROUND cast(T, known(T, ...)) ISSUE ]]**************
 **
 ** The original version of known(T, expr) would also cast the result to the
 ** type.  This is sometimes desirable, but not always, and so the more
@@ -834,14 +830,14 @@ void Needful_Panic_Abruptly(const char* error) {
 ** expansion when trying to do cast(T, known(T, expr)).  Due to needing to
 ** focus on other things, the quickest workaround was to keep a casting
 ** version of known() that matched the version before the change (using
-** the x_cast()).  This should be revisited to make it work correctly.
+** the c_cast()).  This should be revisited to make it work correctly.
 **/
 
-#define needful_rigid_x_cast_known(T,expr) \
-    needful_xtreme_cast(T,expr)
+#define needful_rigid_c_cast_known(T,expr) \
+    needful_c_cast(T,expr)
 
-#define needful_lenient_x_cast_known(T,expr) /* const passthru const [1] */ \
-    needful_xtreme_cast(T,expr)
+#define needful_lenient_c_cast_known(T,expr) /* const passthru const [1] */ \
+    needful_c_cast(T,expr)
 
 
 /****[[ upcast: CAST SAFELY UPWARD ]]*****************************************
@@ -851,7 +847,7 @@ void Needful_Panic_Abruptly(const char* error) {
 ** upcast, but the C++ enhancement will do that enforcement.
 */
 
-#define needful_upcast /* (T,expr) */  needful_xtreme_cast
+#define needful_upcast /* (T,expr) */  needful_c_cast
 
 
 
@@ -1082,7 +1078,7 @@ void Needful_Panic_Abruptly(const char* error) {
 **    an integer cast).  But it's still slow--enough so that replacing all
 **    integer casts with i_cast() in one codebase made it take 2x as long to
 **    compile.  So day-to-day dev builds should probably leave i_cast() as
-**    a macro for the plain C "xtreme" cast.  However if you're using wrapper
+**    a macro for the plain c_cast().  However if you're using wrapper
 **    classes the needful_integer_cast() can actually be zero cost where a
 **    C cast would not be; so judicious use of ii_cast() on hot paths in
 **    debug builds extracting integers from wrappers can be a good idea.
@@ -1114,7 +1110,7 @@ void Needful_Panic_Abruptly(const char* error) {
 #if !defined(NEEDFUL_DONT_DEFINE_CAST_SHORTHANDS)
     #define cast /* (T,...) */      needful_lenient_hookable_cast
 
-    #define x_cast /* (T,...) */    needful_xtreme_cast
+    #define c_cast /* (T,...) */    needful_c_cast
 
     #define raw_cast /* (T,...) */  needful_raw_cast
     #define h_cast /* (T,...) */    needful_lenient_hookable_cast
@@ -1124,7 +1120,7 @@ void Needful_Panic_Abruptly(const char* error) {
   #if defined(NEEDFUL_ICAST_SLOW_BUILD)  /* default off for fast builds [1] */
     #define i_cast /* (T,...) */    needful_integer_cast
   #else
-    #define i_cast /* (T,...) */    needful_xtreme_cast
+    #define i_cast /* (T,...) */    needful_c_cast
   #endif
     #define ii_cast /* (T,...) */   needful_integer_cast  /* see [1] */
 
@@ -1176,10 +1172,10 @@ void Needful_Panic_Abruptly(const char* error) {
     #define known_not /* (T,expr) [3] */         needful_lenient_known_not
     #define known_any /* ((T,...),expr) */       needful_rigid_known_any
 
-    #define rigid_x_cast_known /* (T,expr) */    needful_rigid_x_cast_known
-    #define lenient_x_cast_known /* (T,expr) */  needful_lenient_x_cast_known
+    #define rigid_c_cast_known /* (T,expr) */    needful_rigid_c_cast_known
+    #define lenient_c_cast_known /* (T,expr) */  needful_lenient_c_cast_known
 
-    #define x_cast_known /* (T,expr) [2] */      needful_lenient_x_cast_known
+    #define c_cast_known /* (T,expr) [2] */      needful_lenient_c_cast_known
 
     #define known_lvalue /* (var) */             needful_known_lvalue
 

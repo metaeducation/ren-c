@@ -137,7 +137,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 #undef rebDelegate
 
 #define rebDelegate(...) \
-    x_cast(Bounce, rebDelegate_helper( \
+    c_cast(Bounce, rebDelegate_helper( \
         LIBREBOL_BINDING_NAME(),  /* captured from callsite! */ \
         __VA_ARGS__, rebEND \
     ))

@@ -705,7 +705,7 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
     };
 
 #define Mem_Copy(dst,src,size) \
-    memcpy(x_cast(char*, (dst)), (src), (size))  // [4]
+    memcpy(c_cast(char*, (dst)), (src), (size))  // [4]
 
 #define Mem_Fill(dst,byte,size) \
-    memset(x_cast(char*, (dst)), (byte), (size))  // [4]
+    memset(c_cast(char*, (dst)), (byte), (size))  // [4]

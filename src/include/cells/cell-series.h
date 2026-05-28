@@ -163,8 +163,8 @@ INLINE Cell* Init_Series_At_Core_Untracked(
         (out), exactly(uintptr_t, (flags)), (flex), (index), (binding)))
 
 #define Init_Series_At(out,heart,flex,index) \
-    x_cast(Element*, Init_Series_At_Core( \
-        rigid_x_cast_known(Init(Element), (out)), \
+    c_cast(Element*, Init_Series_At_Core( \
+        rigid_c_cast_known(Init(Element), (out)), \
         FLAG_HEART_AND_LIFT(heart), (flex), (index), UNBOUND))
 
 #define Init_Series(out,heart,flex) \

@@ -305,7 +305,7 @@ namespace needful {
 #endif
 
 #define Known_Phase(p) \
-    x_cast_known(Phase*, (p))  // overload means Details* or Paramlist* ok too
+    c_cast_known(Phase*, (p))  // overload means Details* or Paramlist* ok too
 
 
 // Includes STUB_FLAG_DYNAMIC because an action's paramlist is always

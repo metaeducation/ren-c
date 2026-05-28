@@ -1216,7 +1216,7 @@ INLINE Cell* Copy_Cell_Core_Untracked(
 }
 
 #define Copy_Cell_Untracked(out, v) \
-    x_cast(TransferredCellType((out), (v)), \
+    c_cast(TransferredCellType((out), (v)), \
         Copy_Cell_Core_Untracked((out), (v), CELL_MASK_COPY))
 
 #define Copy_Cell_Core(out,v,copy_mask) \
@@ -1262,7 +1262,7 @@ INLINE Cell* Move_Cell_Core_Untracked(Cell* out, Cell* c, Flags copy_mask)
 }
 
 #define Move_Cell_Untracked(out, v) \
-    x_cast(TransferredCellType((out), (v)), \
+    c_cast(TransferredCellType((out), (v)), \
         Move_Cell_Core_Untracked((out), (v), CELL_MASK_COPY))
 
 #define Move_Cell_Core(out,v,copy_mask) \

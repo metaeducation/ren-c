@@ -162,8 +162,8 @@ INLINE Size String_Byte_Offset_For_Index(const Cell* cell, Index index)
 // initialize.
 
 #define Init_String_At(out,heart,strand,index) \
-    x_cast(Element*, Init_Series_At_Core( \
-        rigid_x_cast_known(Init(Element), (out)), \
+    c_cast(Element*, Init_Series_At_Core( \
+        rigid_c_cast_known(Init(Element), (out)), \
         FLAG_HEART_AND_LIFT(heart), \
         known(Strand*, (strand)), \
         (index), \
@@ -200,16 +200,16 @@ INLINE Element* Textify_Any_Utf8(Element* any_utf8) {  // always works
 //    is thus cheap and on hand.  But review this idea.
 
 #define Init_Trash(out,label) \
-    x_cast(Value*, Init_Series_At_Core( \
-        rigid_x_cast_known(Init(Value), (out)), \
+    c_cast(Value*, Init_Series_At_Core( \
+        rigid_c_cast_known(Init(Value), (out)), \
         FLAG_TYPE(TYPE_TRASH) | FLAG_HEART(HEART_TAG_SIGNIFYING_TRASH), \
         known(const Symbol*, (label)), \
         0, \
         UNBOUND))
 
 #define Init_Lifted_Trash(out,label) \
-    x_cast(Element*, Init_Series_At_Core( \
-        rigid_x_cast_known(Init(Element), (out)), \
+    c_cast(Element*, Init_Series_At_Core( \
+        rigid_c_cast_known(Init(Element), (out)), \
         FLAG_TYPE(TYPE_QUASIFORM) | FLAG_HEART(HEART_TAG_SIGNIFYING_TRASH), \
         known(const Symbol*, (label)), \
         0, \

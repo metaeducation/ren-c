@@ -50,8 +50,8 @@
 #if (! DEBUG_CHECK_ENDS)
     INLINE bool Is_End(const void* p) {
         return (
-            x_cast(const Byte*, (p))[0] == BASE_BYTE_WILD
-            and x_cast(const Byte*, (p))[1] == '\0'
+            c_cast(const Byte*, (p))[0] == BASE_BYTE_WILD
+            and c_cast(const Byte*, (p))[1] == '\0'
         );
     }
 #else
