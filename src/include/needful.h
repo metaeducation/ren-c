@@ -692,7 +692,15 @@ void Needful_Panic_Abruptly(const char* error) {
 
 #define needful_lenient_hookable_cast(T,expr)       ((T)(expr))  /* [1] */
 
-#define needful_raw_cast(T,expr)                    ((T)(expr))  /* [2] */
+#define needful_lenient_unhookable_cast(T,expr)     ((T)(expr))  /* [1] */
+
+#define needful_raw_cast /* (T,expr) [2] */    needful_lenient_unhookable_cast
+
+#if defined(NEEDFUL_FAST_CAST_IS_SLOW)
+    #define needful_fast_cast /* (T,expr) */   needful_lenient_hookable_cast
+#else
+    #define needful_fast_cast /* (T,expr) */   needful_lenient_unhookable_cast
+#endif
 
 #define needful_rigid_hookable_cast(T,expr)         ((T)(expr))  /* [3] */
 
@@ -786,6 +794,9 @@ void Needful_Panic_Abruptly(const char* error) {
     #define needful_hookable_downcast  needful_nocast
     #define needful_unhookable_downcast  needful_nocast
 #endif
+
+#define needful_hookable_typed_downcast(T,expr)    ((T)(expr))
+#define needful_unhookable_typed_downcast(T,expr)  ((T)(expr))
 
 
 /****[[ c_cast(): "WHAT PARENTHESES-CAST WOULD DO" ]]*************************
@@ -1098,6 +1109,7 @@ void Needful_Panic_Abruptly(const char* error) {
     #define c_cast /* (T,...) */    needful_c_cast
 
     #define raw_cast /* (T,...) */  needful_raw_cast
+    #define fast_cast /* (T,...) */  needful_fast_cast
 
     #define m_cast /* (T,...) */    needful_mutable_cast
 
