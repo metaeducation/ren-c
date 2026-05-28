@@ -47,7 +47,7 @@
 **                 (yes, it's standard C! `except` is a macro that expands
 **                 into a for() loop that can scope the declaration)
 **
-**   cast()        A family of visible, hookable casts (h_cast, raw_cast,
+**   cast()        A family of visible, hookable casts (cast, raw_cast,
 **                 m_cast, i_cast, ...) that replace C's invisible
 **                 parenthesized casts.  Can run debug-build validation
 **                 hooks--even on raw pointer casts.
@@ -641,16 +641,14 @@ void Needful_Panic_Abruptly(const char* error) {
 **
 *****[[ CAST SELECTION GUIDE ]]***********************************************
 **
-**        PRO-TIP: #define cast() as h_cast() in your codebase!!! [1]
-**
 ** SAFETY LEVEL
-**    - Hookable cast:            h_cast()    // safe default w/debug hooks
+**    - Hookable cast:            cast()      // safe default w/debug hooks
 **    - Unhooked/unchecked cast:  raw_cast()  // use with fresh malloc()s
 **                                               // ...or critical debug paths
 **
 ** POINTER CONSTNESS
 **    - Adding mutability:         m_cast()    // const T* => T*
-**    - Preserve mutability:       h_cast()    // TA* => TB* ...or...
+**    - Preserve mutability:       cast()      // TA* => TB* ...or...
 **                               & raw_cast()    // const TA* => const TB*
 **
 ** TYPE CONVERSIONS
@@ -659,19 +657,6 @@ void Needful_Panic_Abruptly(const char* error) {
 **    - Non-integral to integral:  p_cast()    // T* => intptr_t
 **    - Function to function:      f_cast()    // ret1(*)(...) => ret2(*)(...)
 **    - va_list to void*:          v_cast()    // va_list* <=> void*
-**
-*****[[ NOTES ]]**************************************************************
-**
-** 1. Because `cast` has a fair likelihood of being defined as the name of a
-**    function or variable in C codebases, Needful does not force a definition
-**    of `cast`.  But in an ideal situation, you could adapt your codebase
-**    such that cast() can be defined, and defined as h_cast().
-**
-**    It's also potentially the case that you might want to start it out as
-**    meaning raw_cast()...especially if gradually adding Needful to existing
-**    code.  You could start by turning all the old (T)(V) casts into cast()
-**    defined as raw_cast()...and redefine it as h_cast() after a process over
-**    the span of time, having figured out which needed to be other casts.
 */
 
 
@@ -1113,7 +1098,6 @@ void Needful_Panic_Abruptly(const char* error) {
     #define c_cast /* (T,...) */    needful_c_cast
 
     #define raw_cast /* (T,...) */  needful_raw_cast
-    #define h_cast /* (T,...) */    needful_lenient_hookable_cast
 
     #define m_cast /* (T,...) */    needful_mutable_cast
 
