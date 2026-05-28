@@ -128,5 +128,5 @@ INLINE Option(Slot*) Sea_Slot(SeaOfVars* sea, const Symbol* sym, bool strict) {
     Patch* patch = opt Sea_Patch(sea, sym, strict);
     if (not patch)
         return nullptr;
-    return raw_cast(Slot*, Stub_Cell(patch));
+    return Stub_Cell(patch);
 }

@@ -406,9 +406,9 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
         if (SPORADICALLY(32)) {
             LEVEL_STATE_BYTE(sub) = ST_ACTION_TYPECHECKING;
         } else {
-            Mark_Typechecked(cast(Param*, LOCAL(VALUE)));
-            Mark_Typechecked(cast(Param*, LOCAL(MOLDER)));
-            Mark_Typechecked(cast(Param*, LOCAL(FORM)));
+            Mark_Typechecked(upcast(Param*, LOCAL(VALUE)));
+            Mark_Typechecked(upcast(Param*, LOCAL(MOLDER)));
+            Mark_Typechecked(upcast(Param*, LOCAL(FORM)));
             Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
         }
 

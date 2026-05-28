@@ -190,7 +190,7 @@ REBINT Find_Key_Hashed(
         assert(mode == 0);
         slot = zombie_slot;
         Copy_Cell(
-            raw_cast(Stable*, Array_At(array, (indexes[slot] - 1) * wide)),
+            upcast(Stable*, Array_At(array, (indexes[slot] - 1) * wide)),
             key
         );
     }

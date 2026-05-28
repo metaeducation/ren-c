@@ -294,7 +294,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Url)
     rebRelease(port);
 
     assert(STATE == STATE_0);  // retriggered frame must act like initial entry
-    Mark_Typechecked(raw_cast(Param*, ARG_N(1)));
+    Mark_Typechecked(upcast(Param*, ARG_N(1)));
 
     return CONTINUE_SAMELEVEL;
 }

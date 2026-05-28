@@ -222,7 +222,7 @@ STATIC_ASSERT(VARLIST_FLAG_PURE == STUB_FLAG_CONTEXT_PURE);
 
 
 #define Varlist_Array(ctx) \
-    raw_cast(Array*, known(VarList*, ctx))  // performance critical, raw_cast()
+    raw_cast(Array*, known(VarList*, (ctx)))  // fast_cast...
 
 
 //=//// ERROR VARLIST SUBLCASS ////////////////////////////////////////////=//

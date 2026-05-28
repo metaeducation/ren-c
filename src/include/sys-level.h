@@ -195,7 +195,7 @@ INLINE Element* Evaluator_Level_Current(Level* L) {
 
 INLINE ParamList* Level_Varlist(Level* L) {
     assert(Is_Level_Dispatching(L));
-    return raw_cast(ParamList*, L->varlist);
+    return L->varlist;
 }
 
 

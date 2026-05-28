@@ -41,16 +41,14 @@
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Stub*> {  // both must be const [B]
-  static void Validate_Bits(const F* p) {
-    DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Base
-    );
-    STATIC_ASSERT(In_C_Type_List(type_list, F));
+  DECLARE_C_TYPE_LIST(allowed_from, void, Byte);
+  static const bool legal = allowed_from::contains<F>::value;
 
+  static void Validate_Bits(const F* p) {
     if (not p)
         return;
 
-    if ((raw_cast(const Stub*, p)->header.bits & (
+    if ((c_cast(const Stub*, p)->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_CELL  // BASE_FLAG_UNREADABLE ok
     )) != (
         BASE_FLAG_BASE
@@ -65,16 +63,14 @@ struct CastHook<const F*, const Stub*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Flex*> {  // both must be const [B]
-  static void Validate_Bits(const F* p) {
-    DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Base, Stub, HashList
-    );
-    STATIC_ASSERT(In_C_Type_List(type_list, F));
+  DECLARE_C_TYPE_LIST(allowed_from, void, Byte);
+  static const bool legal = allowed_from::contains<F>::value;
 
+  static void Validate_Bits(const F* p) {
     if (not p)
         return;
 
-    if ((raw_cast(const Stub*, p)->header.bits & (
+    if ((c_cast(const Stub*, p)->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
     )) != (
         BASE_FLAG_BASE
@@ -89,16 +85,14 @@ struct CastHook<const F*, const Flex*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Binary*> {  // both must be const [B]
-  static void Validate_Bits(const F* p) {
-    DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Base, Flex
-    );
-    STATIC_ASSERT(In_C_Type_List(type_list, F));
+  DECLARE_C_TYPE_LIST(allowed_from, void, Byte);
+  static const bool legal = allowed_from::contains<F>::value;
 
+  static void Validate_Bits(const F* p) {
     if (not p)
         return;
 
-    const Stub* stub = raw_cast(const Stub*, p);
+    const Stub* stub = c_cast(const Stub*, p);
 
     if ((stub->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
@@ -117,16 +111,14 @@ struct CastHook<const F*, const Binary*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Strand*> {  // both must be const [B]
-  static void Validate_Bits(const F* p) {
-    DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Base, Stub, Flex, Binary
-    );
-    STATIC_ASSERT(In_C_Type_List(type_list, F));
+  DECLARE_C_TYPE_LIST(allowed_from, void, Byte);
+  static const bool legal = allowed_from::contains<F>::value;
 
+  static void Validate_Bits(const F* p) {
     if (not p)
         return;
 
-    const Stub* stub = raw_cast(const Stub*, p);
+    const Stub* stub = c_cast(const Stub*, p);
 
     TasteByte taste_byte = TASTE_BYTE(stub);
     if (taste_byte != FLAVOR_NONSYMBOL and taste_byte != FLAVOR_SYMBOL)
@@ -152,16 +144,14 @@ struct CastHook<const F*, const Strand*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Symbol*> {
-    static void Validate_Bits(const F* p) {
-        DECLARE_C_TYPE_LIST(type_list,
-            void, Byte, Base, Stub, Flex, Binary, Strand
-        );
-        STATIC_ASSERT(In_C_Type_List(type_list, F));
+    DECLARE_C_TYPE_LIST(allowed_from, void, Byte);
+    static const bool legal = allowed_from::contains<F>::value;
 
+    static void Validate_Bits(const F* p) {
         if (not p)
             return;
 
-        const Stub* stub = raw_cast(const Stub*, p);
+        const Stub* stub = c_cast(const Stub*, p);
         if ((stub->header.bits & (
             (STUB_MASK_SYMBOL | STUB_MASK_TASTE)
                 | BASE_FLAG_UNREADABLE
@@ -181,16 +171,16 @@ struct CastHook<const F*, const Symbol*> {
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Array*> {  // both must be const [B]
-  static void Validate_Bits(const F* p) {
-    DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Base, Stub, Flex
-    );
-    STATIC_ASSERT(In_C_Type_List(type_list, F));
+  DECLARE_C_TYPE_LIST(allowed_from,
+    void, Byte, Details, VarList, ParamList, Error
+  );
+  static const bool legal = allowed_from::contains<F>::value;
 
+  static void Validate_Bits(const F* p) {
     if (not p)
         return;
 
-    if ((raw_cast(const Stub*, p)->header.bits & (
+    if ((c_cast(const Stub*, p)->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
     )) != (
         BASE_FLAG_BASE
@@ -205,16 +195,14 @@ struct CastHook<const F*, const Array*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const VarList*> {  // both must be const [B]
-  static void Validate_Bits(const F* p) {
-    DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Base, Stub, Array, Flex, Context
-    );
-    STATIC_ASSERT(In_C_Type_List(type_list, F));
+  DECLARE_C_TYPE_LIST(allowed_from, void, Byte, Array, Flex);
+  static const bool legal = allowed_from::contains<F>::value;
 
+  static void Validate_Bits(const F* p) {
     if (not p)
         return;
 
-    if ((raw_cast(const Stub*, p)->header.bits & (
+    if ((c_cast(const Stub*, p)->header.bits & (
         (STUB_MASK_LEVEL_VARLIST
             & (~ STUB_FLAG_LINK_NEEDS_MARK)  // next virtual, maybe null
             & (~ STUB_FLAG_MISC_NEEDS_MARK)  // adjunct, maybe null
@@ -238,16 +226,15 @@ struct CastHook<const F*, const VarList*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const ParamList*> {  // both must be const [B]
-  static void Validate_Bits(const F* p) {
-    DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Base, Stub, Array, Flex, Context, VarList, Phase
-    );
-    STATIC_ASSERT(In_C_Type_List(type_list, F));
+  DECLARE_C_TYPE_LIST(allowed_from,
+      void, Byte, Array, Flex, Phase);
+  static const bool legal = allowed_from::contains<F>::value;
 
+  static void Validate_Bits(const F* p) {
     if (not p)
         return;
 
-    Validate_Paramlist_Bits(raw_cast(const Stub*, p));
+    Validate_Paramlist_Bits(c_cast(const Stub*, p));
   }
 };
 
@@ -268,16 +255,14 @@ INLINE void Validate_Details_Bits(const Stub* stub) {
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Details*> {  // both must be const [B]
-  static void Validate_Bits(const F* p) {
-    DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Base, Stub, Array, Flex, Phase
-    );
-    STATIC_ASSERT(In_C_Type_List(type_list, F));
+  DECLARE_C_TYPE_LIST(allowed_from, void, Byte, Array, Flex, Phase);
+  static const bool legal = allowed_from::contains<F>::value;
 
+  static void Validate_Bits(const F* p) {
     if (not p)
         return;
 
-    Validate_Details_Bits(raw_cast(const Stub*, p));
+    Validate_Details_Bits(c_cast(const Stub*, p));
   }
 };
 
@@ -286,16 +271,14 @@ struct CastHook<const F*, const Details*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Phase*> {  // both must be const [B]
-  static void Validate_Bits(const F* p) {
-    DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Base, Stub, Flex, ParamList, Details
-    );
-    STATIC_ASSERT(In_C_Type_List(type_list, F));
+  DECLARE_C_TYPE_LIST(allowed_from, void, Byte, Flex, ParamList, Details);
+  static const bool legal = allowed_from::contains<F>::value;
 
+  static void Validate_Bits(const F* p) {
     if (not p)
         return;
 
-    const Stub* stub = raw_cast(const Stub*, p);
+    const Stub* stub = c_cast(const Stub*, p);
 
     if (TASTE_BYTE(stub) == FLAVOR_DETAILS)
         Validate_Details_Bits(stub);

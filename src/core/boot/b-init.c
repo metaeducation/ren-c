@@ -560,7 +560,7 @@ void Startup_Core(void)
   //
   // (We have to cast it because API RebolContext* is a typedef of void*.)
 
-    known_nullptr(librebol_binding) = cast(RebolContext*, g_lib_context);
+    known_nullptr(librebol_binding) = upcast(RebolContext*, g_lib_context);
 
 } create_global_objects: {
 

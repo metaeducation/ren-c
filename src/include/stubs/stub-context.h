@@ -88,7 +88,7 @@ INLINE const Symbol* Let_Symbol(const Let* let) {
 }
 
 INLINE Slot* Let_Slot(Let* let) {
-    return raw_cast(Slot*, Stub_Cell(let));
+    return upcast(Slot*, Stub_Cell(let));
 }
 
 INLINE Option(Slot*) Lookup_Let_Slot(

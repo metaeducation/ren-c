@@ -253,7 +253,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
 
     RebolContext** binding_ref
         = Cell_Handle_Pointer(RebolContext*, binding_ref_handle);
-    *binding_ref = cast(RebolContext*, g_currently_loading_module);
+    *binding_ref = upcast(RebolContext*, g_currently_loading_module);
 
     assert(g_currently_loading_module == sea);
     g_currently_loading_module = nullptr;

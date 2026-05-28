@@ -204,13 +204,13 @@ Bounce Irreducible_Bounce(Bounce b) {
         assert(Get_Details_Flag(Ensure_Level_Details(TOP_LEVEL), RAW_NATIVE));
         possibly(Not_Base_Managed(TOP_LEVEL->varlist));
         return raw_cast(Bounce,  // v-- RebolBounce is void*, not Bounce
-            rebDelegateCore(cast(RebolContext*, g_lib_context), cp)
+            rebDelegateCore(upcast(RebolContext*, g_lib_context), cp)
         );
     }
 
     assert(Is_Base_Managed(TOP_LEVEL->varlist));
     return raw_cast(Bounce,  // v-- RebolBounce is void*, not Bounce
-        rebDelegateCore(cast(RebolContext*, TOP_LEVEL->varlist), cp)
+        rebDelegateCore(upcast(RebolContext*, TOP_LEVEL->varlist), cp)
     );
 }}
 

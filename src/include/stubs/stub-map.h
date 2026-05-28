@@ -77,7 +77,7 @@ INLINE void Tweak_Link_Hashlist(Array* pairlist, HashList* hashlist) {
 // point lets us show the analyzer that we never return 0.
 //
 INLINE Count Hashlist_Num_Slots(HashList* hashlist) {
-    Count used = Flex_Used(cast(Flex*, hashlist));  // subvert C++ deletion
+    Count used = Flex_Used(c_cast(Flex*, hashlist));  // subvert C++ deletion
   #if DEBUG_STATIC_ANALYZING
     if (used < 7)  // g_primes[0]
         crash ("Hashlist must have a minimal prime number of entries");

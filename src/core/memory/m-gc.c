@@ -457,7 +457,7 @@ static void Propagate_All_GC_Marks(void)
                 if (flavor < MIN_FLAVOR_ANTIFORMS_OK)
                     crash (v);  // antiforms not legal in many array types
 
-                dont(assert(Is_Antiform_Stable(cast(Value*, v))));
+                dont(assert(Is_Antiform_Stable(upcast(Value*, v))));
             }
           #endif
 

@@ -174,7 +174,7 @@ DECLARE_NATIVE(TO)
 
         SymId id = Symbol_Id_From_Type(unwrap type);
         Init_Word(ARG(VALUE), Canon_Symbol(id));
-        Mark_Typechecked(raw_cast(Param*, ARG(VALUE)));
+        Mark_Typechecked(upcast(Param*, ARG(VALUE)));
     }
 
     Element* value = Element_ARG(VALUE);

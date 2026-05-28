@@ -463,7 +463,7 @@ INLINE bool Is_Specialized(const Param* p) {
 
 INLINE const Slot* Known_Unspecialized(const Param* p) {
     assert(Not_Specialized(p));
-    return raw_cast(Slot*, p);
+    return p;
 }
 
 

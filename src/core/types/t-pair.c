@@ -360,9 +360,6 @@ IMPLEMENT_GENERIC(REVERSE, Is_Pair)
 }
 
 
-// 1. This cast to Value should not be necessary, Element should be tolerated
-//    by the API.  Review.
-//
 IMPLEMENT_GENERIC(MULTIPLY, Is_Pair)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
@@ -374,7 +371,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Pair)
         panic (PARAM(VALUE2));
 
     return rebDelegate(CANON(MAKE), CANON(PAIR_X), "[",
-        CANON(MULTIPLY), v2, cast(Stable*, Cell_Pair_First(pair1)),  // !!! [1]
-        CANON(MULTIPLY), v2, cast(Stable*, Cell_Pair_Second(pair1)),
+        CANON(MULTIPLY), v2, Cell_Pair_First(pair1),
+        CANON(MULTIPLY), v2, Cell_Pair_Second(pair1),
     "]");
 }

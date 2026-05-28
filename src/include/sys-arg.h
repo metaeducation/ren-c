@@ -171,7 +171,7 @@ INLINE Cell* Arg_Of_Level_Inline(
       case ARGMODE_OPTIONAL:
         assert(n != 0 and n <= Level_Num_Slots(L));
         assert(L->executor != &Intrinsic_Executor);
-        if (Is_Light_Null(raw_cast(Value*, L->rootvar) + n))
+        if (Is_Light_Null(upcast(Value*, L->rootvar) + n))
             return nullptr;  // should get wrapped by an Option(T)
         break;
 
@@ -230,7 +230,7 @@ INLINE Cell* Arg_Of_Level_Inline(
 //
 
 #define Level_Args_Head(L) \
-    (raw_cast(Arg*, (L)->rootvar) + 1)  // 1-based indexing
+    (upcast(Arg*, (L)->rootvar) + 1)  // 1-based indexing
 
 #define ARG(name) \
     c_cast(checked_type_##name##_, Arg_Of_Level_Inline( /* bool casts [1] */ \

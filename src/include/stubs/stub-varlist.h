@@ -265,7 +265,7 @@ INLINE Fixed(Slot*) Varlist_Fixed_Slot(VarList* c, Ordinal n) {  // 1-based
 // not a possibility.
 
 INLINE Init(Slot) Slot_Init_Hack(Slot* slot) {
-    return raw_cast(Init(Slot), slot);
+    return upcast(Init(Slot), slot);
 }
 
 MUTABLE_IF_C(Value*, INLINE) Slot_Hack(

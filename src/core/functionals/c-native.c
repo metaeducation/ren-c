@@ -233,7 +233,7 @@ DECLARE_NATIVE(NATIVE)
     if (g_current_uses_librebol) {
         UNUSED(native_type);  // !!! no :INTRINSIC, but what about :COMBINATOR?
         Api(Value*) action = rebFunctionCore(
-            cast(RebolContext*, g_currently_loading_module),
+            upcast(RebolContext*, g_currently_loading_module),
             spec,
             f_cast(RebolActionCFunction*, cfunc)
         );

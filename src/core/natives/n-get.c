@@ -533,7 +533,7 @@ Result(Value*) Meta_Get_Var(
     const Element* var,
     Context* context
 ){
-    assert(raw_cast(Value*, var) != out);
+    assert(upcast(Value*, var) != out);
     assert(steps_out != out);  // Legal for SET, not for GET
 
     if (Is_Chain(var) or Is_Path(var)) {

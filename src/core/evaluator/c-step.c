@@ -889,7 +889,7 @@ Bounce Stepper_Executor(Level* L)
         dont(Quote_Cell(As_Element(SPARE)));  // want to run word
 
         Api(Value*) temp = rebUndecayed_helper(
-            cast(RebolContext*, Level_Binding(L)),
+            upcast(RebolContext*, Level_Binding(L)),
             spare, out, rebEND
         );
         Copy_Cell(OUT, temp);
@@ -1884,7 +1884,7 @@ Bounce Stepper_Executor(Level* L)
     dont(Quote_Cell(As_Element(SPARE)));  // want to run word
 
     Api(Value*) temp = rebValue_helper(  // pass binding explicitly to helper
-        cast(RebolContext*, Level_Binding(L)),
+        upcast(RebolContext*, Level_Binding(L)),
         spare, out,
         rebEND  // must pass END explicitly to helper
     );

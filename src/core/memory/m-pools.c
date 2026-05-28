@@ -641,16 +641,16 @@ void Unmanage_Pairing(Pairing* p) {
 //
 //  Free_Pairing: C
 //
-void Free_Pairing(Cell* paired) {
+void Free_Pairing(Pairing* paired) {
     assert(Not_Base_Managed(paired));
     Raw_Pooled_Free(STUB_POOL, paired);
 
   #if DEBUG_STUB_ORIGINS && TRAMPOLINE_COUNTS_TICKS
     //
-    // This wasn't actually a Series, but poke the tick where the base was
+    // This wasn't actually a Stub, but poke the tick where the base was
     // freed into the memory spot so crash() finds it.
     //
-    raw_cast(Stub*, paired)->tick = g_tick;
+    c_cast(Stub*, paired)->tick = g_tick;
   #endif
 }
 

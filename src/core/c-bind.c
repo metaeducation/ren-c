@@ -254,7 +254,7 @@ Let* Make_Let_Variable(
       )
     );
 
-    Init(Slot) slot = Slot_Init_Hack(raw_cast(Slot*, Stub_Cell(let)));
+    Init(Slot) slot = Slot_Init_Hack(upcast(Slot*, Stub_Cell(let)));
     Init_Void_Signifying_Unset(slot);
 
     Tweak_Link_Inherit_Bind_Raw(let, inherit);  // linked list [1]

@@ -48,14 +48,12 @@
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Base*> {  // both must be const [B]
-  static void Validate_Bits(const F* p) {
-    DECLARE_C_TYPE_LIST(type_list,
-        void, Byte,
-        Stub, ParamList, Context, SeaOfVars,
-        Element, Value
-    );
-    STATIC_ASSERT(In_C_Type_List(type_list, F));
+  DECLARE_C_TYPE_LIST(allowed_from,
+      void, Byte
+  );
+  static const bool legal = allowed_from::contains<F>::value;
 
+  static void Validate_Bits(const F* p) {
     if (not p)
         return;
 

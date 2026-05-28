@@ -947,7 +947,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             rebRelease(made);
 
             assert(STATE == STATE_0);
-            Mark_Typechecked(raw_cast(Param*, ARG_N(1)));
+            Mark_Typechecked(upcast(Param*, ARG_N(1)));
 
             return CONTINUE_SAMELEVEL;
         }

@@ -168,9 +168,9 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     if (SPORADICALLY(32)) {
         LEVEL_STATE_BYTE(sub) = ST_ACTION_TYPECHECKING;
     } else {
-        Mark_Typechecked(raw_cast(Param*, location_arg));
-        Mark_Typechecked(raw_cast(Param*, picker_arg));
-        Mark_Typechecked(raw_cast(Param*, dual_arg));
+        Mark_Typechecked(upcast(Param*, location_arg));
+        Mark_Typechecked(upcast(Param*, picker_arg));
+        Mark_Typechecked(upcast(Param*, dual_arg));
         Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
     }
 
@@ -346,9 +346,9 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Writeback_Dual_In_Scratch_To_Spare(
     if (SPORADICALLY(32)) {
         LEVEL_STATE_BYTE(sub) = ST_ACTION_TYPECHECKING;
     } else {
-        Mark_Typechecked(raw_cast(Param*, location_arg));
-        Mark_Typechecked(raw_cast(Param*, picker_arg));
-        Mark_Typechecked(raw_cast(Param*, dual_value_arg));
+        Mark_Typechecked(upcast(Param*, location_arg));
+        Mark_Typechecked(upcast(Param*, picker_arg));
+        Mark_Typechecked(upcast(Param*, dual_value_arg));
         Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
     }
 

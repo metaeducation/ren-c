@@ -52,10 +52,9 @@
 // conversions from these types.
 //
 DECLARE_C_TYPE_LIST(g_convertible_to_cell,
-    Cell, Slot, Param, Value, Stable, Element, Dual,
     Pairing,  // same size as Stub, holds two Cells
     char,  // some memory blobs use char* for debuggers to read UTF-8 easier
-    Base, Byte, void
+    Byte, void
 );
 
 
@@ -63,9 +62,9 @@ DECLARE_C_TYPE_LIST(g_convertible_to_cell,
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Slot*> {  // both must be const [B]
-    static void Validate_Bits(const F* p) {
-        STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
+    static const bool legal = g_convertible_to_cell::contains<F>::value;
 
+    static void Validate_Bits(const F* p) {
         if (not p)
             return;
 
@@ -89,9 +88,9 @@ struct CastHook<const F*, const Slot*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Param*> {  // both must be const [B]
-    static void Validate_Bits(const F* p) {
-        STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
+    static const bool legal = g_convertible_to_cell::contains<F>::value;
 
+    static void Validate_Bits(const F* p) {
         if (not p)
             return;
 
@@ -106,9 +105,9 @@ struct CastHook<const F*, const Param*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Value*> {  // both must be const [B]
-  static void Validate_Bits(const F* p) {
-    STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
+  static const bool legal = g_convertible_to_cell::contains<F>::value;
 
+  static void Validate_Bits(const F* p) {
     if (not p)
         return;
 
@@ -123,9 +122,9 @@ struct CastHook<const F*, const Value*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Stable*> {  // both must be const [B]
-  static void Validate_Bits(const F* p) {
-    STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
+  static const bool legal = g_convertible_to_cell::contains<F>::value;
 
+  static void Validate_Bits(const F* p) {
     if (not p)
         return;
 
@@ -140,9 +139,9 @@ struct CastHook<const F*, const Stable*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Element*> {  // both must be const [B]
-    static void Validate_Bits(const F* p) {
-        STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
+    static const bool legal = g_convertible_to_cell::contains<F>::value;
 
+    static void Validate_Bits(const F* p) {
         if (not p)
             return;
 
@@ -160,9 +159,9 @@ struct CastHook<const F*, const Element*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Dual*> {  // both must be const [B]
-    static void Validate_Bits(const F* p) {
-        STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
+    static const bool legal = g_convertible_to_cell::contains<F>::value;
 
+    static void Validate_Bits(const F* p) {
         if (not p)
             return;
 

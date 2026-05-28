@@ -1110,7 +1110,7 @@ const RebolBaseInternal* API_rebArgR(
     for (; key != tail; ++key, ++arg) {
         if (Are_Synonyms(Key_Symbol(key), symbol)) {
             Value* v = As_Value(arg);
-            return cast(
+            return upcast(
                 RebolBaseInternal*,
                 Nullptr_If_Nulled_Cell(v)
             );
@@ -1249,7 +1249,7 @@ static Result(Level*) Run_Valist_And_Call_Va_End(  // va_end()s [1]
 
     if (binding == nullptr) {
         assert(Is_Stub_Sea(g_user_context));
-        binding = raw_cast(RebolContext*, g_user_context);
+        binding = upcast(RebolContext*, g_user_context);
     }
 
     assert(Is_Base_Managed(binding));
@@ -1315,7 +1315,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
 
     if (binding == nullptr) {  // e.g. someone calling libRebol() from main()
         assert(Is_Stub_Sea(g_user_context));
-        binding = cast(RebolContext*, g_user_context);
+        binding = upcast(RebolContext*, g_user_context);
     }
 
     assert(Is_Base_Managed(binding));
@@ -2799,7 +2799,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
     ENTER_API;
 
     if (p == nullptr)
-        return cast(RebolBaseInternal*, LIB(QUASI_NULL));
+        return upcast(RebolBaseInternal*, LIB(QUASI_NULL));
 
     Stub* stub;
 
@@ -2814,7 +2814,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
         const Value* at = cast(const Value*, p);
         if (Is_Light_Null(at)) {
             assert(not Is_Api_Value(at));  // only internals use nulled cells
-            return cast(RebolBaseInternal*, LIB(QUASI_NULL));
+            return upcast(RebolBaseInternal*, LIB(QUASI_NULL));
         }
 
         Value* v = Alloc_Value();
@@ -2829,7 +2829,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
 
     Value* v = raw_cast(Value*, Stub_Cell(stub));
     Lift_Cell(v);
-    return cast(RebolBaseInternal*, stub);  // C needs cast
+    return upcast(RebolBaseInternal*, stub);  // C needs cast
 }
 
 
@@ -2874,7 +2874,7 @@ RebolBaseInternal* API_rebUNQUOTING(const void* p)
     require (
         Unlift_Cell_No_Decay(v)
     );
-    return cast(RebolBaseInternal*, stub);  // cast needed in C
+    return upcast(RebolBaseInternal*, stub);  // cast needed in C
 }
 
 
@@ -2901,7 +2901,7 @@ RebolBaseInternal* API_rebRELEASING(RebolValue* v)
         panic ("Cannot apply rebR() more than once to the same API value");
 
     Set_Flavor_Flag(VALUE_HOLDER, stub, RELEASE);
-    return cast(RebolBaseInternal*, stub);  // cast needed in C
+    return upcast(RebolBaseInternal*, stub);  // cast needed in C
 }
 
 
@@ -2926,7 +2926,7 @@ RebolBaseInternal* API_rebINLINE(const RebolValue* v)
     );
     Copy_Cell(Stub_Cell(s), i);
 
-    return cast(RebolBaseInternal*, s);  // cast needed in C
+    return upcast(RebolBaseInternal*, s);  // cast needed in C
 }
 
 
@@ -2973,7 +2973,7 @@ RebolBaseInternal* API_rebRUN(const void* p)
     if (not Is_Frame(stable))
         panic ("rebRUN() requires FRAME! or actions (aka FRAME! antiforms)");
 
-    return cast(RebolBaseInternal*, stub);  // cast needed in C
+    return upcast(RebolBaseInternal*, stub);  // cast needed in C
 }
 
 
@@ -3420,7 +3420,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
     assert(Is_Base_Managed(L->varlist));
     assert(Link_Inherit_Bind_Raw(L->varlist));  // must inherit (?)
 
-    RebolContext* context = cast(RebolContext*, L->varlist);  // [1]
+    RebolContext* context = upcast(RebolContext*, L->varlist);  // [1]
 
     Stable* cfunc_handle = Details_At(details, IDX_API_ACTION_CFUNC);
     RebolActionCFunction* cfunc = f_cast(RebolActionCFunction*,
