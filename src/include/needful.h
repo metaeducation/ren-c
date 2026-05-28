@@ -1041,6 +1041,25 @@ void Needful_Panic_Abruptly(const char* error) {
 #define NEEDFUL_NODISCARD  /* default to no-op in C or pre-C++17 */
 
 
+/****[[ ALWAYS_INLINE shim ]]**************************************************
+**
+** Hints to the compiler to inline a function even in non-optimized builds.
+** In GCC/Clang this is __attribute__((always_inline)) and in MSVC it is
+** __forceinline.  When neither is available it falls back to plain `inline`.
+**
+** The primary use is marking the trivial no-op default CastHook::Validate_Bits
+** so that debug builds pay zero cost when no hook has been registered.
+*/
+
+#if defined(__GNUC__) || defined(__clang__)
+    #define NEEDFUL_ALWAYS_INLINE  __attribute__((always_inline)) inline
+#elif defined(_MSC_VER)
+    #define NEEDFUL_ALWAYS_INLINE  __forceinline
+#else
+    #define NEEDFUL_ALWAYS_INLINE  inline
+#endif
+
+
 /*****************************************************************************
 **
 **  OPTIONAL SHORHANDS FOR THE `NEEDFUL_XXX` MACROS AS JUST `XXX` MACROS
@@ -1228,6 +1247,10 @@ void Needful_Panic_Abruptly(const char* error) {
 
   #if !defined(NODISCARD)
     #define NODISCARD  NEEDFUL_NODISCARD
+  #endif
+
+  #if !defined(ALWAYS_INLINE)
+    #define ALWAYS_INLINE  NEEDFUL_ALWAYS_INLINE
   #endif
 #endif
 
