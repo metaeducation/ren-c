@@ -598,7 +598,7 @@ Result(ParamList*) Pop_Paramlist(
     Count num_params = (TOP_INDEX - base) / 2 + (methodization ? 1 : 0);
 
     require (
-      KeyList* keylist = u_downcast Make_Flex(
+      KeyList* keylist = raw_downcast Make_Flex(
         STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
         num_params
     ));

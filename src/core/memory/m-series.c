@@ -72,7 +72,7 @@ Result(None) Flex_Data_Alloc(Flex* s, REBLEN capacity) {
 
     if (pool_id < SYSTEM_POOL) {  // a pool is designated for this size range
         trap (
-          s->content.dynamic.data = u_downcast Raw_Pooled_Alloc(pool_id)
+          s->content.dynamic.data = raw_downcast Raw_Pooled_Alloc(pool_id)
         );
         size = g_mem.pools[pool_id].wide;
         assert(size >= capacity * wide);

@@ -517,7 +517,7 @@ INLINE Result(Level*) Prep_Level_Core(
     Flags flags
 ){
     trap (
-      Level* L = u_downcast preallocated
+      Level* L = raw_downcast preallocated
     );
 
   #if RUNTIME_CHECKS

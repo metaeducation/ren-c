@@ -988,7 +988,7 @@ IMPLEMENT_GENERIC(COPY, Any_List)
     flags |= (list->header.bits & ARRAY_FLAG_CONST_SHALLOW);  // retain [1]
 
     require (
-      Source* copy = u_downcast Copy_Array_Core_Managed(
+      Source* copy = raw_downcast Copy_Array_Core_Managed(
         flags, // flags
         arr,
         index, // at

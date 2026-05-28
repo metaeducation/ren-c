@@ -800,7 +800,7 @@ VarList* Copy_Varlist_Extra_Managed(
         assert(CTX_TYPE(original) != HEART_FRAME);  // can't expand FRAME!s
 
         require (
-          KeyList* keylist = u_downcast Copy_Flex_At_Len_Extra(
+          KeyList* keylist = raw_downcast Copy_Flex_At_Len_Extra(
             STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
             Bonus_Keylist(original),
             0,
