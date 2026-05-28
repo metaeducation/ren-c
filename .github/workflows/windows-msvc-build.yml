@@ -143,6 +143,14 @@ jobs:
       uses: ./.github/actions/capture-git-hashes
 
 
+    - name: Clone needful-enhanced For C++ Enhanced Build
+      if: contains(matrix.standard, 'c++')
+      run: |
+        git clone --depth=1 \
+          https://github.com/metaeducation/needful-enhanced \
+          src/include/needful-enhanced
+
+
     - name: Clone $EXTENSIONS From Separate Repositories
       uses: ./.github/actions/clone-extension-repos
 

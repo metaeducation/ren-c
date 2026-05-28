@@ -88,6 +88,13 @@ jobs:
       uses: ./.github/actions/capture-git-hashes
 
 
+    - name: Clone needful-enhanced For C++ Enhanced Build
+      run: |
+        git clone --depth=1 \
+          https://github.com/metaeducation/needful-enhanced \
+          src/include/needful-enhanced
+
+
   #====# TOOLCHAIN INSTALLATION STEPS #=======================================#
 
     - name: Speedup `apt install` by Diverting mandb To No-Op  # See README
