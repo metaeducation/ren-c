@@ -41,7 +41,7 @@
 
 typedef uint_fast16_t SymId16;  // 16 bits for SymId in symbol header
 
-#define SYM_0  u_cast(Option(SymId), none)
+#define SYM_0  raw_cast(Option(SymId), none)
 
 #if NEEDFUL_OPTION_USES_WRAPPER
     bool operator==(Option(SymId)& a, Option(SymId)& b) = delete;

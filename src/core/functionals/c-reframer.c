@@ -167,7 +167,7 @@ Result(None) Init_Invokable_From_Feed(
     StackIndex base = TOP_INDEX;
 
     if (Is_Word(v) or Is_Tuple(v) or Is_Path(v) or Is_Chain(v)) {
-        Value* sink_out = u_cast(Value*, out);
+        Value* sink_out = raw_cast(Value*, out);
         require (
           Get_Var(sink_out, NO_STEPS, v, Feed_Binding(feed))
         );

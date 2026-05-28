@@ -203,13 +203,13 @@ Bounce Irreducible_Bounce(Bounce b) {
     if (Link_Inherit_Bind(TOP_LEVEL->varlist) == nullptr) {  // raw native [1]
         assert(Get_Details_Flag(Ensure_Level_Details(TOP_LEVEL), RAW_NATIVE));
         possibly(Not_Base_Managed(TOP_LEVEL->varlist));
-        return u_cast(Bounce,  // v-- RebolBounce is void*, not Bounce
+        return raw_cast(Bounce,  // v-- RebolBounce is void*, not Bounce
             rebDelegateCore(cast(RebolContext*, g_lib_context), cp)
         );
     }
 
     assert(Is_Base_Managed(TOP_LEVEL->varlist));
-    return u_cast(Bounce,  // v-- RebolBounce is void*, not Bounce
+    return raw_cast(Bounce,  // v-- RebolBounce is void*, not Bounce
         rebDelegateCore(cast(RebolContext*, TOP_LEVEL->varlist), cp)
     );
 }}
@@ -446,7 +446,7 @@ Bounce Action_Executor(Level* L)
                 if (Word_Symbol(ordered) != param_symbol)
                     continue;
 
-                possibly(  // need to use u_cast() due to this possibility
+                possibly(  // need to use raw_cast() due to this possibility
                     ARG == Level_Args_Head(L) and Is_Cell_Poisoned(ARG)
                 );
                 REBLEN offset = ARG - Level_Args_Head(L);
@@ -1123,7 +1123,7 @@ Result(None) Push_Action(
         return fail (e);
     }
 
-    L->varlist = u_cast(ParamList*, s);
+    L->varlist = raw_cast(ParamList*, s);
     L->rootvar = Flex_Head_Dynamic(Element, s);
 
     possibly(  // ACTION!, quasi, etc.

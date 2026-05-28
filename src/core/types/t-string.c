@@ -70,7 +70,7 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
         and not SPORADICALLY(20)  // test non-ASCII codepath for ASCII
     ){
         possibly(Link_Bookmarks(s));  // mutations maintain for long strings
-        cp = u_cast(Utf8(const*), u_cast(Byte*, Strand_Head(s)) + at);
+        cp = raw_cast(Utf8(const*), raw_cast(Byte*, Strand_Head(s)) + at);
         return m_cast(Utf8(*), cp);
     }
 
@@ -161,9 +161,9 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
 
     index = booked;
     if (book)
-        cp = u_cast(Utf8(const*), Flex_Data(s) + BOOKMARK_OFFSET(unwrap book));
+        cp = raw_cast(Utf8(const*), Flex_Data(s) + BOOKMARK_OFFSET(unwrap book));
     else
-        cp = u_cast(Utf8(const*), Flex_Data(s));
+        cp = raw_cast(Utf8(const*), Flex_Data(s));
 
     if (index > at) {
       #if DEBUG_TRACE_BOOKMARKS
@@ -947,7 +947,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             rebRelease(made);
 
             assert(STATE == STATE_0);
-            Mark_Typechecked(u_cast(Param*, ARG_N(1)));
+            Mark_Typechecked(raw_cast(Param*, ARG_N(1)));
 
             return CONTINUE_SAMELEVEL;
         }

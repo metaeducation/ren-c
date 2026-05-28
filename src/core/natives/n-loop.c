@@ -2294,7 +2294,7 @@ DECLARE_NATIVE(REPEAT)
     Stable* count = opt ARG(COUNT);  // nullptr checked in initial_entry
     Element* body = ARG(BODY);
 
-    Stable* index = u_cast(Stable*, SPARE);  // current index, erased on entry
+    Stable* index = raw_cast(Stable*, SPARE);  // current index, erased on entry
 
     enum {
         ST_REPEAT_INITIAL_ENTRY = STATE_0,

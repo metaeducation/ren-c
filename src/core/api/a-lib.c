@@ -1249,11 +1249,11 @@ static Result(Level*) Run_Valist_And_Call_Va_End(  // va_end()s [1]
 
     if (binding == nullptr) {
         assert(Is_Stub_Sea(g_user_context));
-        binding = u_cast(RebolContext*, g_user_context);
+        binding = raw_cast(RebolContext*, g_user_context);
     }
 
     assert(Is_Base_Managed(binding));
-    Tweak_Feed_Binding(feed, u_cast(Context*, binding));
+    Tweak_Feed_Binding(feed, raw_cast(Context*, binding));
 
     Level* L = Make_Level(
         &Evaluator_Executor,
@@ -2827,7 +2827,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
         panic ("Unknown pointer");
     }
 
-    Value* v = u_cast(Value*, Stub_Cell(stub));
+    Value* v = raw_cast(Value*, Stub_Cell(stub));
     Lift_Cell(v);
     return cast(RebolBaseInternal*, stub);  // C needs cast
 }
@@ -2867,7 +2867,7 @@ RebolBaseInternal* API_rebUNQUOTING(const void* p)
         panic ("Unknown pointer");
     }
 
-    Value* v = u_cast(Value*, Stub_Cell(stub));
+    Value* v = raw_cast(Value*, Stub_Cell(stub));
     if (not Any_Lifted(v))
         panic ("rebUNQUOTING()/rebU() can only unquote QUOTED? values");
 

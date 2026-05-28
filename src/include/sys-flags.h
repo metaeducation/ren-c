@@ -98,9 +98,9 @@
 // 1. The macros are in all-caps to show they are "weird" and usable as
 //    LValues.
 //
-// 2. u_cast() is used for "unhookable const-preserving casts" in the C++
+// 2. raw_cast() is used for "unhookable const-preserving casts" in the C++
 //    build, so if (p) is const Byte* the Byte won't be mutable.  (The C
-//    build throws away constness in u_cast(), since it can't "sense" it.)
+//    build throws away constness in raw_cast(), since it can't "sense" it.)
 //
 // 3. Byte alias for `unsigned char` is used vs. `uint8_t`, due to strict
 //    aliasing exemption for char types (some say uint8_t should count...).
@@ -108,16 +108,16 @@
 //    reading from...you will get the correct up-to-date value of that byte.
 
 #define FIRST_BYTE(p) \
-    u_cast(Byte*, known(void*, (p)))[0]  // CAPS_NAME: LValue [1]
+    raw_cast(Byte*, known(void*, (p)))[0]  // CAPS_NAME: LValue [1]
 
 #define SECOND_BYTE(p) \
-    u_cast(Byte*, known(void*, (p)))[1]  // const-preserving [2]
+    raw_cast(Byte*, known(void*, (p)))[1]  // const-preserving [2]
 
 #define THIRD_BYTE(p) \
-    u_cast(Byte*, known(void*, (p)))[2]  // Byte strict exempt [3]
+    raw_cast(Byte*, known(void*, (p)))[2]  // Byte strict exempt [3]
 
 #define FOURTH_BYTE(p) \
-    u_cast(Byte*, known(void*, (p)))[3]
+    raw_cast(Byte*, known(void*, (p)))[3]
 
 
 // There might not seem to be a good reason to keep the uint16_t variant in
@@ -128,23 +128,23 @@
 // as long as there has to be an order, might as well be platform-independent.
 
 INLINE uint16_t FIRST_UINT16(const void* p) {
-    const Byte* bp = u_cast(Byte*, p);
+    const Byte* bp = raw_cast(Byte*, p);
     return i_cast(uint16_t, bp[0] << 8) | bp[1];
 }
 
 INLINE uint16_t SECOND_UINT16(const void* p) {
-    const Byte* bp = u_cast(Byte*, p);
+    const Byte* bp = raw_cast(Byte*, p);
     return i_cast(uint16_t, bp[2] << 8) | bp[3];
 }
 
 INLINE void SET_FIRST_UINT16(void *p, uint16_t u) {
-    Byte* bp = u_cast(Byte*, p);
+    Byte* bp = raw_cast(Byte*, p);
     bp[0] = u / 256;
     bp[1] = u % 256;
 }
 
 INLINE void SET_SECOND_UINT16(void* p, uint16_t u) {
-    Byte* bp = u_cast(Byte*, p);
+    Byte* bp = raw_cast(Byte*, p);
     bp[2] = u / 256;
     bp[3] = u % 256;
 }

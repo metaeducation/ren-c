@@ -83,7 +83,7 @@
 // TYPE_BLOCK, TYPE_BLANK if va_list
 //
 #define Feed_Data(feed) \
-    u_cast(Element*, Stub_Cell(&(feed)->singular))
+    raw_cast(Element*, Stub_Cell(&(feed)->singular))
 
 
 // Nullptr is used by the API to indicate null cells.  We want the frequent
@@ -102,7 +102,7 @@
 
 INLINE Option(const Cell*) Misc_Feedstub_Pending(Stub* stub) {
     assert(Stub_Flavor(stub) == FLAVOR_FEED);
-    return u_cast(const Cell*, stub->misc.base);
+    return raw_cast(const Cell*, stub->misc.base);
 }
 
 INLINE void Tweak_Misc_Feedstub_Pending(
@@ -115,7 +115,7 @@ INLINE void Tweak_Misc_Feedstub_Pending(
 
 INLINE Option(Stub*) Link_Feedstub_Splice(Stub* stub) {
     assert(Stub_Flavor(stub) == FLAVOR_FEED);
-    return u_cast(Stub*, stub->link.base);
+    return raw_cast(Stub*, stub->link.base);
 }
 
 INLINE void Tweak_Link_Feedstub_Splice(
@@ -285,7 +285,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
 
     switch (Stub_Flavor(f)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
-        Array* inst1 = u_cast(Array*, f);
+        Array* inst1 = raw_cast(Array*, f);
         Element* single = cast(Element*, Stub_Cell(inst1));
         if (Is_Space(single)) {
             GC_Kill_Flex(inst1);
@@ -305,7 +305,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         break; }
 
       case FLAVOR_VALUE_HOLDER: {
-        Array* inst1 = u_cast(Array*, f);
+        Array* inst1 = raw_cast(Array*, f);
 
         // We usually get the API *cells* passed to us, not the singular
         // array holding them.  But the rebR() function will actually
@@ -845,7 +845,7 @@ INLINE Result(Feed*) Prep_At_Feed(
 //       ]
 //
 #define Next_Not_Word_Or_Is_Newline_Or_End(L) ( \
-    (u_cast(Cell*, L->feed->p)->header.bits & ( /* g_cell_aligned_end? [1] */ \
+    (raw_cast(Cell*, L->feed->p)->header.bits & ( /* g_cell_aligned_end? [1] */ \
         FLAG_HEARTSIGIL_BYTE(255) \
             | FLAG_LIFT_BYTE(255) \
             | CELL_FLAG_NEWLINE_BEFORE \
@@ -857,7 +857,7 @@ INLINE Result(Feed*) Prep_At_Feed(
 
 
 #define Next_Not_Frame_Or_Is_Newline_Or_End(L) ( \
-    (u_cast(Cell*, L->feed->p)->header.bits & ( /* g_cell_aligned_end? [1] */ \
+    (raw_cast(Cell*, L->feed->p)->header.bits & ( /* g_cell_aligned_end? [1] */ \
         FLAG_HEARTSIGIL_BYTE(255) \
             | FLAG_LIFT_BYTE(255) \
             | CELL_FLAG_NEWLINE_BEFORE \
@@ -873,7 +873,7 @@ INLINE Result(Feed*) Prep_At_Feed(
 // in one masking operation.
 //
 #define Next_Is_End_Or_Blank(L) ( \
-    (u_cast(Cell*, L->feed->p)->header.bits & ( \
+    (raw_cast(Cell*, L->feed->p)->header.bits & ( \
         FLAG_LIFT_BYTE(255) \
     )) == ( \
         FLAG_TYPE(TYPE_BLANK) \

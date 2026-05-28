@@ -168,9 +168,9 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     if (SPORADICALLY(32)) {
         LEVEL_STATE_BYTE(sub) = ST_ACTION_TYPECHECKING;
     } else {
-        Mark_Typechecked(u_cast(Param*, location_arg));
-        Mark_Typechecked(u_cast(Param*, picker_arg));
-        Mark_Typechecked(u_cast(Param*, dual_arg));
+        Mark_Typechecked(raw_cast(Param*, location_arg));
+        Mark_Typechecked(raw_cast(Param*, picker_arg));
+        Mark_Typechecked(raw_cast(Param*, dual_arg));
         Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
     }
 
@@ -307,7 +307,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Writeback_Dual_In_Scratch_To_Spare(
         Data_Stack_At(Element, picker_index)
     );
 
-    dual_value_arg = u_cast(Value*, Erase_ARG(DUAL));
+    dual_value_arg = raw_cast(Value*, Erase_ARG(DUAL));
 
 } erase_parent_spare_now_that_we_are_done_extracting_it: {
 
@@ -346,9 +346,9 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Writeback_Dual_In_Scratch_To_Spare(
     if (SPORADICALLY(32)) {
         LEVEL_STATE_BYTE(sub) = ST_ACTION_TYPECHECKING;
     } else {
-        Mark_Typechecked(u_cast(Param*, location_arg));
-        Mark_Typechecked(u_cast(Param*, picker_arg));
-        Mark_Typechecked(u_cast(Param*, dual_value_arg));
+        Mark_Typechecked(raw_cast(Param*, location_arg));
+        Mark_Typechecked(raw_cast(Param*, picker_arg));
+        Mark_Typechecked(raw_cast(Param*, dual_value_arg));
         Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
     }
 
@@ -515,7 +515,7 @@ Option(Error*) Trap_Push_Steps_To_Stack(
             }
             Lift_Cell(TOP_STABLE);
             Lift_Cell(Init_Word(PUSH(), CANON(DOT_1)));
-            Lift_Cell(Init_Word(PUSH(), u_cast(const Symbol*, payload1)));
+            Lift_Cell(Init_Word(PUSH(), raw_cast(const Symbol*, payload1)));
             goto return_success;
         }
 
@@ -649,7 +649,7 @@ Option(Error*) Tweak_Stack_Steps_With_Dual_Scratch_To_Dual_Spare(void)
         or STATE == ST_TWEAK_GETTING
         or STATE == ST_TWEAK_SETTING
     );
-    const TweakMode mode = u_cast(TweakMode, STATE);
+    const TweakMode mode = raw_cast(TweakMode, STATE);
 
   #if NEEDFUL_DOES_CORRUPTIONS  // confirm caller pre-corrupted spare [1]
     assert(Not_Cell_Readable(SPARE));

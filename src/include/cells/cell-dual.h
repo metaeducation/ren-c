@@ -85,7 +85,7 @@ INLINE const Dual* Opt_Extract_Dual_If_Undecayed_Bedrock(const Value* v) {
         return nullptr;
 
     const Element* tail;
-    const Dual* item = u_cast(Dual*, List_At(&tail, v));
+    const Dual* item = raw_cast(Dual*, List_At(&tail, v));
     if (item == tail or item + 1 != tail)
         return nullptr;
 
@@ -96,7 +96,7 @@ INLINE const Dual* Opt_Extract_Dual_If_Undecayed_Bedrock(const Value* v) {
 }
 
 #define Is_Undecayed_Bedrock(v) \
-    u_cast(bool, Opt_Extract_Dual_If_Undecayed_Bedrock(v))
+    raw_cast(bool, Opt_Extract_Dual_If_Undecayed_Bedrock(v))
 
 
 //=//// DRAIN BEDROCK: SPACE //////////////////////////////////////////////-//

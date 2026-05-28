@@ -559,7 +559,7 @@ DECLARE_NATIVE(EVAL_FREE)
 
     Set_Action_Level_Label(L, Frame_Label_Deep(frame));
 
-    L->varlist = u_cast(ParamList*, varlist);
+    L->varlist = raw_cast(ParamList*, varlist);
     L->rootvar = Rootvar_Of_Varlist(varlist);
     if (MISC_VARLIST_ADJUNCT(varlist) != nullptr)  // might have adjunct
         assert(Get_Stub_Flag(varlist, MISC_NEEDS_MARK));
@@ -927,7 +927,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
   //    or by frame builders.  It probably makes the most sense if the type
   //    check is willing to do it as a canonization; this is still in flux.
 
-    possibly(u_cast(Cell*, param) == u_cast(Cell*, slot));  // !!! really?
+    possibly(raw_cast(Cell*, param) == raw_cast(Cell*, slot));  // !!! really?
     possibly(Get_Parameter_Flag(param, UNDO_OPT));  // our responsibility? [1]
     USED(param);
 

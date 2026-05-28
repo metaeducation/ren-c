@@ -299,7 +299,7 @@ INLINE Cell* Data_Stack_Cell_At(StackIndex i) {
 }
 
 #define Data_Stack_At(T,i)  /* may be erased cell */ \
-    cast(OnStack(T*), u_cast(T*, Data_Stack_Cell_At(i)))  // u_cast() needed
+    cast(OnStack(T*), raw_cast(T*, Data_Stack_Cell_At(i)))  // raw_cast() needed
 
 #if RUNTIME_CHECKS
     #define IN_DATA_STACK_DEBUG(v) \

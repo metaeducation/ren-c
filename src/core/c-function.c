@@ -627,7 +627,7 @@ Result(ParamList*) Pop_Paramlist(
     else
         Init_Frame_Unchecked(
             rootvar,
-            u_cast(ParamList*, paramlist),  // partially formed, u_cast() !
+            raw_cast(ParamList*, paramlist),  // partially formed, raw_cast() !
             ANONYMOUS,
             UNCOUPLED
         );

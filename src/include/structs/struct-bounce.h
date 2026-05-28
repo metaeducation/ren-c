@@ -102,7 +102,7 @@ INLINE bool Is_Api_Value(const Value* v);
           { return b; }
 
         explicit operator const char*() const
-          { return u_cast(const char*, b); }
+          { return raw_cast(const char*, b); }
     };
 #endif
 

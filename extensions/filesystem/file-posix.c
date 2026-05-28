@@ -699,7 +699,7 @@ Stable* Rename_File_Or_Directory(const Stable* port, const Stable* to)
         time_t now_secs_gm = mktime(gmtime(&now_secs));
 
         double diff = difftime(mktime(&local_tm), now_secs_gm);
-        return u_cast(int, diff / 60);
+        return raw_cast(int, diff / 60);
     }
 
     //

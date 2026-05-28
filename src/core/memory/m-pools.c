@@ -354,7 +354,7 @@ void Shutdown_Pools(void)
 
             ++num_leaks;
 
-            Stub* stub = u_cast(Stub*, unit);
+            Stub* stub = raw_cast(Stub*, unit);
             if (Is_Base_Managed(stub)) {
                 printf("MANAGED Stub leak, this REALLY shouldn't happen\n");
                 leaked = stub;  // report a managed one if found
@@ -508,7 +508,7 @@ Base* Try_Find_Containing_Base_Debug(const void *p)
                 continue;
 
             if (unit[0] & BASE_BYTEMASK_0x08_CELL) {  // a "pairing"
-                Pairing* pairing = u_cast(Pairing*, unit);
+                Pairing* pairing = raw_cast(Pairing*, unit);
                 if (
                     p >= cast(void*, Pairing_Head(pairing))
                     and p < cast(void*, Pairing_Tail(pairing))
@@ -518,7 +518,7 @@ Base* Try_Find_Containing_Base_Debug(const void *p)
                 continue;
             }
 
-            Flex* f = u_cast(Flex*, unit);
+            Flex* f = raw_cast(Flex*, unit);
             if (Not_Stub_Flag(f, DYNAMIC)) {
                 if (
                     p >= cast(void*, &f->content)
@@ -650,7 +650,7 @@ void Free_Pairing(Cell* paired) {
     // This wasn't actually a Series, but poke the tick where the base was
     // freed into the memory spot so crash() finds it.
     //
-    u_cast(Stub*, paired)->tick = g_tick;
+    raw_cast(Stub*, paired)->tick = g_tick;
   #endif
 }
 
@@ -761,7 +761,7 @@ Result(None) Expand_Flex_At_Index_And_Update_Used(
             // but when it is this will be useful.
             //
             for (index = 0; index < delta; index++)
-                Erase_Cell(Array_At(u_cast(Array*, f), index));
+                Erase_Cell(Array_At(raw_cast(Array*, f), index));
         }
       #endif
         Assert_Flex_Term_If_Needed(f);
@@ -805,7 +805,7 @@ Result(None) Expand_Flex_At_Index_And_Update_Used(
             //
             while (delta != 0) {
                 --delta;
-                Erase_Cell(Array_At(u_cast(Array*, f), index + delta));
+                Erase_Cell(Array_At(raw_cast(Array*, f), index + delta));
             }
         }
       #endif
@@ -880,7 +880,7 @@ Result(None) Expand_Flex_At_Index_And_Update_Used(
     );
     assert(Get_Stub_Flag(f, DYNAMIC));
     if (Stub_Holds_Cells(f))
-        Prep_Array(u_cast(Array*, f), 0);  // capacity doesn't matter to prep
+        Prep_Array(raw_cast(Array*, f), 0);  // capacity doesn't matter to prep
 
     // If necessary, add Flex to the recently expanded list
     //
@@ -1060,7 +1060,7 @@ Result(None) Remake_Flex(Flex* f, REBLEN units, Flags flags)
     }
     assert(Get_Stub_Flag(f, DYNAMIC));
     if (Stub_Holds_Cells(f))
-        Prep_Array(u_cast(Array*, f), 0);  // capacity doesn't matter to prep
+        Prep_Array(raw_cast(Array*, f), 0);  // capacity doesn't matter to prep
 
     if (preserve) {
         // Preserve as much data as possible (if it was requested, some
@@ -1329,7 +1329,7 @@ REBLEN Check_Memory_Debug(void)
             if (unit[0] & BASE_BYTEMASK_0x08_CELL)
                 continue; // a pairing
 
-            Flex* f = u_cast(Flex*, unit);
+            Flex* f = raw_cast(Flex*, unit);
             if (Not_Stub_Flag(f, DYNAMIC))
                 continue;  // data lives in the Flex Stub itself
 
@@ -1466,7 +1466,7 @@ void Dump_All_Series_Of_Width(Size wide)
             if (unit[0] & BASE_BYTEMASK_0x08_CELL)  // a pairing
                 continue;
 
-            Flex* f = u_cast(Flex*, unit);
+            Flex* f = raw_cast(Flex*, unit);
             if (Flex_Wide(f) == wide) {
                 ++count;
                 printf(
@@ -1502,7 +1502,7 @@ void Dump_All_Flex_In_Pool(PoolId pool_id)
             if (unit[0] & BASE_BYTEMASK_0x08_CELL)
                 continue;  // pairing
 
-            Flex* f = u_cast(Flex*, unit);
+            Flex* f = raw_cast(Flex*, unit);
             if (
                 Get_Stub_Flag(f, DYNAMIC)
                 and pool_id == Pool_Id_For_Size(Flex_Total(f))
@@ -1610,7 +1610,7 @@ REBU64 Inspect_Flex(bool show)
             if (unit[0] & BASE_BYTEMASK_0x08_CELL)
                 continue;
 
-            Flex* f = u_cast(Flex*, unit);
+            Flex* f = raw_cast(Flex*, unit);
 
             if (Get_Stub_Flag(f, DYNAMIC))
                 tot_size += Flex_Total(f);

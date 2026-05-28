@@ -43,7 +43,7 @@ INLINE bool Is_Cell_Wordlike(const Cell* v) {
     const Base* payload1 = SERIESLIKE_PAYLOAD_1_BASE(v);
     if (Is_Base_A_Cell(payload1))
         return false;
-    return Stub_Flavor(u_cast(const Flex*, payload1)) == FLAVOR_SYMBOL;
+    return Stub_Flavor(raw_cast(const Flex*, payload1)) == FLAVOR_SYMBOL;
 }
 
 INLINE const Symbol* Word_Symbol(const Cell* c) {

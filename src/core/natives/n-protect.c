@@ -396,7 +396,7 @@ bool Is_Value_Frozen_Deep(const Cell* v) {
     // Frozen deep should be set even on non-Arrays, e.g. all frozen shallow
     // Strings should also have FLEX_INFO_FROZEN_DEEP.
     //
-    return Get_Flex_Info(u_cast(Flex*, base), FROZEN_DEEP);
+    return Get_Flex_Info(raw_cast(Flex*, base), FROZEN_DEEP);
 }
 
 

@@ -46,7 +46,7 @@ INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
     assert(Has_Utf8_Heart(c));
 
     if (not Cell_Payload_1_Needs_Mark(c))  // must store bytes in cell direct
-        return u_cast(Utf8(const*), c->payload.at_least_8);
+        return raw_cast(Utf8(const*), c->payload.at_least_8);
 
     const Strand* str = cast(Strand*, SERIESLIKE_PAYLOAD_1_BASE(c));
     return Strand_Head(str);  // symbols are strings
@@ -81,10 +81,10 @@ INLINE Utf8(const*) Cell_Strand_Tail(const Cell* c) {
 
 
 #define String_At_Ensure_Mutable(v) \
-    u_cast(Utf8(*), m_cast(Byte*, String_At(Ensure_Mutable(v))))
+    raw_cast(Utf8(*), m_cast(Byte*, String_At(Ensure_Mutable(v))))
 
 #define String_At_Known_Mutable(v) \
-    u_cast(Utf8(*), m_cast(Byte*, String_At(Known_Mutable(v))))
+    raw_cast(Utf8(*), m_cast(Byte*, String_At(Known_Mutable(v))))
 
 
 INLINE REBLEN String_Len_At(const Cell* c) {

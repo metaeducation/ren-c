@@ -260,7 +260,7 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
   //    dictate that decaying automatically here is better, wait and see.
 
     const Element* tail;
-    const Dual* first = u_cast(Dual*, List_At(&tail, v));
+    const Dual* first = raw_cast(Dual*, List_At(&tail, v));
 
     if (want_value and first == tail)
         return fail ("Empty PACK! cannot decay to single value");

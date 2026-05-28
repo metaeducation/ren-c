@@ -62,7 +62,7 @@ INLINE Dual* Init_Context_Cell_Untracked(Init(Dual) out, VarList* vlist) {
     );
     CELL_FRAME_PAYLOAD_1_PHASE(out) = vlist;
     if (heart == HEART_FRAME)  // "self-lensing" Lens_Self()
-        CELL_FRAME_EXTRA_LENS_OR_LABEL(out) = u_cast(ParamList*, vlist);
+        CELL_FRAME_EXTRA_LENS_OR_LABEL(out) = raw_cast(ParamList*, vlist);
     else
         CELL_FRAME_EXTRA_LENS_OR_LABEL(out) = nullptr;
     CELL_FRAME_PAYLOAD_2_COUPLING(out) = nullptr;  // UNCOUPLED

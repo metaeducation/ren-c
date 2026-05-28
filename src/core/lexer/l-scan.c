@@ -3242,7 +3242,7 @@ Bounce Scanner_Executor(Level* level_)
         return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
 
     Bounce b = Scanner_Executor_Core(level_);
-    if (u_cast(const void*, b) != nullptr) {
+    if (raw_cast(const void*, b) != nullptr) {
         if (b == BOUNCE_TOPLEVEL_OUT) {
             if (Is_Failure(Level_Out(level_)))
                 assert(TOP_INDEX == STACK_BASE);

@@ -182,7 +182,7 @@ INLINE Array* Make_Array_Core_Into(
             not Level_Is_Variadic(TOP_LEVEL) and
             (filename = Link_Filename(Level_Array(TOP_LEVEL)))
         ){
-            Tweak_Link_Filename(u_cast(Source*, a), filename);
+            Tweak_Link_Filename(raw_cast(Source*, a), filename);
             MISC_SOURCE_LINE(a) = MISC_SOURCE_LINE(Level_Array(TOP_LEVEL));
         }
     }

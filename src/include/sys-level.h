@@ -173,7 +173,7 @@ INLINE Option(LineNumber) Line_Number_Of_Level(Level* L) {
 
 INLINE Element* Evaluator_Level_Current(Level* L) {
     assert(L->executor == &Stepper_Executor);
-    return u_cast(Element*, &(L->scratch));
+    return raw_cast(Element*, &(L->scratch));
 }
 
 
@@ -195,7 +195,7 @@ INLINE Element* Evaluator_Level_Current(Level* L) {
 
 INLINE ParamList* Level_Varlist(Level* L) {
     assert(Is_Level_Dispatching(L));
-    return u_cast(ParamList*, L->varlist);
+    return raw_cast(ParamList*, L->varlist);
 }
 
 

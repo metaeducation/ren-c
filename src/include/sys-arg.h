@@ -171,7 +171,7 @@ INLINE Cell* Arg_Of_Level_Inline(
       case ARGMODE_OPTIONAL:
         assert(n != 0 and n <= Level_Num_Slots(L));
         assert(L->executor != &Intrinsic_Executor);
-        if (Is_Light_Null(u_cast(Value*, L->rootvar) + n))
+        if (Is_Light_Null(raw_cast(Value*, L->rootvar) + n))
             return nullptr;  // should get wrapped by an Option(T)
         break;
 
@@ -189,14 +189,14 @@ INLINE Cell* Arg_Of_Level_Inline(
 
 #if NO_RUNTIME_CHECKS
     #define Required_Arg_Of_Level(L,n) \
-        (u_cast(Param*, (L)->rootvar) + (n))
+        (raw_cast(Param*, (L)->rootvar) + (n))
 #else
     #define Required_Arg_Of_Level(L,n) \
         Arg_Of_Level_Inline((L), (n), ARGMODE_REQUIRED)
 #endif
 
 #define Optional_Arg_Of_Level(L,n) \
-    u_cast(Option(Cell*), Arg_Of_Level_Inline((L), (n), ARGMODE_OPTIONAL))
+    raw_cast(Option(Cell*), Arg_Of_Level_Inline((L), (n), ARGMODE_OPTIONAL))
 
 #define Intrinsic_Arg_Of_Level(L,n) \
     Arg_Of_Level_Inline((L), (n), ARGMODE_INTRINSIC)
@@ -230,19 +230,19 @@ INLINE Cell* Arg_Of_Level_Inline(
 //
 
 #define Level_Args_Head(L) \
-    (u_cast(Arg*, (L)->rootvar) + 1)  // 1-based indexing
+    (raw_cast(Arg*, (L)->rootvar) + 1)  // 1-based indexing
 
 #define ARG(name) \
     x_cast(checked_type_##name##_, Arg_Of_Level_Inline( /* bool casts [1] */ \
         level_, \
         checked_##name##_, \
-        u_cast(ArgMode, checked_argmode_##name##_)))
+        raw_cast(ArgMode, checked_argmode_##name##_)))
 
 #define Unchecked_ARG(name) \
     x_cast(unchecked_type_##name##_, Arg_Of_Level_Inline( \
         level_, \
         unchecked_##name##_, \
-        u_cast(ArgMode, unchecked_argmode_##name##_)))
+        raw_cast(ArgMode, unchecked_argmode_##name##_)))
 
 #define Element_ARG(name) \
     As_Element(ARG(name))
@@ -254,7 +254,7 @@ INLINE Cell* Arg_Of_Level_Inline(
     As_Element(Required_Arg_Of_Level(level_, (n)))
 
 #define Erase_ARG(name) \
-    u_cast(Init(Slot), \
+    raw_cast(Init(Slot), \
         Erase_Cell(Required_Arg_Of_Level(level_, checked_##name##_)))
 
 
@@ -292,7 +292,7 @@ INLINE Cell* Arg_Of_Level_Inline(
     cast(Value*, Required_Arg_Of_Level(level_, PARAM_INDEX(name)))
 
 #define Sink_LOCAL(name) \
-    u_cast(Sink(Value), Required_Arg_Of_Level(level_, PARAM_INDEX(name)))
+    raw_cast(Sink(Value), Required_Arg_Of_Level(level_, PARAM_INDEX(name)))
 
 #define Element_LOCAL(name) \
     cast(Element*, Required_Arg_Of_Level(level_, PARAM_INDEX(name)))

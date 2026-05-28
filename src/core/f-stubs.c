@@ -60,13 +60,13 @@ REBINT Get_Num_From_Arg(const Stable* val)
 //
 REBINT Float_Int16(REBD32 f)
 {
-    if (fabs(f) > u_cast(REBD32, 0x7FFF)) {
+    if (fabs(f) > raw_cast(REBD32, 0x7FFF)) {
         DECLARE_ELEMENT (temp);
         Init_Decimal(temp, f);
 
         panic (Error_Out_Of_Range(temp));
     }
-    return u_cast(REBINT, f);
+    return raw_cast(REBINT, f);
 }
 
 

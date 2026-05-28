@@ -146,7 +146,7 @@ INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
 //    stowed in non-methods just because they were accessed from an object.
 //    See DETAILS_FLAG_METHODIZED for controlling this behavior.
 
-#define UNCOUPLED  u_cast(Option(VarList*), nullptr)  // not all can couple [1]
+#define UNCOUPLED  raw_cast(Option(VarList*), nullptr)  // not all can couple [1]
 
 INLINE Option(VarList*) Frame_Coupling(const Cell* c) {
     assert(Heart_Of(c) == HEART_FRAME);
@@ -265,13 +265,13 @@ INLINE Fixed(Slot*) Varlist_Fixed_Slot(VarList* c, Ordinal n) {  // 1-based
 // not a possibility.
 
 INLINE Init(Slot) Slot_Init_Hack(Slot* slot) {
-    return u_cast(Init(Slot), slot);
+    return raw_cast(Init(Slot), slot);
 }
 
 MUTABLE_IF_C(Value*, INLINE) Slot_Hack(
     CONST_IF_C(Slot*) slot
 ){
-    CONSTABLE(Value*) s = u_cast(Value*, slot);
+    CONSTABLE(Value*) s = raw_cast(Value*, slot);
     assert(Type_Of_Raw(s) < MIN_TYPE_BEDROCK);
     return s;
 }
@@ -279,7 +279,7 @@ MUTABLE_IF_C(Value*, INLINE) Slot_Hack(
 MUTABLE_IF_C(Stable*, INLINE) Stable_Slot_Hack(
     CONST_IF_C(Slot*) slot
 ){
-    CONSTABLE(Value*) s = u_cast(Value*, slot);
+    CONSTABLE(Value*) s = raw_cast(Value*, slot);
     assert(Type_Of_Raw(s) < MIN_TYPE_BEDROCK);
     if (Type_Of_Raw(s) > MAX_TYPE_STABLE)
         panic ("Stable_Slot_Hack() called on non-Stable slot");
@@ -319,18 +319,18 @@ INLINE Fixed(Slot*) Varlist_Fixed_Slots(Sink(const Slot*) tail, VarList* v) {
 // The Stub.misc field of frames which can be tied to levels can be a Level*,
 // instead of an "adjunct" object.
 //
-// 1. The VarList may not be fully formed yet, use u_cast()
+// 1. The VarList may not be fully formed yet, use raw_cast()
 
 INLINE Option(Level*) Misc_Runlevel(Stub* varlist) {
     assert(Is_Stub_Varlist(varlist));
-    assert(CTX_TYPE(u_cast(VarList*, varlist)) == HEART_FRAME);  // [1]
+    assert(CTX_TYPE(raw_cast(VarList*, varlist)) == HEART_FRAME);  // [1]
     assert(Not_Stub_Flag(varlist, MISC_NEEDS_MARK));
     return cast(Level*, MISC_VARLIST_RUNLEVEL(varlist));
 }
 
 INLINE void Tweak_Misc_Runlevel(Stub* varlist, Option(Level*) L) {
     assert(Is_Stub_Varlist(varlist));
-    possibly(CTX_TYPE(u_cast(VarList*, varlist)) == HEART_FRAME);  // [1]
+    possibly(CTX_TYPE(raw_cast(VarList*, varlist)) == HEART_FRAME);  // [1]
     MISC_VARLIST_RUNLEVEL(varlist) = opt L;
     assert(Not_Stub_Flag(varlist, MISC_NEEDS_MARK));
 }

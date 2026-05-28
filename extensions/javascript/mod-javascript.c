@@ -260,7 +260,7 @@ INLINE Bounce Bounce_From_Bounce_Id(heapaddr_t id) {
     if (id == 0)
         return nullptr;
 
-    Bounce b = u_cast(Bounce, Pointer_From_Heapaddr(id));
+    Bounce b = raw_cast(Bounce, Pointer_From_Heapaddr(id));
     return b;
 }
 

@@ -338,7 +338,7 @@ INLINE void Proxy_Frame_Activation(Value* v, const Value* original) {
 
 INLINE Option(InfixMode) Frame_Infix_Mode(const Cell* c) {
     assert(Heart_Of(c) == HEART_FRAME);
-    return u_cast(InfixMode, Get_Cell_Crumb(c));
+    return raw_cast(InfixMode, Get_Cell_Crumb(c));
 }
 
 INLINE void Tweak_Frame_Infix_Mode(Cell* c, Option(InfixMode) mode) {

@@ -463,7 +463,7 @@ INLINE bool Is_Specialized(const Param* p) {
 
 INLINE const Slot* Known_Unspecialized(const Param* p) {
     assert(Not_Specialized(p));
-    return u_cast(Slot*, p);
+    return raw_cast(Slot*, p);
 }
 
 
@@ -514,7 +514,7 @@ INLINE Element* Init_Unconstrained_Parameter_Untracked(
     Init(Element) out,
     Flags param_flags
 ){
-    ParamClass pclass = u_cast(ParamClass, FIRST_BYTE(&param_flags));
+    ParamClass pclass = raw_cast(ParamClass, FIRST_BYTE(&param_flags));
     assert(pclass != PARAMCLASS_0);  // must have class
     if (param_flags & PARAMETER_FLAG_REFINEMENT) {
         assert(param_flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
@@ -552,7 +552,7 @@ INLINE bool Is_Parameter_Divergent(const Cell* v) {
 INLINE Param* Unspecialize_Parameter(Cell* p) {
     assert(Type_Of_Raw(p) == TYPE_PARAMETER);
     Tweak_Cell_Lift_Byte(p, TYPE_BEDROCK_HOLE);
-    return u_cast(Param*, p);
+    return raw_cast(Param*, p);
 }
 
 // When it came to literal parameters that could be escaped, R3-Alpha and Red
@@ -594,7 +594,7 @@ INLINE bool Is_Soft_Escapable_Group(const Element* e) {
 //        return-of  ; +1
 //
 INLINE SymId Starred_Returner_Id(SymId id) {
-    SymId starred_id = u_cast(SymId, u_cast(SymId16, id) - 1);  // subtract [1]
+    SymId starred_id = raw_cast(SymId, raw_cast(SymId16, id) - 1);  // subtract [1]
 
   #if RUNTIME_CHECKS
     switch (id) {

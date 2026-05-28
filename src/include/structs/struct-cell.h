@@ -211,7 +211,7 @@ typedef Byte HeartsigilByte;  // help document when Byte is Heart + Sigil [1]
 //
 
 #define SIGIL_0 /* add safety of the Option() */ \
-    u_cast(Option(Sigil), SIGIL_0_constexpr)
+    raw_cast(Option(Sigil), SIGIL_0_constexpr)
 
 #define FLAG_SIGIL_CRUMB(crumb) \
     FLAG_HEARTSIGIL_BYTE(known(int, (crumb)) << BYTE_SIGIL_SHIFT)

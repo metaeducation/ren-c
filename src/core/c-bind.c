@@ -254,14 +254,14 @@ Let* Make_Let_Variable(
       )
     );
 
-    Init(Slot) slot = Slot_Init_Hack(u_cast(Slot*, Stub_Cell(let)));
+    Init(Slot) slot = Slot_Init_Hack(raw_cast(Slot*, Stub_Cell(let)));
     Init_Void_Signifying_Unset(slot);
 
     Tweak_Link_Inherit_Bind_Raw(let, inherit);  // linked list [1]
     Corrupt_Unused_Field(let->misc.corrupt);  // not currently used
     INFO_LET_SYMBOL(let) = m_cast(Symbol*, symbol);
 
-    return u_cast(Let*, let);
+    return raw_cast(Let*, let);
 }
 
 
@@ -371,8 +371,8 @@ bool Try_Get_Binding_Of(
   // needed by ParamList to hold the inherited phase.
 
     if (flavor == FLAVOR_LET) {
-        if (Let_Symbol(u_cast(Let*, c)) == symbol) {
-            Init_Let(out, u_cast(Let*, c));
+        if (Let_Symbol(raw_cast(Let*, c)) == symbol) {
+            Init_Let(out, raw_cast(Let*, c));
             Tweak_Word_Stub(wordlike, c);
             goto finalize_and_return_true;
         }
@@ -1210,7 +1210,7 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
 
     // Currently we start by making a shallow copy and then adjust it
 
-    Source* copy = u_cast(Source*, Make_Array_For_Copy(flags, original, len));
+    Source* copy = raw_cast(Source*, Make_Array_For_Copy(flags, original, len));
     Set_Flex_Len(copy, len);
 
     const Element* src = Array_At(original, index);
@@ -1531,7 +1531,7 @@ Result(None) Read_Slot_Meta(Sink(Value) out, const Slot* slot)
 //  Read_Slot: C
 //
 Result(None) Read_Slot(Sink(Stable) out, const Slot* slot) {
-    Sink(Value) atom_out = u_cast(Value*, out);
+    Sink(Value) atom_out = raw_cast(Value*, out);
     trap (
       Read_Slot_Meta(atom_out, slot)
     );
@@ -1568,14 +1568,14 @@ Result(None) Write_Loop_Slot_May_Unbind_Or_Decay(Slot* slot, Value* v)
         Unbind_Cell_If_Bindable_Core(v);
 
     if (Not_Bedrock(slot)) {  // ordinary write
-        Copy_Cell(u_cast(Value*, slot), v);
+        Copy_Cell(raw_cast(Value*, slot), v);
         return none;
     }
 
     assert(Is_Cell_A_Bedrock_Alias(slot));
 
     DECLARE_ELEMENT (temp);
-    Copy_Cell(temp, u_cast(Element*, slot));
+    Copy_Cell(temp, raw_cast(Element*, slot));
     Tweak_Cell_Quoted_Type(temp, HEART_WORD);
     unnecessary(Push_Lifeguard(temp));  // slot protects it.
 
@@ -1596,7 +1596,7 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
     if (not Is_Bindable_Heart(heart))
         return;
 
-    Context* binding = u_cast(Context*, cell->extra.base);
+    Context* binding = raw_cast(Context*, cell->extra.base);
     if (not binding)
         return;
 

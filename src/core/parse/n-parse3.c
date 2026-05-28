@@ -135,7 +135,7 @@ Value* g_trash_parse3_success;
 // always put the fetched rule in the same place...and then the binding
 // is only used when the rule *isn't* in that cell.
 //
-#define P_SAVE              u_cast(Element*, ARG(SAVE))
+#define P_SAVE              raw_cast(Element*, ARG(SAVE))
 #define rule_binding() \
     (rule == ARG(SAVE) ? SPECIFIED : P_RULE_BINDING)
 
@@ -390,7 +390,7 @@ static Result(Option(SymId)) Get_Parse_Value(
 ){
     assert(out != rule);
 
-    Stable* out_value = u_cast(Stable*, out);  // defuses Sink() behavior [1]
+    Stable* out_value = raw_cast(Stable*, out);  // defuses Sink() behavior [1]
 
     if (Is_Word(rule)) {
         Option(SymId) id = Word_Id_If_Parse3_Keyword(rule);

@@ -50,7 +50,7 @@ struct CastHook<const F*, const Stub*> {  // both must be const [B]
     if (not p)
         return;
 
-    if ((u_cast(const Stub*, p)->header.bits & (
+    if ((raw_cast(const Stub*, p)->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_CELL  // BASE_FLAG_UNREADABLE ok
     )) != (
         BASE_FLAG_BASE
@@ -74,7 +74,7 @@ struct CastHook<const F*, const Flex*> {  // both must be const [B]
     if (not p)
         return;
 
-    if ((u_cast(const Stub*, p)->header.bits & (
+    if ((raw_cast(const Stub*, p)->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
     )) != (
         BASE_FLAG_BASE
@@ -98,7 +98,7 @@ struct CastHook<const F*, const Binary*> {  // both must be const [B]
     if (not p)
         return;
 
-    const Stub* stub = u_cast(const Stub*, p);
+    const Stub* stub = raw_cast(const Stub*, p);
 
     if ((stub->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
@@ -126,7 +126,7 @@ struct CastHook<const F*, const Strand*> {  // both must be const [B]
     if (not p)
         return;
 
-    const Stub* stub = u_cast(const Stub*, p);
+    const Stub* stub = raw_cast(const Stub*, p);
 
     TasteByte taste_byte = TASTE_BYTE(stub);
     if (taste_byte != FLAVOR_NONSYMBOL and taste_byte != FLAVOR_SYMBOL)
@@ -161,7 +161,7 @@ struct CastHook<const F*, const Symbol*> {
         if (not p)
             return;
 
-        const Stub* stub = u_cast(const Stub*, p);
+        const Stub* stub = raw_cast(const Stub*, p);
         if ((stub->header.bits & (
             (STUB_MASK_SYMBOL | STUB_MASK_TASTE)
                 | BASE_FLAG_UNREADABLE
@@ -190,7 +190,7 @@ struct CastHook<const F*, const Array*> {  // both must be const [B]
     if (not p)
         return;
 
-    if ((u_cast(const Stub*, p)->header.bits & (
+    if ((raw_cast(const Stub*, p)->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
     )) != (
         BASE_FLAG_BASE
@@ -214,7 +214,7 @@ struct CastHook<const F*, const VarList*> {  // both must be const [B]
     if (not p)
         return;
 
-    if ((u_cast(const Stub*, p)->header.bits & (
+    if ((raw_cast(const Stub*, p)->header.bits & (
         (STUB_MASK_LEVEL_VARLIST
             & (~ STUB_FLAG_LINK_NEEDS_MARK)  // next virtual, maybe null
             & (~ STUB_FLAG_MISC_NEEDS_MARK)  // adjunct, maybe null
@@ -247,7 +247,7 @@ struct CastHook<const F*, const ParamList*> {  // both must be const [B]
     if (not p)
         return;
 
-    Validate_Paramlist_Bits(u_cast(const Stub*, p));
+    Validate_Paramlist_Bits(raw_cast(const Stub*, p));
   }
 };
 
@@ -277,7 +277,7 @@ struct CastHook<const F*, const Details*> {  // both must be const [B]
     if (not p)
         return;
 
-    Validate_Details_Bits(u_cast(const Stub*, p));
+    Validate_Details_Bits(raw_cast(const Stub*, p));
   }
 };
 
@@ -295,7 +295,7 @@ struct CastHook<const F*, const Phase*> {  // both must be const [B]
     if (not p)
         return;
 
-    const Stub* stub = u_cast(const Stub*, p);
+    const Stub* stub = raw_cast(const Stub*, p);
 
     if (TASTE_BYTE(stub) == FLAVOR_DETAILS)
         Validate_Details_Bits(stub);

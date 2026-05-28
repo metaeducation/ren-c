@@ -758,7 +758,7 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
 #endif
 
 #define Cell_Binding(v) \
-    u_cast(Context*, (v)->extra.base)
+    raw_cast(Context*, (v)->extra.base)
 
 #if (! DEBUG_CHECK_BINDING)
     #define Tweak_Cell_Binding(c,binding) \
@@ -780,10 +780,10 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
 #endif
 
 #define SPECIFIED \
-    u_cast(Context*, nullptr)  // u_cast (don't want DEBUG_CHECK_CASTS)
+    raw_cast(Context*, nullptr)  // raw_cast (don't want DEBUG_CHECK_CASTS)
 
 #define UNBOUND \
-    u_cast(Context*, nullptr)  // using a stub did not improve performance [1]
+    raw_cast(Context*, nullptr)  // using a stub did not improve performance [1]
 
 
 //=//// HOOKABLE LIFT_BYTE() ACCESSOR /////////////////////////////////////=//
@@ -856,7 +856,7 @@ INLINE void Tweak_Cell_Lift_Byte(Cell* cell, Option(TypeEnum) t) {
 
 #if NO_RUNTIME_CHECKS
     #define Type_Of_Core(v) \
-        u_cast(Option(Type), Type_Of_Raw(v))
+        raw_cast(Option(Type), Type_Of_Raw(v))
 #else
     INLINE Option(Type) Type_Of_Core(const Cell* v) {
         if (Type_Of_Raw(v) < MIN_TYPE_HEART) {  // raw [1]

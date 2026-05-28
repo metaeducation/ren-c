@@ -363,7 +363,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Not_Flavor_Flag(SYMBOL, sym, HITCH_IS_BIND_STUMP));
 
         if (Cell_Payload_2_Needs_Mark(v)) {
-            Stub* stub = u_cast(Stub*, CELL_PAYLOAD_2(v));
+            Stub* stub = raw_cast(Stub*, CELL_PAYLOAD_2(v));
             assert(Is_Stub_Let(stub) or Is_Stub_Patch(stub));
         }
         else

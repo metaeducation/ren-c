@@ -242,7 +242,7 @@ Init(Slot) Append_To_Sea_Core(
 
 } return_patch: {
 
-    return u_cast(Init(Slot), u_cast(Cell*, Stub_Cell(patch)));
+    return raw_cast(Init(Slot), raw_cast(Cell*, Stub_Cell(patch)));
 }}
 
 
@@ -280,7 +280,7 @@ static Init(Slot) Append_To_Varlist_Core(
         Tweak_Word_Index(unwrap any_word, len);
     }
 
-    return u_cast(Init(Slot), slot);  // location we just added (void cell)
+    return raw_cast(Init(Slot), slot);  // location we just added (void cell)
 }}
 
 

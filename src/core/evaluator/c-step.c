@@ -90,7 +90,7 @@
 
 
 #undef SCRATCH  // rename for its specific use in the evaluator
-#define CURRENT  u_cast(Element*, &L->scratch)  // no executor check
+#define CURRENT  raw_cast(Element*, &L->scratch)  // no executor check
 
 #define level_ L  // for OUT, SPARE, STATE macros
 
@@ -1038,7 +1038,7 @@ Bounce Stepper_Executor(Level* L)
     } default: {  //// MISCELLANEOUS TIED! TYPE //////////////////////////////
 
         Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-        Clear_Cell_Sigil(u_cast(Element*, OUT));  // remove the $
+        Clear_Cell_Sigil(raw_cast(Element*, OUT));  // remove the $
         goto lookahead;
 
     }}  // end switch on tied type

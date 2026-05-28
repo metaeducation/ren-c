@@ -71,7 +71,7 @@ typedef HeartEnum Heart;
         Type () = default;
         Type (TypeEnum type) : t (type) {}
 
-        // !!! needed for u_cast(Option(Type), Byte) -- review ideas
+        // !!! needed for raw_cast(Option(Type), Byte) -- review ideas
         explicit Type (uintptr_t u) : t (i_cast(TypeEnum, u)) {}
 
         Type (needful::Nocast0Struct)  // for return fail with Result(Type)
@@ -195,8 +195,8 @@ INLINE bool Is_Logic_Type(Option(Type) type) {
     #define HEART_0  HEART_0_constexpr  // [1]
     #define TYPE_0  TYPE_0_constexpr
 #else
-    #define HEART_0  u_cast(Option(Heart), HEART_0_constexpr)  // [1]
-    #define TYPE_0  u_cast(Option(Type), TYPE_0_constexpr)
+    #define HEART_0  raw_cast(Option(Heart), HEART_0_constexpr)  // [1]
+    #define TYPE_0  raw_cast(Option(Type), TYPE_0_constexpr)
 
     void operator==(const Option(Type)&, const Option(Type)&) = delete;  // [2]
     void operator!=(const Option(Type)&, const Option(Type)&) = delete;

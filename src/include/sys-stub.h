@@ -216,11 +216,11 @@ MUTABLE_IF_C(Value*, INLINE) Stub_Cell(CONST_IF_C(Stub*) stub)
     assert(Is_Base_Readable(s) and Not_Stub_Flag(s, DYNAMIC));
     impossible(not Stub_Holds_Cells(s));  // assert not worth the cost [1]
 
-    return u_cast(Value*, &s->content.fixed.cell);
+    return raw_cast(Value*, &s->content.fixed.cell);
 }
 
 INLINE Stub* Compact_Stub_From_Cell(const Cell* v) {
-    Stub* s = u_cast(Stub*,  // DEBUG_CHECK_CASTS checks Array
+    Stub* s = raw_cast(Stub*,  // DEBUG_CHECK_CASTS checks Array
         cast(void*,
             cast(Byte*, m_cast(Cell*, v))
             - offsetof(Stub, content)

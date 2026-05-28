@@ -215,7 +215,7 @@
 
 #if NO_CPLUSPLUS_11
   #if !defined(nullptr)
-    #define nullptr  u_cast(void*, 0)
+    #define nullptr  raw_cast(void*, 0)
   #endif
 #else
     // http://en.cppreference.com/w/cpp/language/nullptr

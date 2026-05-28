@@ -1140,7 +1140,7 @@ Result(Value*) Init_Typechecker(
     Init(Value) out,
     const Stable* datatype_or_block
 ){
-    possibly(u_cast(Value*, out) == datatype_or_block);
+    possibly(raw_cast(Value*, out) == datatype_or_block);
 
     if (Is_Datatype(datatype_or_block)) {
         Option(Type) t = Datatype_Type(datatype_or_block);

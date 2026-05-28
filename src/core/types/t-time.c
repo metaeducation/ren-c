@@ -490,7 +490,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                 secs = Add_Max(
                     HEART_TIME,
                     secs,
-                    u_cast(int64_t, dec * SEC_SEC),
+                    raw_cast(int64_t, dec * SEC_SEC),
                     MAX_TIME
                 );
                 Init_Time_Nanoseconds(OUT, secs);
@@ -500,7 +500,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                 secs = Add_Max(
                     HEART_TIME,
                     secs,
-                    u_cast(int64_t, dec * -SEC_SEC),
+                    raw_cast(int64_t, dec * -SEC_SEC),
                     MAX_TIME
                 );
                 Init_Time_Nanoseconds(OUT, secs);
@@ -509,7 +509,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
               case SYM_DIVIDE:
                 if (dec == 0.0)
                     panic (Error_Zero_Divide_Raw());
-                secs = u_cast(int64_t, secs / dec);
+                secs = raw_cast(int64_t, secs / dec);
                 Init_Time_Nanoseconds(OUT, secs);
                 return BOUNCE_OUT;
 
@@ -726,7 +726,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Time)
             );
     }
     else if (Is_Decimal(v2))
-        secs = u_cast(int64_t, secs * VAL_DECIMAL(v2));
+        secs = raw_cast(int64_t, secs * VAL_DECIMAL(v2));
     else
         panic (PARAM(VALUE2));
 

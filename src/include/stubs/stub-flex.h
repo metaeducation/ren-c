@@ -292,8 +292,8 @@ MUTABLE_IF_C(Byte*, INLINE) Flex_Data(CONST_IF_C(Flex*) flex)
 
     impossible(not Is_Base_Readable(flex));  // slow assert, assume valid [1]
     return Get_Stub_Flag(f, DYNAMIC)  // inlined in Flex_Data_At() [2]
-        ? u_cast(Byte*, f->content.dynamic.data)
-        : u_cast(Byte*, &f->content);
+        ? raw_cast(Byte*, f->content.dynamic.data)
+        : raw_cast(Byte*, &f->content);
 }
 
 MUTABLE_IF_C(Byte*, INLINE) Flex_Data_At(
@@ -323,30 +323,30 @@ MUTABLE_IF_C(Byte*, INLINE) Flex_Data_At(
 
     return ((w) * (i)) + (  // v-- inlining of Flex_Data() [2]
         Get_Stub_Flag(f, DYNAMIC)
-            ? u_cast(Byte*, f->content.dynamic.data)
-            : u_cast(Byte*, &f->content)
+            ? raw_cast(Byte*, f->content.dynamic.data)
+            : raw_cast(Byte*, &f->content)
         );
 }
 
 #define Flex_At(T,f,i) \
-    u_cast(T*, Flex_Data_At(sizeof(T), (f), (i)))  // zero-based [3]
+    raw_cast(T*, Flex_Data_At(sizeof(T), (f), (i)))  // zero-based [3]
 
 #if RUNTIME_CHECKS
     #define Flex_Head(T,f) \
         Flex_At(T, (f), 0)  // Flex_Data() doesn't check width, _At() does
 #else
     #define Flex_Head(T,f) \
-        u_cast(T*, Flex_Data(f))  // slightly faster, but no width check
+        raw_cast(T*, Flex_Data(f))  // slightly faster, but no width check
 #endif
 
 #define Flex_Head_Dynamic(T,f) \
-    u_cast(T*, (f)->content.dynamic.data)  // faster if you know it's dynamic
+    raw_cast(T*, (f)->content.dynamic.data)  // faster if you know it's dynamic
 
 #define Flex_Data_Tail(w,f) \
-    u_cast(Byte*, Flex_Data_At((w), (f), Flex_Used(f)))
+    raw_cast(Byte*, Flex_Data_At((w), (f), Flex_Used(f)))
 
 #define Flex_Tail(T,f) \
-    u_cast(T*, Flex_Data_Tail(sizeof(T), (f)))
+    raw_cast(T*, Flex_Data_Tail(sizeof(T), (f)))
 
 MUTABLE_IF_C(Byte*, INLINE) Flex_Data_Last(
     size_t wide,
@@ -358,7 +358,7 @@ MUTABLE_IF_C(Byte*, INLINE) Flex_Data_Last(
 }
 
 #define Flex_Last(T,f) \
-    u_cast(T*, Flex_Data_Last(sizeof(T), (f)))
+    raw_cast(T*, Flex_Data_Last(sizeof(T), (f)))
 
 
 //=//// FLEX TERMINATION //////////////////////////////////////////////////=//

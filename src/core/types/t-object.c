@@ -140,7 +140,7 @@ void Init_Evars(EVARS *e, const Element* v) {
                 paramlist = Phase_Paramlist(Frame_Phase(v));
             }
             else if (
-                u_cast(Stub*, lens) == varlist  // self-lens, archetypal [2]
+                raw_cast(Stub*, lens) == varlist  // self-lens, archetypal [2]
             ){
                 e->lens_mode = LENS_MODE_ALL_UNSEALED;
                 paramlist = Phase_Paramlist(Frame_Phase(Phase_Archetype(lens)));
@@ -157,7 +157,7 @@ void Init_Evars(EVARS *e, const Element* v) {
 
             assert(Varlist_Len(paramlist) <= Varlist_Len(varlist));
 
-            e->param = u_cast(Param*, Varlist_Slots_Head(paramlist));
+            e->param = raw_cast(Param*, Varlist_Slots_Head(paramlist));
             e->key = Varlist_Keys(&e->key_tail, paramlist);
         }
 
@@ -291,7 +291,7 @@ REBINT CT_Context(const Element* a, const Element* b, bool strict)
     assert(Any_Context_Heart(b_heart));
 
     if (a_heart != b_heart)  // e.g. ERROR! won't equal OBJECT!
-        return u_cast(Byte, a_heart) > u_cast(Byte, b_heart) ? 1 : 0;
+        return raw_cast(Byte, a_heart) > raw_cast(Byte, b_heart) ? 1 : 0;
 
     if (Cell_Context(a) == Cell_Context(b))
         return 0;  // short-circuit, always equal if same context pointer
@@ -775,7 +775,7 @@ VarList* Copy_Varlist_Extra_Managed(
     for (; src != src_tail; ++src, ++dest) {
         Copy_Cell_Core(  // trying to duplicate slot precisely
             dest,
-            u_cast(Cell*, src),  // !!! PRECISE SLOT DUP (includes accessors)
+            raw_cast(Cell*, src),  // !!! PRECISE SLOT DUP (includes accessors)
             CELL_MASK_ALL  // include SLOT_MARKED_HIDDEN, PARAM_NOTE_TYPECHECKED
         );
 
@@ -1334,7 +1334,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     Copy_Cell_Core(slot, dual, CELL_MASK_COPY);
 
     require (  // CASE 3: Ordinary writing non-bedrock into non-bedrock slot
-        Unlift_Cell_No_Decay(m_cast(Value*, u_cast(Value*, slot)))
+        Unlift_Cell_No_Decay(m_cast(Value*, raw_cast(Value*, slot)))
     );
     return OKAY_OUT_NO_WRITEBACK;  // VarList* in cell not changed
 

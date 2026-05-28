@@ -244,7 +244,7 @@ bool Specialize_Action_Throws(
         Remember_Cell_Is_Lifeguard(Stub_Cell(use));  // protects exemplar
 
         bool threw = Eval_Any_List_At_Throws(
-            u_cast(Value*, out),  // use as temporary output
+            raw_cast(Value*, out),  // use as temporary output
             unwrap def,
             SPECIFIED
         );
@@ -263,7 +263,7 @@ bool Specialize_Action_Throws(
     const Key* key = Phase_Keys(&tail, unspecialized);
     const Param* param = Phase_Params_Head(unspecialized);
 
-    Arg* arg = u_cast(Arg*, Varlist_Slots_Head(exemplar));
+    Arg* arg = raw_cast(Arg*, Varlist_Slots_Head(exemplar));
 
     StackIndex ordered_stackindex = lowest_stackindex;
 
@@ -346,7 +346,7 @@ bool Specialize_Action_Throws(
                 panic (Error_Bad_Parameter_Raw(ordered));
             }
 
-            Param* ordered_slot = u_cast(Param*,
+            Param* ordered_slot = raw_cast(Param*,
                 Varlist_Slot(exemplar, VAL_WORD_INDEX(ordered))
             );
             if (not Is_Specialized(ordered_slot)) {

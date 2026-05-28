@@ -263,7 +263,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     const Key* key_tail;  // move this yielder call frame into old varlist [1]
     const Key* key = Varlist_Keys(&key_tail, original_varlist);
     Param* param = Phase_Params_Head(Level_Phase(L));
-    Arg* dest = u_cast(Arg*, Varlist_Slots_Head(original_varlist));
+    Arg* dest = raw_cast(Arg*, Varlist_Slots_Head(original_varlist));
     Arg* src = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++param, ++dest, ++src) {
         if (Is_Specialized(param))
@@ -277,7 +277,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         Diminish_Stub(L->varlist);  // maybe lingering references [3]
 
     Tweak_Misc_Runlevel(original_varlist, L);  // [4]
-    L->varlist = u_cast(ParamList*, original_varlist);  // rootvar must match
+    L->varlist = raw_cast(ParamList*, original_varlist);  // rootvar must match
     L->rootvar = Rootvar_Of_Varlist(original_varlist);
 
   //=//// RESUME THE YIELD-SUSPENDED STATE ////////////////////////////////=//

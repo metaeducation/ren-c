@@ -734,7 +734,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         Copy_Cell(ARG_N(1), made);
         rebRelease(made);
         assert(STATE == STATE_0);  // !!! weirdness
-        Mark_Typechecked(u_cast(Param*, ARG_N(1)));
+        Mark_Typechecked(raw_cast(Param*, ARG_N(1)));
         return CONTINUE_SAMELEVEL; }  // should dispatch to the PORT!
 
       default:

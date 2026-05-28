@@ -12,7 +12,7 @@ struct CastHook<const F*, const Level*> {
     if (not p)
         return;
 
-    if (not Is_Base_A_Level(u_cast(const Base*, p)))
+    if (not Is_Base_A_Level(raw_cast(const Base*, p)))
         crash (p);
   }
 };

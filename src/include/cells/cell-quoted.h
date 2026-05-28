@@ -321,7 +321,7 @@ MUTABLE_IF_C(Result(Stable*), INLINE) Ensure_Stable(CONST_IF_C(Value*) v_) {
     CONSTABLE(Value*) v = m_cast(Value*, v_);
     if (Not_Cell_Stable(v))
         return fail ("Value is an unstable antiform");
-    return u_cast(Stable*, v);
+    return raw_cast(Stable*, v);
 }
 
 
@@ -372,7 +372,7 @@ INLINE Element* Unquasify(Element* elem) {
 INLINE Element* Quasify_Antiform(Exact(Stable*) v) {
     assert(Is_Antiform(v));
     Tweak_Cell_Lift_Byte(v, TYPE_QUASIFORM);  // all antiforms can be quasi
-    return u_cast(Element*, v);
+    return raw_cast(Element*, v);
 }
 
 INLINE Element* Reify_If_Antiform(Value* v) {
@@ -434,7 +434,7 @@ INLINE Result(Value*) Unlift_Cell_No_Decay_Core(Value* v) {
 
 INLINE Stable* Known_Stable_Unlift_Cell_Core(Stable* v) {
     assume (
-      Unlift_Cell_No_Decay(u_cast(Value*, v))
+      Unlift_Cell_No_Decay(raw_cast(Value*, v))
     );
     Assert_Cell_Stable(v);
     return v;
@@ -446,7 +446,7 @@ INLINE Stable* Known_Stable_Unlift_Cell_Core(Stable* v) {
 INLINE Dual* Copy_Lifted_Cell_Untracked(Init(Dual) out, const Value* v)
 {
     Copy_Cell_Core_Untracked(out, v, CELL_MASK_COPY);
-    return Lift_Cell(u_cast(Value*, out));
+    return Lift_Cell(raw_cast(Value*, out));
 }
 
 #define Copy_Lifted_Cell(out,v) \

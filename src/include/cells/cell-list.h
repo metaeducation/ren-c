@@ -36,7 +36,7 @@ INLINE bool Is_Cell_Listlike(const Cell* v) {  // PACK!s are allowed
     const Base* payload1 = SERIESLIKE_PAYLOAD_1_BASE(v);
     if (Is_Base_A_Cell(payload1))
         return true;  // List_At() works, but Cell_Array() won't work!
-    return Stub_Flavor(u_cast(const Flex*, payload1)) == FLAVOR_SOURCE;
+    return Stub_Flavor(raw_cast(const Flex*, payload1)) == FLAVOR_SOURCE;
 }
 
 INLINE const Source* Cell_Array(const Cell* c) {  // PACK!s are allowed
@@ -249,7 +249,7 @@ INLINE bool Is_None_Core(const Stable* v) {  // SPLICE with no elements [1]
 INLINE Stable* Spread_Cell(Exact(Stable*) v) {
     assert(Any_List(v));
     Tweak_Cell_Heart(v, HEART_BLOCK_SIGNIFYING_SPLICE);  // forget former type
-    Tweak_Cell_Binding(u_cast(Element*, v), UNBOUND);
+    Tweak_Cell_Binding(raw_cast(Element*, v), UNBOUND);
     Tweak_Cell_Lift_Byte(v, TYPE_SPLICE);
     return v;
 }

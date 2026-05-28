@@ -152,7 +152,7 @@ Bounce Func_Dispatcher(Level* const L)
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
     Inject_Methodization_If_Any(L);
 
-    Context* binding = u_cast(ParamList*, L->varlist);
+    Context* binding = raw_cast(ParamList*, L->varlist);
     Element* spare = Copy_Cell(SPARE, body);
     Tweak_Cell_Binding(spare, binding);
 

@@ -161,7 +161,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         Init_Blob(Slot_Init_Hack(state_slot), bin);
         Term_Binary_Len(bin, sizeof(FileReq));
 
-        file = u_cast(FileReq*, Binary_Head(bin));
+        file = raw_cast(FileReq*, Binary_Head(bin));
         file->id = FILEHANDLE_NONE;
         file->is_dir = false;  // would be dispatching to Dir Actor if dir
         file->size_cache = FILESIZE_UNKNOWN;

@@ -1207,7 +1207,7 @@ DECLARE_NATIVE(DEFAULT)
   // 3. TRASH!, VOID!, NULL, empty PACK! and empty SPLICE! are "defaultable".
   //    Space runes (blanks) aren't; no stable form is overwritten by DEFAULT.
 
-    Element* steps = u_cast(Element*, SCRATCH);  // avoid double-eval [1]
+    Element* steps = raw_cast(Element*, SCRATCH);  // avoid double-eval [1]
     STATE = ST_DEFAULT_GETTING_TARGET;  // can't leave at STATE_0
 
     if (Is_Set_Run_Word(target)) {

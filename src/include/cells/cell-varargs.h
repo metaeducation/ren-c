@@ -142,7 +142,7 @@ INLINE bool Is_Block_Style_Varargs(
     // implementation detail of a poisoned cell
     //
     Array* array1 = source;
-    *shared_out = u_cast(Element*, Stub_Cell(array1));
+    *shared_out = raw_cast(Element*, Stub_Cell(array1));
     assert(Is_Cell_Poisoned(*shared_out) or Is_Block(*shared_out));
 
     return true;

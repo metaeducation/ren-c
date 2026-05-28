@@ -120,8 +120,8 @@ INLINE void Tweak_Frame_Lens_Or_Label(Cell* c, Option(const Stub*) f) {
 
 INLINE ParamList* Phase_Paramlist_Core(Phase* p) {
     while (Is_Stub_Details(p))
-        p = u_cast(Phase*, CELL_FRAME_PAYLOAD_1_PHASE(Phase_Archetype(p)));
-    return u_cast(ParamList*, p);
+        p = raw_cast(Phase*, CELL_FRAME_PAYLOAD_1_PHASE(Phase_Archetype(p)));
+    return raw_cast(ParamList*, p);
 }
 
 #define Phase_Paramlist(p) \
@@ -159,7 +159,7 @@ INLINE void Tweak_Details_Dispatcher(Details* details, Dispatcher* dispatcher)
 //
 INLINE Array* Details_Array(Details* details) {
     assert(Is_Stub_Details(details));
-    return u_cast(Array*, details);  // performance critical, u_cast()
+    return raw_cast(Array*, details);  // performance critical, raw_cast()
 }
 
 

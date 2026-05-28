@@ -679,7 +679,7 @@ INLINE Element* Copy_Sequence_At_Untracked(
         return out;
     }
 
-    switch (Stub_Flavor(u_cast(Flex*, payload1))) {
+    switch (Stub_Flavor(raw_cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL : {  // compressed single WORD! sequence
         assert(n < 2);
         if (Get_Cell_Flag(sequence, LEADING_BLANK) ? n == 0 : n != 0)
@@ -861,7 +861,7 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
         return TRAILING_BLANK_AND(WORD);
     }
 
-    Option(Heart) mirror = Mirror_Of(u_cast(const Source*, f));
+    Option(Heart) mirror = Mirror_Of(raw_cast(const Source*, f));
     if (not mirror)  // s actually is sequence elements, not one element
         return NOT_SINGLEHEART_0;
 

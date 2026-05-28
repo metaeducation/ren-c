@@ -353,7 +353,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
             PANIC_BUF_SIZE - strsize(buf)
         );
       #if DEBUG_FANCY_CRASH
-        Crash_With_Stub_Debug(u_cast(const Stub*, unwrap p));
+        Crash_With_Stub_Debug(raw_cast(const Stub*, unwrap p));
       #endif
         break;
 

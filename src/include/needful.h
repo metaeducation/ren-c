@@ -47,7 +47,7 @@
 **                 (yes, it's standard C! `except` is a macro that expands
 **                 into a for() loop that can scope the declaration)
 **
-**   cast()        A family of visible, hookable casts (h_cast, u_cast,
+**   cast()        A family of visible, hookable casts (h_cast, raw_cast,
 **                 m_cast, i_cast, ...) that replace C's invisible
 **                 parenthesized casts.  Can run debug-build validation
 **                 hooks--even on raw pointer casts.
@@ -645,13 +645,13 @@ void Needful_Panic_Abruptly(const char* error) {
 **
 ** SAFETY LEVEL
 **    - Hookable cast:            h_cast()    // safe default w/debug hooks
-**    - Unhooked/unchecked cast:  u_cast()    // use with fresh malloc()s
+**    - Unhooked/unchecked cast:  raw_cast()  // use with fresh malloc()s
 **                                               // ...or critical debug paths
 **
 ** POINTER CONSTNESS
 **    - Adding mutability:         m_cast()    // const T* => T*
 **    - Preserve mutability:       h_cast()    // TA* => TB* ...or...
-**                               & u_cast()      // const TA* => const TB*
+**                               & raw_cast()    // const TA* => const TB*
 **
 ** TYPE CONVERSIONS
 **    - intlike to intlike:        i_cast()    // enum E => int, int => enum E
@@ -668,14 +668,14 @@ void Needful_Panic_Abruptly(const char* error) {
 **    such that cast() can be defined, and defined as h_cast().
 **
 **    It's also potentially the case that you might want to start it out as
-**    meaning u_cast()...especially if gradually adding Needful to existing
+**    meaning raw_cast()...especially if gradually adding Needful to existing
 **    code.  You could start by turning all the old (T)(V) casts into cast()
-**    defined as u_cast()...and redefine it as h_cast() after a process over
+**    defined as raw_cast()...and redefine it as h_cast() after a process over
 **    the span of time, having figured out which needed to be other casts.
 */
 
 
-/****[[ cast() and u_cast(): MAIN CAST ]]*************************************
+/****[[ cast() and raw_cast(): MAIN CAST ]]***********************************
 **
 ** 1. As with all needful macros, we don't force short names on clients.
 **    You may have a `cast()` function or variable in your codebase, and if
@@ -707,7 +707,7 @@ void Needful_Panic_Abruptly(const char* error) {
 
 #define needful_lenient_hookable_cast(T,expr)       ((T)(expr))  /* [1] */
 
-#define needful_lenient_unhookable_cast(T,expr)     ((T)(expr))  /* [2] */
+#define needful_raw_cast(T,expr)                    ((T)(expr))  /* [2] */
 
 #define needful_rigid_hookable_cast(T,expr)         ((T)(expr))  /* [3] */
 
@@ -1116,7 +1116,7 @@ void Needful_Panic_Abruptly(const char* error) {
 
     #define x_cast /* (T,...) */    needful_xtreme_cast
 
-    #define u_cast /* (T,...) */    needful_lenient_unhookable_cast
+    #define raw_cast /* (T,...) */  needful_raw_cast
     #define h_cast /* (T,...) */    needful_lenient_hookable_cast
 
     #define m_cast /* (T,...) */    needful_mutable_cast

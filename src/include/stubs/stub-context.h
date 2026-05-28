@@ -30,11 +30,11 @@
 //
 
 INLINE Option(Context*) Link_Inherit_Bind(Context* context)
-  { return u_cast(Context*, context->link.base); }
+  { return raw_cast(Context*, context->link.base); }
 
 INLINE Option(Context*) Link_Inherit_Bind_Raw(Stub* context) {
     assert(Stub_Flavor(context) == FLAVOR_VARLIST);
-    return u_cast(Context*, context->link.base);
+    return raw_cast(Context*, context->link.base);
 }
 
 INLINE void Tweak_Link_Inherit_Bind_Raw(Stub* context, Option(Context*) next) {
@@ -88,7 +88,7 @@ INLINE const Symbol* Let_Symbol(const Let* let) {
 }
 
 INLINE Slot* Let_Slot(Let* let) {
-    return u_cast(Slot*, Stub_Cell(let));
+    return raw_cast(Slot*, Stub_Cell(let));
 }
 
 INLINE Option(Slot*) Lookup_Let_Slot(

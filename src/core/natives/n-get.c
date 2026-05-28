@@ -196,11 +196,11 @@ Result(None) Get_Word(Sink(Stable) out, const Element* word)
     assert(Is_Word(word));
 
     trap (
-      Get_Word_Or_Tuple(u_cast(Value*, out), word)
+      Get_Word_Or_Tuple(raw_cast(Value*, out), word)
     );
 
     require (
-      Decay_If_Unstable(u_cast(Value*, out))
+      Decay_If_Unstable(raw_cast(Value*, out))
     );
 
     return none;
@@ -224,7 +224,7 @@ Result(Value*) Get_Chain_Push_Refinements(
 
     // The first item must resolve to an action.
 
-    Value* atom_out = u_cast(Value*, out);
+    Value* atom_out = raw_cast(Value*, out);
 
     if (Is_Group(head)) {  // historical Rebol didn't allow group at head
         if (Eval_Value_Throws(atom_out, head, derived))
@@ -533,7 +533,7 @@ Result(Value*) Meta_Get_Var(
     const Element* var,
     Context* context
 ){
-    assert(u_cast(Value*, var) != out);
+    assert(raw_cast(Value*, var) != out);
     assert(steps_out != out);  // Legal for SET, not for GET
 
     if (Is_Chain(var) or Is_Path(var)) {
@@ -612,7 +612,7 @@ Result(Stable*) Get_Var(
     const Element* var,
     Context* context
 ){
-    Value* unstable_out = u_cast(Value*, out);
+    Value* unstable_out = raw_cast(Value*, out);
     trap (
       Meta_Get_Var(unstable_out, steps_out, var, context)
     );

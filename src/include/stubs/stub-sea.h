@@ -113,8 +113,8 @@ INLINE Option(Patch*) Sea_Patch(
             stub = Misc_Hitch(stub);  // skip binding Stump
 
         for (; stub != sym; stub = Misc_Hitch(stub)) {  // should be Patch
-            if (Info_Patch_Sea(u_cast(Patch*, stub)) == sea)
-                return u_cast(Patch*, stub);
+            if (Info_Patch_Sea(raw_cast(Patch*, stub)) == sea)
+                return raw_cast(Patch*, stub);
         }
         if (strict)
             return nullptr;
@@ -128,5 +128,5 @@ INLINE Option(Slot*) Sea_Slot(SeaOfVars* sea, const Symbol* sym, bool strict) {
     Patch* patch = opt Sea_Patch(sea, sym, strict);
     if (not patch)
         return nullptr;
-    return u_cast(Slot*, Stub_Cell(patch));
+    return raw_cast(Slot*, Stub_Cell(patch));
 }

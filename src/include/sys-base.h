@@ -47,7 +47,7 @@ typedef Byte BaseByte;
 
 #else
     INLINE Byte& BASE_BYTE(const Base* base) {
-        assert(u_cast(Byte*, base)[0] & BASE_BYTEMASK_0x80_BASE);
+        assert(raw_cast(Byte*, base)[0] & BASE_BYTEMASK_0x80_BASE);
         return m_cast(Byte*, base)[0];   // cast away constness [2]
     }
 #endif
@@ -271,7 +271,7 @@ INLINE Result(void*) Raw_Pooled_Alloc(PoolId pool_id)
 
   #if RUNTIME_CHECKS && TRAMPOLINE_COUNTS_TICKS  // scramble occasionally [3]
     if (SPORADICALLY(8))
-        FIRST_BYTE(unit) = u_cast(Byte, g_tick % 256);
+        FIRST_BYTE(unit) = raw_cast(Byte, g_tick % 256);
   #endif
 
     return unit;
@@ -373,10 +373,10 @@ INLINE PoolId Pool_Id_For_Size(Size size) {
 //
 
 #define Alloc_On_Heap(T) \
-    u_cast(Result(T*), Raw_Heap_Alloc(sizeof(T)))
+    raw_cast(Result(T*), Raw_Heap_Alloc(sizeof(T)))
 
 #define Alloc_N_On_Heap(T,n) \
-    u_cast(Result(T*), Raw_Heap_Alloc(sizeof(T) * (n)))
+    raw_cast(Result(T*), Raw_Heap_Alloc(sizeof(T) * (n)))
 
 #if CPLUSPLUS_11
     #define Free_Memory(T,p) \

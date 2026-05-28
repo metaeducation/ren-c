@@ -92,7 +92,7 @@
   //    implicit conversion target, but not both.  (We choose Byte*.)
   //
   // 4. In C++11 mode, GCC gives "reinterpret cast is not a constexpr" when
-  //    you use u_cast()...which expands to a C-style parentheses cast, but
+  //    you use raw_cast()...which expands to a C-style parentheses cast, but
   //    that's the error it gives.
   //
   // 5. Wrapping the pointer in a class means incrementing or decrementing
@@ -111,14 +111,14 @@
         explicit ValidatedUtf8 (const Utf8Byte* p)  // [1]
             : p (p) {}
         explicit ValidatedUtf8 (const char *cstr)  // [1]
-            : p (u_cast(Utf8Byte*, cstr)) {}
+            : p (raw_cast(Utf8Byte*, cstr)) {}
 
         operator const void*() const = delete;  // don't add, GCC ambiguity [2]
 
         constexpr operator const Utf8Byte*() const { return p; }  // [3]
 
         /*constexpr [4]*/ operator const char*() const  // [3]
-          { return u_cast(char*, p); }
+          { return raw_cast(char*, p); }
 
         explicit operator bool() const
           { return p != nullptr; }  // if() uses
@@ -175,9 +175,9 @@
           { return const_cast<Utf8Byte*>(p); }
 
         explicit /*constexpr [4]*/ operator const char*() const  // [3]
-          { return u_cast(char*, p); }
+          { return raw_cast(char*, p); }
         /*constexpr [4]*/ operator char*() const  // [3]
-          { return u_cast(char*, const_cast<Utf8Byte*>(p)); }
+          { return raw_cast(char*, const_cast<Utf8Byte*>(p)); }
     };
 
 #endif

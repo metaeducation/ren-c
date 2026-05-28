@@ -344,7 +344,7 @@ void Replug_Stack(Level* base, Stable* plug) {
 
   restore_state_components: {
 
-    Array* array = m_cast(Array*, u_cast(Array*, Cell_Handle_Base(plug)));
+    Array* array = m_cast(Array*, raw_cast(Array*, Cell_Handle_Base(plug)));
     assert(Stub_Flavor(array) == FLAVOR_DATASTACK);
 
     Stable* item = Flex_Tail(Stable, array);

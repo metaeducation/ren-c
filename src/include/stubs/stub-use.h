@@ -53,7 +53,7 @@ INLINE Result(Use*) Alloc_Use_Inherits_Core(
     Corrupt_Unused_Field(use->misc.corrupt);
     Corrupt_Unused_Field(use->info.corrupt);
 
-    return u_cast(Use*, use);
+    return raw_cast(Use*, use);
 }
 
 #define Alloc_Use_Inherits(inherit) \

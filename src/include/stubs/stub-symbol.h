@@ -48,12 +48,12 @@
 // being able to systemically see where "no label" is occurring based on the
 // type system is fundamentally more useful than lying.
 //
-#define ANONYMOUS  u_cast(Option(const Symbol*), nullptr)
+#define ANONYMOUS  raw_cast(Option(const Symbol*), nullptr)
 
 // Filenames aren't restricted to the rules of symbols, so prefer to use
 // NO_FILENAME instead of ANONYMOUS, as it's a "Strand" vs. a "Symbol"
 //
-#define NO_FILENAME  u_cast(Option(Strand*), nullptr)
+#define NO_FILENAME  raw_cast(Option(Strand*), nullptr)
 
 INLINE bool Is_Strand_Symbol(const Strand* s) {
     if (Stub_Flavor(s) == FLAVOR_SYMBOL)
@@ -68,7 +68,7 @@ INLINE bool Is_Strand_Symbol(const Strand* s) {
 
 
 #define Symbol_Id(s) \
-    u_cast(Option(SymId), SECOND_UINT16(&known(Symbol*, (s))->info.flags))
+    raw_cast(Option(SymId), SECOND_UINT16(&known(Symbol*, (s))->info.flags))
 
 INLINE const Symbol* Canon_Symbol(SymId symid) {
     assert(symid != SYM_0_constexpr);
@@ -116,7 +116,7 @@ INLINE Stub* Misc_Hitch(const Stub* stub) {
         or flavor_stub == FLAVOR_PATCH
     );
     UNUSED(flavor_stub);
-    Stub* hitch = u_cast(Stub*, MISC_HITCH(stub));
+    Stub* hitch = raw_cast(Stub*, MISC_HITCH(stub));
     Flavor flavor_hitch = Stub_Flavor(hitch);
     assert(
         flavor_hitch == FLAVOR_SYMBOL

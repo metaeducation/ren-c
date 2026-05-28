@@ -52,10 +52,10 @@
     (FLAG_FLAVOR(FLAVOR_SOURCE) | BASE_FLAG_MANAGED)
 
 #define Make_Source(capacity) \
-    u_cast(Source*, Make_Array_Core(STUB_MASK_UNMANAGED_SOURCE, (capacity)))
+    raw_cast(Source*, Make_Array_Core(STUB_MASK_UNMANAGED_SOURCE, (capacity)))
 
 #define Make_Source_Managed(capacity) \
-    u_cast(Source*, Make_Array_Core(STUB_MASK_MANAGED_SOURCE, (capacity)))
+    raw_cast(Source*, Make_Array_Core(STUB_MASK_MANAGED_SOURCE, (capacity)))
 
 
 //=//// MIRROR BYTE ///////////////////////////////////////////////////////=//

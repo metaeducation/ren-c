@@ -418,9 +418,9 @@ static void Init_System_Object(
   // up its archetype so that it is an actual ERROR!.
 
     Slot* std_error_slot = Get_System(SYS_STANDARD, STD_ERROR);
-    assert(Is_Object(u_cast(Element*, std_error_slot)));
-    VarList* varlist = Cell_Varlist(u_cast(Element*, std_error_slot));
-    Tweak_Cell_Type_Matching_Heart(u_cast(Element*, std_error_slot), HEART_ERROR);
+    assert(Is_Object(raw_cast(Element*, std_error_slot)));
+    VarList* varlist = Cell_Varlist(raw_cast(Element*, std_error_slot));
+    Tweak_Cell_Type_Matching_Heart(raw_cast(Element*, std_error_slot), HEART_ERROR);
 
     Element* rootvar = Rootvar_Of_Varlist(varlist);
     assert(Is_Object(rootvar));

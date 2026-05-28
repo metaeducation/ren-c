@@ -133,7 +133,7 @@ enum {
 
 INLINE const Symbol* Info_Stump_Bind_Symbol(const Stump* stump) {
     assert(Is_Stub_Stump(stump));
-    return u_cast(const Symbol*, INFO_STUMP_SYMBOL(stump));
+    return raw_cast(const Symbol*, INFO_STUMP_SYMBOL(stump));
 }
 
 INLINE void Tweak_Info_Stump_Bind_Symbol(Stump* stump, const Symbol* symbol) {
@@ -143,7 +143,7 @@ INLINE void Tweak_Info_Stump_Bind_Symbol(Stump* stump, const Symbol* symbol) {
 
 INLINE Option(Stump*) Link_Stump_Next(const Stump* stump) {
     assert(Is_Stub_Stump(stump));
-    return u_cast(Stump*, LINK_STUMP_NEXT(stump));
+    return raw_cast(Stump*, LINK_STUMP_NEXT(stump));
 }
 
 INLINE void Tweak_Link_Stump_Next(Stump* stump, Option(Stump*) next) {

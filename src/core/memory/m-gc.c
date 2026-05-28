@@ -906,14 +906,14 @@ static REBLEN Sweep_Distinct_Pairing_Pool(void)
     for (; seg != nullptr; seg = seg->next) {
         Length n = g_mem.pools[PAIR_POOL].num_units_per_segment;
 
-        Byte* unit = u_cast(Byte*, seg + 1);
+        Byte* unit = raw_cast(Byte*, seg + 1);
         for (; n > 0; --n, unit += wide) {
             if (unit[0] == BASE_BYTE_FREE)
                 continue;
 
             assert(unit[0] & BASE_BYTEMASK_0x08_CELL);
 
-            Cell* c = u_cast(Cell*, unit);
+            Cell* c = raw_cast(Cell*, unit);
             if (c->header.bits & BASE_FLAG_MANAGED) {
                 assert(not (c->header.bits & BASE_FLAG_ROOT));
                 if (Is_Base_Marked(c)) {
@@ -982,7 +982,7 @@ Count Sweep_Stubs(void)
             }
 
             if (unit[0] & BASE_BYTEMASK_0x01_MARKED) {  // managed and marked
-                Remove_GC_Mark(u_cast(Base*, unit));  // just remove mark
+                Remove_GC_Mark(raw_cast(Base*, unit));  // just remove mark
                 continue;
             }
 
@@ -1004,9 +1004,9 @@ Count Sweep_Stubs(void)
                 // is over we can just free them.
             }
             else
-                Diminish_Stub(u_cast(Stub*, unit));
+                Diminish_Stub(raw_cast(Stub*, unit));
 
-            GC_Kill_Stub(u_cast(Stub*, unit));
+            GC_Kill_Stub(raw_cast(Stub*, unit));
         }
     }
 
@@ -1039,7 +1039,7 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
         for (; n > 0; --n, unit += sizeof(Stub)) {
             switch (*unit >> 4) {  // note: SHIFTING the base byte...
               case 0x8 + 0x1: {
-                Stub* s = u_cast(Stub*, unit);
+                Stub* s = raw_cast(Stub*, unit);
                 assert(Is_Base_Managed(s));
                 if (Is_Base_Marked(s)) {
                     Remove_GC_Mark(s);
@@ -1060,7 +1060,7 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
                 //
                 // !!! It is (usually) in the STUB_POOL, but *not* a "Stub".
                 //
-                Pairing* pairing = u_cast(Pairing*, unit);
+                Pairing* pairing = raw_cast(Pairing*, unit);
                 assert(Is_Base_Managed(pairing));
                 if (Is_Base_Marked(pairing)) {
                     Remove_GC_Mark(pairing);
@@ -1112,7 +1112,7 @@ void Emergency_Shutdown_Gc_Debug(void)
                 continue;
 
             if (*stub & BASE_BYTEMASK_0x01_MARKED)
-                Remove_GC_Mark(u_cast(Base*, stub));
+                Remove_GC_Mark(raw_cast(Base*, stub));
         }
     }
 
@@ -1128,7 +1128,7 @@ void Emergency_Shutdown_Gc_Debug(void)
                 continue;
 
             if (*unit & BASE_BYTEMASK_0x01_MARKED)
-                Remove_GC_Mark(u_cast(Pairing*, unit));
+                Remove_GC_Mark(raw_cast(Pairing*, unit));
         }
     }
   #endif
@@ -1253,7 +1253,7 @@ Count Recycle_Core(Flex* sweeplist)
   // prohibit it, allow it for now--though the policy should be reviewed.
 
     if (g_failure)
-        Queue_Mark_Base_Deep(u_cast(Base**, &g_failure));
+        Queue_Mark_Base_Deep(raw_cast(Base**, &g_failure));
 
 } mark_root_stubs: {
 
