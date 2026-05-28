@@ -221,3 +221,10 @@ typedef Param Arg;  // !!! Args should be just Slot; review.
     struct OnStackPointer;
     #define OnStack(T)  OnStackPointer<T>
 #endif
+
+
+#if NEEDFUL_NEED_USES_WRAPPER
+    template<typename T>  // unwrap Need(T) so bool-deleted path is never tried
+    inline const void* to_rebarg(const needful::NeedWrapper<T>& w)
+        { return to_rebarg(static_cast<T>(w)); }
+#endif
