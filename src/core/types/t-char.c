@@ -805,7 +805,7 @@ Result(Element*) Alias_Any_Utf8_As(
             size
         ));
         memcpy(
-            Flex_Data(str),
+            Flex_Bytes(str),
             cast(Byte*, utf8),
             size + 1  // +1 to include '\0'
         );

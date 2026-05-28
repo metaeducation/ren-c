@@ -225,7 +225,7 @@ unsigned char* API_rebAllocBytes(size_t size)
             + 1  // for termination (AS TEXT! of rebRepossess()), see [1]
     ));
 
-    Byte* ptr = Flex_Data(f) + ALIGN_SIZE;
+    Byte* ptr = Flex_Bytes(f) + ALIGN_SIZE;
 
     Flex** pf = (cast(Flex**, ptr) - 1);
     *pf = f;  // save self in bytes that appear immediately before the data
@@ -254,7 +254,7 @@ unsigned char* API_rebAllocBytes(size_t size)
   //    well offer the invariant to users, I guess?  :-/
 
     Set_Flex_Used(f, ALIGN_SIZE + size);  // !!! uninitialized [1]
-    Flex_Data(f)[ALIGN_SIZE + size] = '\0';  // expected by scanner [2]
+    Flex_Bytes(f)[ALIGN_SIZE + size] = '\0';  // expected by scanner [2]
 
     return ptr;
 }}

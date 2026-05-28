@@ -192,7 +192,7 @@ Result(Flex*) Copy_Flex_Core(Flags flags, const Flex* f)
         Set_Flex_Used(copy, used);
     }
 
-    memcpy(Flex_Data(copy), Flex_Data(f), used * Flex_Wide(f));
+    memcpy(Flex_Bytes(copy), Flex_Bytes(f), used * Flex_Wide(f));
 
     Assert_Flex_Term_If_Needed(copy);
     return copy;
@@ -230,8 +230,8 @@ Result(Flex*) Copy_Flex_At_Len_Extra(
     );
     assert(Flex_Wide(f) == Flex_Wide(copy));
     memcpy(
-        Flex_Data(copy),
-        Flex_Data(f) + index * Flex_Wide(f),
+        Flex_Bytes(copy),
+        Flex_Bytes(f) + index * Flex_Wide(f),
         len * Flex_Wide(f)  // !!! Would +1 copying terminator be worth it?
     );
     Set_Flex_Used(copy, len);
@@ -319,7 +319,7 @@ void Remove_Flex_Units_And_Update_Used(Flex* f, Size byteoffset, REBLEN quantity
 
     REBLEN total = Flex_Used(f) * Flex_Wide(f);
 
-    Byte* data = Flex_Data(f) + start;
+    Byte* data = Flex_Bytes(f) + start;
     memmove(
         data,
         data + (quantity * Flex_Wide(f)),
@@ -452,7 +452,7 @@ Byte* Reset_Buffer(Flex* buf, REBLEN len)
     require (
       Expand_Flex_At_Index_And_Update_Used(buf, 0, len)
     );
-    return Flex_Data(buf);
+    return raw_cast(Byte*, Flex_Data(buf));
 }
 
 

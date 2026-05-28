@@ -587,7 +587,7 @@ void Run_All_Handle_Cleaners(void) {
 
             assert(unit[0] != BASE_BYTE_DIMINISHED);  // shouldn't be in pool
 
-            Stub* stub = cast(Stub*, unit);
+            Stub* stub = cast(Stub*, upcast(void*, unit));
 
             if (Stub_Flavor(stub) != FLAVOR_HANDLE)
                 continue;  // only interested in handles
@@ -639,7 +639,7 @@ static void Mark_Root_Stubs(void)
 
             assert(not (unit[0] & BASE_BYTEMASK_0x08_CELL));  // no root pairs
 
-            Stub* s = cast(Stub*, unit);
+            Stub* s = cast(Stub*, upcast(void*, unit));
             assert(Is_Base_Readable(s));
 
             // This stub came from Alloc_Value() or rebAlloc(); the only
@@ -885,7 +885,7 @@ static void Mark_All_Levels(void)
             if (unit[0] == BASE_BYTE_FREE)
                 continue;
 
-            Level* level = cast(Level*, unit);
+            Level* level = cast(Level*, upcast(void*, unit));
             Mark_Level(level);
             Propagate_All_GC_Marks();
         }
@@ -982,8 +982,8 @@ Count Sweep_Stubs(void)
             }
 
             if (unit[0] & BASE_BYTEMASK_0x01_MARKED) {  // managed and marked
-                Remove_GC_Mark(raw_cast(Base*, unit));  // just remove mark
-                continue;
+                Remove_GC_Mark(raw_cast(Base*, upcast(void*, unit)));
+                continue;  // only need to remove mark
             }
 
             assert(not (unit[0] & BASE_BYTEMASK_0x02_ROOT));  // roots marked
@@ -1004,9 +1004,9 @@ Count Sweep_Stubs(void)
                 // is over we can just free them.
             }
             else
-                Diminish_Stub(raw_cast(Stub*, unit));
+                Diminish_Stub(raw_cast(Stub*, upcast(void*, unit)));
 
-            GC_Kill_Stub(raw_cast(Stub*, unit));
+            GC_Kill_Stub(raw_cast(Stub*, upcast(void*, unit)));
         }
     }
 
@@ -1039,7 +1039,7 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
         for (; n > 0; --n, unit += sizeof(Stub)) {
             switch (*unit >> 4) {  // note: SHIFTING the base byte...
               case 0x8 + 0x1: {
-                Stub* s = raw_cast(Stub*, unit);
+                Stub* s = raw_cast(Stub*, upcast(void*, unit));
                 assert(Is_Base_Managed(s));
                 if (Is_Base_Marked(s)) {
                     Remove_GC_Mark(s);
@@ -1112,7 +1112,7 @@ void Emergency_Shutdown_Gc_Debug(void)
                 continue;
 
             if (*stub & BASE_BYTEMASK_0x01_MARKED)
-                Remove_GC_Mark(raw_cast(Base*, stub));
+                Remove_GC_Mark(raw_cast(Base*, upcast(void*, stub)));
         }
     }
 

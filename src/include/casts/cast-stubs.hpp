@@ -41,8 +41,7 @@
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Stub*> {  // both must be const [B]
-  DECLARE_C_TYPE_LIST(allowed_from, void, Byte);
-  static const bool legal = allowed_from::contains<F>::value;
+  static const bool legal = false;
 
   static void Validate_Bits(const F* p) {
     if (not p)
@@ -63,8 +62,7 @@ struct CastHook<const F*, const Stub*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Flex*> {  // both must be const [B]
-  DECLARE_C_TYPE_LIST(allowed_from, void, Byte);
-  static const bool legal = allowed_from::contains<F>::value;
+  static const bool legal = false;
 
   static void Validate_Bits(const F* p) {
     if (not p)
@@ -85,8 +83,7 @@ struct CastHook<const F*, const Flex*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Binary*> {  // both must be const [B]
-  DECLARE_C_TYPE_LIST(allowed_from, void, Byte);
-  static const bool legal = allowed_from::contains<F>::value;
+  static const bool legal = false;
 
   static void Validate_Bits(const F* p) {
     if (not p)
@@ -111,8 +108,7 @@ struct CastHook<const F*, const Binary*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Strand*> {  // both must be const [B]
-  DECLARE_C_TYPE_LIST(allowed_from, void, Byte);
-  static const bool legal = allowed_from::contains<F>::value;
+  static const bool legal = false;
 
   static void Validate_Bits(const F* p) {
     if (not p)
@@ -144,8 +140,7 @@ struct CastHook<const F*, const Strand*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Symbol*> {
-    DECLARE_C_TYPE_LIST(allowed_from, void, Byte);
-    static const bool legal = allowed_from::contains<F>::value;
+    static const bool legal = false;
 
     static void Validate_Bits(const F* p) {
         if (not p)
@@ -172,7 +167,7 @@ struct CastHook<const F*, const Symbol*> {
 template<typename F>  // [A]
 struct CastHook<const F*, const Array*> {  // both must be const [B]
   DECLARE_C_TYPE_LIST(allowed_from,
-    void, Byte, Details, VarList, ParamList, Error
+    Details, VarList, ParamList, Error
   );
   static const bool legal = allowed_from::contains<F>::value;
 
@@ -195,7 +190,7 @@ struct CastHook<const F*, const Array*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const VarList*> {  // both must be const [B]
-  DECLARE_C_TYPE_LIST(allowed_from, void, Byte, Array, Flex);
+  DECLARE_C_TYPE_LIST(allowed_from, Array, Flex);
   static const bool legal = allowed_from::contains<F>::value;
 
   static void Validate_Bits(const F* p) {
@@ -227,7 +222,7 @@ struct CastHook<const F*, const VarList*> {  // both must be const [B]
 template<typename F>  // [A]
 struct CastHook<const F*, const ParamList*> {  // both must be const [B]
   DECLARE_C_TYPE_LIST(allowed_from,
-      void, Byte, Array, Flex, Phase);
+      Array, Flex, Phase);
   static const bool legal = allowed_from::contains<F>::value;
 
   static void Validate_Bits(const F* p) {
@@ -255,7 +250,7 @@ INLINE void Validate_Details_Bits(const Stub* stub) {
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Details*> {  // both must be const [B]
-  DECLARE_C_TYPE_LIST(allowed_from, void, Byte, Array, Flex, Phase);
+  DECLARE_C_TYPE_LIST(allowed_from, Array, Flex, Phase);
   static const bool legal = allowed_from::contains<F>::value;
 
   static void Validate_Bits(const F* p) {
@@ -271,7 +266,7 @@ struct CastHook<const F*, const Details*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Phase*> {  // both must be const [B]
-  DECLARE_C_TYPE_LIST(allowed_from, void, Byte, Flex, ParamList, Details);
+  DECLARE_C_TYPE_LIST(allowed_from, Flex, ParamList, Details);
   static const bool legal = allowed_from::contains<F>::value;
 
   static void Validate_Bits(const F* p) {

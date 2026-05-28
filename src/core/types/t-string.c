@@ -161,9 +161,9 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
 
     index = booked;
     if (book)
-        cp = raw_cast(Utf8(const*), Flex_Data(s) + BOOKMARK_OFFSET(unwrap book));
+        cp = raw_cast(Utf8(const*), Flex_Bytes(s) + BOOKMARK_OFFSET(unwrap book));
     else
-        cp = raw_cast(Utf8(const*), Flex_Data(s));
+        cp = raw_cast(Utf8(const*), Flex_Bytes(s));
 
     if (index > at) {
       #if DEBUG_TRACE_BOOKMARKS

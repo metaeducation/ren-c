@@ -354,7 +354,7 @@ void Shutdown_Pools(void)
 
             ++num_leaks;
 
-            Stub* stub = raw_cast(Stub*, unit);
+            Stub* stub = raw_cast(Stub*, upcast(void*, unit));
             if (Is_Base_Managed(stub)) {
                 printf("MANAGED Stub leak, this REALLY shouldn't happen\n");
                 leaked = stub;  // report a managed one if found
@@ -518,7 +518,7 @@ Base* Try_Find_Containing_Base_Debug(const void *p)
                 continue;
             }
 
-            Flex* f = raw_cast(Flex*, unit);
+            Flex* f = raw_cast(Flex*, upcast(void*, unit));
             if (Not_Stub_Flag(f, DYNAMIC)) {
                 if (
                     p >= cast(void*, &f->content)
@@ -781,8 +781,8 @@ Result(None) Expand_Flex_At_Index_And_Update_Used(
 
         Unpoison_Flex_Tail_If_Debug(f);
         memmove(
-            Flex_Data(f) + start + extra,
-            Flex_Data(f) + start,
+            Flex_Bytes(f) + start + extra,
+            Flex_Bytes(f) + start,
             size - start
         );
         Set_Flex_Used_Internal(f, used_old + delta);
@@ -1150,7 +1150,7 @@ Stub* Diminish_Stub(Stub* s)
 
       case FLAVOR_API_ALLOC: {  // unpoison flex backpointer in data if needed
         Flex* f = cast(Flex*, s);
-        Byte* ptr = Flex_Data(f) + ALIGN_SIZE;
+        Byte* ptr = Flex_Bytes(f) + ALIGN_SIZE;
         Flex** pf = cast(Flex**, ptr) - 1;
         Unpoison_Memory_If_Sanitize(pf, sizeof(Flex*));
         assert(*pf == f);
@@ -1329,7 +1329,7 @@ REBLEN Check_Memory_Debug(void)
             if (unit[0] & BASE_BYTEMASK_0x08_CELL)
                 continue; // a pairing
 
-            Flex* f = raw_cast(Flex*, unit);
+            Flex* f = raw_cast(Flex*, upcast(void*, unit));
             if (Not_Stub_Flag(f, DYNAMIC))
                 continue;  // data lives in the Flex Stub itself
 
@@ -1398,13 +1398,13 @@ void Check_Level_Pool_For_Leaks(void)
 
     for (; seg != nullptr; seg = seg->next) {
         Count n = g_mem.pools[LEVEL_POOL].num_units_per_segment;
-        Byte* unit = cast(Byte*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);  // pool size may round up
 
         for (; n > 0; --n, unit += g_mem.pools[LEVEL_POOL].wide) {
             if (unit[0] == BASE_BYTE_FREE)
                 continue;
 
-            Level* L = cast(Level*, unit);  // ^-- pool size may round up
+            Level* L = cast(Level*, upcast(void*, unit));
           #if TRAMPOLINE_COUNTS_TICKS
             printf(
                 "** LEVEL LEAKED at tick %lu\n",
@@ -1466,7 +1466,7 @@ void Dump_All_Series_Of_Width(Size wide)
             if (unit[0] & BASE_BYTEMASK_0x08_CELL)  // a pairing
                 continue;
 
-            Flex* f = raw_cast(Flex*, unit);
+            Flex* f = raw_cast(Flex*, upcast(void*, unit));
             if (Flex_Wide(f) == wide) {
                 ++count;
                 printf(
@@ -1502,7 +1502,7 @@ void Dump_All_Flex_In_Pool(PoolId pool_id)
             if (unit[0] & BASE_BYTEMASK_0x08_CELL)
                 continue;  // pairing
 
-            Flex* f = raw_cast(Flex*, unit);
+            Flex* f = raw_cast(Flex*, upcast(void*, unit));
             if (
                 Get_Stub_Flag(f, DYNAMIC)
                 and pool_id == Pool_Id_For_Size(Flex_Total(f))
@@ -1610,7 +1610,7 @@ REBU64 Inspect_Flex(bool show)
             if (unit[0] & BASE_BYTEMASK_0x08_CELL)
                 continue;
 
-            Flex* f = raw_cast(Flex*, unit);
+            Flex* f = raw_cast(Flex*, upcast(void*, unit));
 
             if (Get_Stub_Flag(f, DYNAMIC))
                 tot_size += Flex_Total(f);

@@ -286,7 +286,7 @@ INLINE Length Flex_Dynamic_Used(const Flex* f) {
 //    concerned, `Flex_Head(T, s)` is the same as `Flex_At(T, s, 0)`
 //
 
-MUTABLE_IF_C(Byte*, INLINE) Flex_Data(CONST_IF_C(Flex*) flex)
+MUTABLE_IF_C(void*, INLINE) Flex_Data(CONST_IF_C(Flex*) flex)
 {
     CONSTABLE(Flex*) f = m_cast(Flex*, flex);
 
@@ -296,7 +296,9 @@ MUTABLE_IF_C(Byte*, INLINE) Flex_Data(CONST_IF_C(Flex*) flex)
         : raw_cast(Byte*, &f->content);
 }
 
-MUTABLE_IF_C(Byte*, INLINE) Flex_Data_At(
+#define Flex_Bytes(flex)  raw_cast(Byte*, Flex_Data(flex))
+
+MUTABLE_IF_C(void*, INLINE) Flex_Data_At(
     Byte w,
     CONST_IF_C(Flex*) flex,
     REBLEN i
@@ -343,12 +345,12 @@ MUTABLE_IF_C(Byte*, INLINE) Flex_Data_At(
     raw_cast(T*, (f)->content.dynamic.data)  // faster if you know it's dynamic
 
 #define Flex_Data_Tail(w,f) \
-    raw_cast(Byte*, Flex_Data_At((w), (f), Flex_Used(f)))
+    Flex_Data_At((w), (f), Flex_Used(f))
 
 #define Flex_Tail(T,f) \
     raw_cast(T*, Flex_Data_Tail(sizeof(T), (f)))
 
-MUTABLE_IF_C(Byte*, INLINE) Flex_Data_Last(
+MUTABLE_IF_C(void*, INLINE) Flex_Data_Last(
     size_t wide,
     CONST_IF_C(Flex*) flex
 ){

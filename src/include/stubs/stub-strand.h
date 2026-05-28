@@ -333,7 +333,7 @@ INLINE void Free_Bookmarks_Maybe_Nullptr(const Strand* str) {
         for (i = 0; i != index; ++i)
             cp = Skip_Codepoint(cp);
 
-        Size actual = raw_cast(Byte*, cp) - Flex_Data(s);
+        Size actual = raw_cast(Byte*, cp) - Flex_Bytes(s);
         assert(actual == offset);
     }
 #endif
