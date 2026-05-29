@@ -69,7 +69,7 @@
 **      All macros expand to trivial C--your build won't even notice.
 **
 **   2. If you are doing a build and want the extra checks, put the enhanced
-**      files directory in needful_enhanced/ next to needful.h (you can put
+**      files directory in needful-enhanced/ next to needful.h (you can put
 **      that directory in your .gitignore file so only those who want to do
 **      an enhanced build deal with it):
 **
@@ -394,6 +394,13 @@ typedef enum {
 ** These can be functions or macros with the same signature.  They should use
 ** thread-local state if they're to work in multi-threaded code.
 **
+** 1. It bears some explanation that the trick to get except() to be able to
+**    take an else() clause involves a for loop that runs exactly once.  It
+**    accomplishes this using the C99 feature allowing you do declare multiple
+**    variables scoped to a for loop *if* they are of the same type.  If we
+**    assume your error type is a pointer, then we can declare both the error
+**    variable and a dummy pointer `_once` in the loop, and use a pointer
+**    increment to ensure the loop only runs once.  :-)
 */
 
 #define NeedfulResult(T)  T
@@ -437,7 +444,7 @@ typedef enum {
     Needful_Assert_Not_Failing()
 
 #define needful_except(_decl_) \
-    /* _stmt_ */ needful_postfix_extract_result; \
+    /* _stmt_ */ needful_postfix_extract_result; /* v-- see [1] */ \
     for (_decl_ = Needful_Get_Failure(), *_once = nullptr; !_once; ++_once) \
       if (Needful_Test_And_Clear_Failure()) /* allow else clause to attach */
         /* {body} implicitly picked up after macro by for, decl is scoped */
