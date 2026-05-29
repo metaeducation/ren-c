@@ -77,6 +77,8 @@
 //
 #include "assert-fix.h"
 
+#define NEEDFUL_ASSERT  assert
+
 
 //=//// INCLUDE EXTERNAL API /////////////////////////////////////////////=//
 //

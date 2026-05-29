@@ -40,6 +40,8 @@
 
 #include "assert-fix.h"
 
+#define NEEDFUL_ASSERT  assert
+
 #if TO_WINDOWS
     #undef _WIN32_WINNT  // https://forum.rebol.info/t/326/4
     #define _WIN32_WINNT 0x0501  // Minimum API target: WinXP

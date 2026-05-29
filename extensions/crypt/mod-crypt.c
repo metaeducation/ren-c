@@ -83,6 +83,7 @@ extern "C" {
 #endif
 
 #include "assert-fix.h"
+#define NEEDFUL_ASSERT  assert
 #include "needful.h"
 
 #include "c-extras.h"  // for EXTERN_C, PP_CONCAT, etc.

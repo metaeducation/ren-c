@@ -96,6 +96,12 @@
 **    See: https://needful.metaeducation.com/faq#int-conversion-warning
 **
 **    To restore the warning, set `#define NEEDFUL_DISABLE_INT_WARNING 0`.
+**
+** B. Needful's runtime invariant checks route through `NEEDFUL_ASSERT(expr)`.
+**    If you don't define it, Needful includes `<assert.h>` and defaults it to
+**    the platform `assert()`.  Projects that need debugger-friendlier
+**    behavior can define `NEEDFUL_ASSERT(expr)` before including needful.h,
+**    or include their own assert replacement header first.
 */
 
 #ifndef NEEDFUL_H_INCLUDED  /* "include guard" allows multiple #includes */
@@ -105,6 +111,11 @@
   #if !defined(__cplusplus) && (defined(__GNUC__) || defined(__clang__))
     #pragma GCC diagnostic ignored "-Wint-conversion"  /* See [A] above */
   #endif
+#endif
+
+#if !defined(NEEDFUL_ASSERT)  /* See [B] above */
+    #include <assert.h>
+    #define NEEDFUL_ASSERT(expr)  assert(expr)
 #endif
 
 
@@ -484,7 +495,7 @@ void Needful_Panic_Abruptly(const char* error) {
 }
 
 #define Needful_Assert_Not_Failing() \
-   assert(g_needful_failure == (const char*)0)
+    NEEDFUL_ASSERT(g_needful_failure == (const char*)0)
 
 #endif  /* NEEDFUL_DECLARE_RESULT_HOOKS */
 
@@ -796,7 +807,7 @@ void Needful_Panic_Abruptly(const char* error) {
 
     #define Assert_Corrupted_If_Needful(var) do { \
         if (*(unsigned char*)(&(var)) != 0xBD)  /* cheap check vs. loop */ \
-            assert("Expected variable to be corrupt and it was not"); \
+            NEEDFUL_ASSERT("Expected variable to be corrupt and it was not"); \
     } while (0)
 #endif
 
