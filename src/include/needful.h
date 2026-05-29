@@ -1187,6 +1187,20 @@ void Needful_Panic_Abruptly(const char* error) {
     #define NEEDFUL_CPP_ENHANCED  0  // Note: can still be compiled as C++
 #endif
 
+#define NEEDFUL_VERSION_MAJOR  0
+#define NEEDFUL_VERSION_MINOR  0
+#define NEEDFUL_VERSION_PATCH  0
+
+#define NEEDFUL_VERSION_ENCODE(major, minor, patch) \
+    (((major) * 10000) + ((minor) * 100) + (patch))
+
+#define NEEDFUL_VERSION \
+    NEEDFUL_VERSION_ENCODE( \
+        NEEDFUL_VERSION_MAJOR, \
+        NEEDFUL_VERSION_MINOR, \
+        NEEDFUL_VERSION_PATCH \
+    )
+
 #if !defined(NEEDFUL_NEED_USES_WRAPPER)
   #define NEEDFUL_NEED_USES_WRAPPER  NEEDFUL_CPP_ENHANCED
 #endif
