@@ -1,6 +1,6 @@
 /*
 **  file: %needful.h
-**  summary: "Single-header C library with Rust-grade safety when built as C++"
+**  summary: "Needful: Safer C without changing your C"
 **  homepage: https://needful.metaeducation.com
 **
 ******************************************************************************
@@ -13,16 +13,17 @@
 **
 ******************************************************************************
 **
-** Needful is a single-file, header-only library that gives C codebases
-** powerful safety features--Option(T), Result(T), type-safe casts, structured
-** error handling, and more--with zero runtime cost, no dependencies, and no
-** tools beyond the compiler you already have.
+** Needful is a single-header library that adds typed options, typed results,
+** visible casts, and compile-time intent checks to C.
 **
-** The key trick: every Needful construct compiles as a transparent no-op
-** in C.  But flip one switch (`#define NEEDFUL_CPP_ENHANCED  1`) and rebuild
-** as C++11, and those same constructs light up with compile-time type
-** enforcement that catches real bugs.  Your C code stays C.  The C++ compiler
-** just *checks* it harder.
+** In plain C it stays a no-op; in enhanced builds it catches real mistakes.
+**
+** The key trick: every Needful construct compiles as a transparent macro
+** in C.  But add the enhanced support files, `#define NEEDFUL_CPP_ENHANCED 1`,
+** and rebuild as C++.  The same macros light up with compile-time enforcement
+** that catches real bugs.
+**
+** Your C code stays C.  The C++ compiler just *checks* it harder.
 **
 ****[[ WHAT YOU GET ]]*********************************************************
 **
@@ -66,17 +67,18 @@
 ****[[ GETTING STARTED ]]*****************************************************
 **
 **   1. Drop `needful.h` into your project.  #include it.  Done.
-**      All macros expand to trivial C--your build won't even notice.
+**      That is the default mode: single-header, no companion files, no build
+**      system changes.
 **
-**   2. If you are doing a build and want the extra checks, put the enhanced
-**      files directory in needful-enhanced/ next to needful.h (you can put
-**      that directory in your .gitignore file so only those who want to do
-**      an enhanced build deal with it):
+**   2. If you want the extra C++ checks, put needful-enhanced/ next to
+**      needful.h.  That companion tree can stay out of your main repository
+**      if you prefer--for example by cloning it locally and listing it in
+**      .gitignore:
 **
 **      https://github.com/metaeducation/needful-enhanced
 **
-**      Then `#define NEEDFUL_CPP_ENHANCED  1`.  Build as C++11 or later.
-**      Every macro grows teeth: type mismatches become compile errors.
+**      Then `#define NEEDFUL_CPP_ENHANCED 1` and build as C++11 (or later).
+**      Same source, stricter checking: type mismatches become compile errors.
 **
 **   3. You can run both build modes in CI: the C build for production,
 **      the C++ build to catch bugs.  No code changes needed between them.
@@ -255,7 +257,7 @@
 ** and C++'s `std::optional`:
 **
 **     Option(char*) abc = "abc";
-**     Option(char*) xxx = none;  // nullptr is synonym for pointer types
+**     Option(char*) xxx = none;  // nullptr is none synonym if pointer type
 **
 **     if (abc)
 **        printf("abc is truthy, so `unwrap abc` is safe!\n")
@@ -578,15 +580,14 @@ void Needful_Panic_Abruptly(const char* error) {
 ** purpose of the cast is.
 **
 ** The definitions in C are trivial--they just act like a parenthesized cast.
-** But there are enhanced features when you build as C++11 or higher, where
-** the casts can implement their narrower policies and validation logic.
-** In release builds, the casts have zero overhead.
+** But NEEDFUL_CPP_ENHANCED builds let the casts enforce narrower policies and
+** validation logic.  In release builds, the casts have zero overhead.
 **
 ** Also, the casts are designed to be "hookable" so that customized checks
 ** can be added in C++ builds.  These can be compile-time checks (to limit
 ** what types can be cast to what)...as well as runtime checks in your debug
 ** builds, that can actually validate that the data being cast is legal for
-** the target type.  This even works for casts of raw pointers to types!
+** the target type!  ("raw_cast" skips this validation)
 **
 *****[[ CAST SELECTION GUIDE ]]***********************************************
 **
