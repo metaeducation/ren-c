@@ -844,15 +844,23 @@ void Needful_Panic_Abruptly(const char* error) {
 
 /****[[ STATIC_ASSERT, STATIC_IGNORE, STATIC_FAIL ]]**************************
 **
-** 1. No C shim for STATIC_ASSERT--too many edge cases.  It's a no-op in C
-**    builds; the C++ enhanced build enforces it.
+** 1. C11 added _Static_assert(), so use that when available in C builds.
+**    Pre-C11 C has too many edge cases for a portable shim, so it remains
+**    a no-op there.  The C++ enhanced build enforces STATIC_ASSERT in all
+**    standards modes.
 */
 
 #define NEEDFUL_STATIC_IGNORE(expr) /* uses trick for callsite semicolons */ \
     struct GlobalScopeNoopTrick  /* https://stackoverflow.com/q/53923706 */
 
-#define NEEDFUL_STATIC_ASSERT(cond) \
-    NEEDFUL_STATIC_IGNORE(cond)  /* C version is noop [1] */
+#if !defined(__cplusplus) \
+    && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+    #define NEEDFUL_STATIC_ASSERT(cond) \
+        _Static_assert((cond), "NEEDFUL_STATIC_ASSERT failed")
+#else
+    #define NEEDFUL_STATIC_ASSERT(cond) \
+        NEEDFUL_STATIC_IGNORE(cond)  /* pre-C11 C version is noop [1] */
+#endif
 
 #define NEEDFUL_STATIC_ASSERT_NOT(cond) \
     NEEDFUL_STATIC_ASSERT(! (cond))
