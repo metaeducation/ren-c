@@ -46,6 +46,7 @@
 #define _GNU_SOURCE  // so we get F_OFD_XXX and not just F_XXX
 #include <fcntl.h>
 
+#define NEEDFUL_DEFINE_ALL_SHORTHANDS  1
 #include "needful.h"
 #include "c-extras.h"  // for EXTERN_C, nullptr, etc.
 

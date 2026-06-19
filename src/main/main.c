@@ -70,6 +70,7 @@
     #include "sys-core.h"
 #endif
 
+#define NEEDFUL_DEFINE_ALL_SHORTHANDS  1
 #include "needful.h"  // provides cast(), UNUSED(), etc.
 
 #include "c-extras.h"  // provides INLINE, nullptr, etc.

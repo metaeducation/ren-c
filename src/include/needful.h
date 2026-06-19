@@ -77,8 +77,9 @@
 **
 **      https://github.com/metaeducation/needful-enhanced
 **
-**      Then `#define NEEDFUL_CPP_ENHANCED 1` and build as C++11 (or later).
-**      Same source, stricter checking: type mismatches become compile errors.
+**      Then `#define NEEDFUL_CPP_ENHANCED 1` and build as C++11 (or even
+**      better, C++17!)  Same source, stricter checking: type mismatches
+**      become compile errors.
 **
 **   3. You can run both build modes in CI: the C build for production,
 **      the C++ build to catch bugs.  No code changes needed between them.
@@ -142,40 +143,24 @@
 */
 
 #define NeedfulNeed(T)  T
-#define needful_unwrap
-#define needful_needed
+#define needful_unwrap  /* no-op in C build */
+#define needful_needed  /* no-op in C build */
 
 
-/****[[ nocast: VOID* IMPLICIT COERCION FOR C/C++ COMPATIBILITY ]]************
+/****[[ nocast: IMPLICIT COERCION FOR C/C++ COMPATIBILITY ]]*****************
 **
 ** Docs: https://needful.metaeducation.com/nocast
 **
-** C allows void* to coerce implicitly to any pointer type; C++ does not.
-** `nocast` bridges this for malloc() results, enum initialization, and other
-** places where C's implicit coercions are needed in a C++ build:
+** Bridges C's implicit void* and enum coercions into C++ builds:
 **
-**     SomeType* ptr = nocast malloc(sizeof(SomeType));  // C and C++ both
-**     SomeEnum  e   = nocast 0;                         // C and C++ both
+**     SomeType* ptr = nocast malloc(sizeof(SomeType));  // works in C++...
+**     SomeEnum  e   = nocast some_int_value;            // ...as does this!
 **
-** In C the macro is empty.  In C++ it expands to a helper object using
-** operator+ (lower precedence than %, which appears in Option/Result) that
-** injects the appropriate static_cast to the assignment target's type.
-**
-** Note: nocast requires C++ mechanics even without NEEDFUL_CPP_ENHANCED,
-** hence the unconditional #ifdef __cplusplus block below.
-**
-** 1. NocastConvert: two cases need special handling.  static_cast
-**    already handles void* -> T*, int -> enum, and same-type conversions.
-**    The exception: int -> T* must substitute nullptr (C++ forbids
-**    implicit int-to-pointer conversion, even for literal 0).  Also,
-**    pointer-to-pointer casts (e.g. Derived** -> Base**) fail with
-**    static_cast because C++ doesn't support covariant multi-level
-**    pointer conversions; a C-style cast replicates C's behavior.
-**
-** 2. The choice of `+` as the operator to use is intentional due to wanting
-**    something with lower precedence than `%` (used in Result and Optional)
+** Empty macro in C.  In C++, generates a proxy object using `operator+` to
+** implicitly trigger the correct static_cast (or C-cast for deep pointers).
 **/
-#ifndef __cplusplus
+
+#if !defined(__cplusplus)  // need C++ mechanics even w/o NEEDFUL_CPP_ENHANCED
     #define needful_nocast
 #else
     #include <type_traits>
@@ -184,12 +169,9 @@
     struct NocastMaker {};
 
     template<
-        class To, class From,
+        class To, class From,  // `From` pass-by-value, (no remove_reference)
         bool IntToPtr =  /* only one case needs special handling [1] */
-            std::is_pointer<To>::value &&
-            std::is_integral<
-                typename std::remove_reference<From>::type
-            >::value
+            std::is_pointer<To>::value && std::is_integral<From>::value
     >
     struct NocastConvert {
         static To Do_Conversion(From f) { return static_cast<To>(f); }
@@ -200,7 +182,7 @@
         static To Do_Conversion(From) { return static_cast<To>(nullptr); }
     };
 
-    template<class To, class From>  /* pointer-to-pointer via C-style [1] */
+    template<class To, class From>  /* pointer-to-pointer via C-style */
     struct NocastConvert<To*, From*, /*IntToPtr*/ false> {
         static To* Do_Conversion(From* f) { return (To*)(f); }
     };
@@ -215,37 +197,71 @@
         }
     };
 
-    template<class T>  // choice of operator+ is meaningful [2]
+    template<class T>  /* `+` for lower precedence than `%` for Result(T)  */
     inline NocastHolder<T> operator+(NocastMaker, T v) { return { v }; }
 
     constexpr NocastMaker g_nocast_maker{};
   }
 
-    #define needful_nocast    needful::g_nocast_maker +
+    #define needful_nocast  needful::g_nocast_maker +
 #endif
 
 
-/***[[ nocast_0: Generically Make 0 Of Any Type ]]****************************
+/***[[ nocast_0, struct_0, array_0: POLYMORPHIC ZERO-INITIALIZERS ]]**********
 **
 ** Docs: https://needful.metaeducation.com/nocast#needful_nocast_0
 **
-** Internal helper that produces a zero coercible to any type T.  Needed so
-** that user-defined wrapped types in Option(T) and Result(T) work.
+** `nocast_0` has the same meaning as `nocast 0` but just compiles faster.
+** It is required for macros used with Option(T) and Result(T) when compiled
+** in C++ environments w/o NEEDFUL_CPP_ENHANCED.
+**
+** (These also have general utility in any code that targets both C and C++!)
 **/
 
 #if !defined(__cplusplus)
-    #define needful_nocast_0  0  /* may need warning disablement [A] */
+    #define needful_nocast_0    0    /* may need warning disablement [A] */
+    #define needful_struct_0  { 0 }  /* {} works only in C23 or later... */
+    #define needful_array_0   { 0 }
+
+    #define needful_struct_default  { 0 }  /* same as struct_0 in C */
 #else
   namespace needful {
-    struct Nocast0Struct {
+    struct Nocast0Struct {  /* same meaning as `nocast 0`, compiles faster */
         template<class To>
         constexpr operator To() const {
             return NocastConvert<To, int>::Do_Conversion(0);
         }
     };
+
+    struct Struct0Struct {  /* more safe than `#define needful_struct0 {}` */
+        template <typename T>
+        constexpr operator T() const {
+            static_assert(std::is_class<T>::value,
+                "struct_0 ONLY used on structs, not scalar types!");
+
+            static_assert(std::is_trivially_default_constructible<T>::value,
+                "Zero-init with {} only guaranteed in C-compatible structs!");
+
+            return T{};  /* guarantees recursive zero-initialization */
+        }
+    };
+
+    struct StructDefaultStruct {  /* more lenient, allows user constructors */
+        template <typename T>
+        constexpr operator T() const {
+            static_assert(std::is_class<T>::value,
+                "struct_default ONLY used on structs, not scalar types!");
+
+            return T{};  /* zero-initialization not guaranteed */
+        }
+    };
   }
 
     #define needful_nocast_0  needful::Nocast0Struct{}
+    #define needful_struct_0  needful::Struct0Struct{}
+    #define needful_array_0   {}  /* can't promise usage only w/arrays :-( */
+
+    #define needful_struct_default  needful::StructDefaultStruct{}
 #endif
 
 
@@ -290,7 +306,22 @@ typedef enum {
 
 #define NeedfulOption(T)  T
 
-#define needful_opt
+#define needful_opt  /* no-op in C build */
+
+#define needful_postfix_extract_option  /* no-op in C build */
+
+
+/****[[ Fallible(T): LIKE Option(T) BUT RESULT MUST BE USED ]]****************
+**
+** Needful's Result(T) uses thread-global variables to multiplex an error on
+** top of an arbitrary return value.  Fallible(T) does something simpler: it
+** just lets you mark a return value as Fallible(T) to be a [[nodiscard]]
+** version of an Option(T) (like Rust's #[must_use]).
+**/
+
+#define NeedfulFallible(T)  T
+#define needful_unwrap_fallible  /* no-op in C build */
+#define needful_infallible  /* no-op in C build */
 
 
 /****[[ SCOPE_GUARD: PROTECT FROM UNSAFE MACRO USAGES ]]**********************
@@ -502,6 +533,25 @@ void Needful_Panic_Abruptly(const char* error) {
 #endif  /* NEEDFUL_DECLARE_RESULT_HOOKS */
 
 
+/****[[ NULLPTR-REACTIVE MACROS ]]********************************************
+**
+** These macros react to the presence of a nullptr in the expression, and can
+** also deal with Option(T) expressions.
+**/
+
+#define needful_is_nullptr(_expr_) \
+    ((_expr_ needful_postfix_extract_option) == nullptr)
+
+#define needful_return_if_nullptr(_expr_) \
+    do { if (needful_is_nullptr(_expr_)) { return needful_none; } } while (0)
+
+#define needful_abort_if_nullptr(_expr_) \
+    do { if (needful_is_nullptr(_expr_)) { abort(); } } while (0)
+
+#define needful_tolerate_if_nullptr(_expr_) \
+    NEEDFUL_USED(needful_is_nullptr(_expr_))
+
+
 /****[[ Sink(T) / Init(T): INDICATE FUNCTION OUTPUT PARAMETERS ]]***********
 **
 ** Docs: https://needful.metaeducation.com/contra
@@ -523,7 +573,7 @@ void Needful_Panic_Abruptly(const char* error) {
 #define NeedfulInit(T)  T *
 
 #define NeedfulContra(T)  T *
-#define NeedfulExact(T)  T  // precise type
+#define NeedfulExact(T)  T  /* precise type */
 
 
 /****[[ known(T,expr): COMPILE-TIME TYPE ASSERTION INSIDE MACROS ]]**********
@@ -567,7 +617,7 @@ void Needful_Panic_Abruptly(const char* error) {
 
 #define ENABLE_IF_EXACT_ARG_TYPE(...)
 #define DISABLE_IF_EXACT_ARG_TYPE(...)
-#define ENABLEABLE(T, name) T name
+#define ENABLEABLE(T, name)  T name
 
 
 /****[[ VISIBLE (AND HOOKABLE!) ERGONOMIC CASTS ]]****************************
@@ -777,6 +827,51 @@ void Needful_Panic_Abruptly(const char* error) {
 
 #define needful_upcast /* (T,expr) */  needful_c_cast
 
+
+/****[[ unreachable: INDICATE DIVERGENCE ]]***********************************
+**
+** Docs: https://needful.metaeducation.com/unreachable
+**
+** In Release mode (-O3/NDEBUG),the compiler aggressively deletes the dead
+** branch and optimizes switch jump tables. Triggers an assert in Debug mode.
+**
+** Uses `needful_nocast_0` and `needful_struct_0` to polymorphically satisfy
+** function return signatures without manual type boilerplate.
+**
+** (Note you can `#undef needful_builtin_unreachable` and redefine if needed.)
+**/
+
+#if defined(_MSC_VER)  /* MSVC __assume(0) even works with /Ob0 (no-inline) */
+    #define needful_builtin_unreachable  __assume(0)
+#elif defined(__GNUC__) || defined(__clang__)  /* GCC/Clang take the hint */
+    #define needful_builtin_unreachable  __builtin_unreachable()
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
+    #include <stddef.h>  /* C23 has standard unreachable() in <stddef.h> */
+    #define needful_builtin_unreachable  unreachable()
+#elif defined(__cplusplus) && __cplusplus >= 202302L
+    #include <utility>  /* C++23 has std::unreachable in <utility> */
+    #define needful_builtin_unreachable  std::unreachable()
+#else
+    #define needful_builtin_unreachable  ((void)0)  /* fall back to a no-op */
+#endif
+
+#define needful_unreachable  do { \
+    NEEDFUL_ASSERT(false); \
+    needful_builtin_unreachable; \
+    return needful_nocast_0; \
+  } while (0)
+
+#define needful_unreachable_void  do { \
+    NEEDFUL_ASSERT(false); \
+    needful_builtin_unreachable; \
+    return; \
+  } while (0)
+
+#define needful_unreachable_struct(T)  do { \
+    NEEDFUL_ASSERT(false); \
+    needful_builtin_unreachable; \
+    return (T)needful_struct_0; \
+  } while (0)
 
 
 /****[[ NEEDFUL_DOES_CORRUPTIONS + CORRUPTION SEED/DOSE ]]********************
@@ -1016,7 +1111,14 @@ void Needful_Panic_Abruptly(const char* error) {
 **    operations, anyway).  So lenient defaults the short name `known_cast()`.
 */
 
-#if !defined(NEEDFUL_DONT_DEFINE_OPTION_SHORTHANDS)
+#if !defined(NEEDFUL_DEFINE_ALL_SHORTHANDS)
+    #define NEEDFUL_DEFINE_ALL_SHORTHANDS  0
+#endif
+
+#if !defined(NEEDFUL_OPTION_SHORTHANDS)
+    #define NEEDFUL_OPTION_SHORTHANDS  NEEDFUL_DEFINE_ALL_SHORTHANDS
+#endif
+#if NEEDFUL_OPTION_SHORTHANDS
     #define Need /* (T) */          NeedfulNeed
     #define unwrap /* ... */        needful_unwrap
     #define needed /* ... */        needful_needed
@@ -1028,7 +1130,10 @@ void Needful_Panic_Abruptly(const char* error) {
     #define opt /* ... */           needful_opt
 #endif
 
-#if !defined(NEEDFUL_DONT_DEFINE_CAST_SHORTHANDS)
+#if !defined(NEEDFUL_CAST_SHORTHANDS)
+    #define NEEDFUL_CAST_SHORTHANDS  NEEDFUL_DEFINE_ALL_SHORTHANDS
+#endif
+#if NEEDFUL_CAST_SHORTHANDS
     #define cast /* (T,...) */      needful_cast
     #define raw_cast /* (T,...) */  needful_raw_cast
     #define fast_cast /* (T,...) */  needful_fast_cast
@@ -1037,11 +1142,14 @@ void Needful_Panic_Abruptly(const char* error) {
 
     #define m_cast /* (T,...) */    needful_mutable_cast
 
-  #if defined(NEEDFUL_ICAST_SLOW_BUILD)  /* default off for fast builds [1] */
-    #define i_cast /* (T,...) */    needful_integer_cast
-  #else
-    #define i_cast /* (T,...) */    needful_c_cast
-  #endif
+    #if !defined(NEEDFUL_ICAST_SLOW_BUILD)  /* default off, fast builds [1] */
+        #define NEEDFUL_ICAST_SLOW_BUILD  0
+    #endif
+    #if NEEDFUL_ICAST_SLOW_BUILD
+      #define i_cast /* (T,...) */    needful_integer_cast
+    #else
+      #define i_cast /* (T,...) */    needful_c_cast
+    #endif
     #define ii_cast /* (T,...) */   needful_integer_cast  /* see [1] */
 
     #define p_cast /* (T,...) */    needful_pointer_cast
@@ -1057,7 +1165,10 @@ void Needful_Panic_Abruptly(const char* error) {
     #define upcast /* (T,...) */    needful_upcast
 #endif
 
-#if !defined(NEEDFUL_DONT_DEFINE_RESULT_SHORTHANDS)
+#if !defined(NEEDFUL_RESULT_SHORTHANDS)
+    #define NEEDFUL_RESULT_SHORTHANDS  NEEDFUL_DEFINE_ALL_SHORTHANDS
+#endif
+#if NEEDFUL_RESULT_SHORTHANDS
     #define Result /* (T) */        NeedfulResult
 
     #define fail /* (...) */        needful_fail
@@ -1073,14 +1184,30 @@ void Needful_Panic_Abruptly(const char* error) {
     #define rescue /* (expr) */             needful_rescue
 #endif
 
-#if !defined(NEEDFUL_DONT_DEFINE_SINK_SHORTHANDS)
+#if !defined(NEEDFUL_NULLPTR_SHORTHANDS)
+    #define NEEDFUL_NULLPTR_SHORTHANDS  NEEDFUL_DEFINE_ALL_SHORTHANDS
+#endif
+#if NEEDFUL_NULLPTR_SHORTHANDS
+    #define is_nullptr /* (_expr) */            needful_is_nullptr
+    #define return_if_nullptr /* (_expr_) */    needful_return_if_nullptr
+    #define abort_if_nullptr /* (_expr_) */     needful_abort_if_nullptr
+    #define tolerate_if_nullptr /* (_expr_) */  needful_tolerate_if_nullptr
+#endif
+
+#if !defined(NEEDFUL_CONTRA_SHORTHANDS)
+    #define NEEDFUL_CONTRA_SHORTHANDS  NEEDFUL_DEFINE_ALL_SHORTHANDS
+#endif
+#if NEEDFUL_CONTRA_SHORTHANDS
     #define Sink /* (T) */          NeedfulSink
     #define Init /* (T) */          NeedfulInit
     #define Contra /* (T) */        NeedfulContra
     #define Exact /* (T) */         NeedfulExact
 #endif
 
-#if !defined(NEEDFUL_DONT_DEFINE_KNOWN_SHORTHANDS)
+#if !defined(NEEDFUL_KNOWN_SHORTHANDS)
+    #define NEEDFUL_KNOWN_SHORTHANDS  NEEDFUL_DEFINE_ALL_SHORTHANDS
+#endif
+#if NEEDFUL_KNOWN_SHORTHANDS
     #define rigid_known /* (T,expr) */           needful_rigid_known
     #define rigid_known_not /* (T,expr) */       needful_rigid_known_not
     #define rigid_known_any /* ((T,...),expr) */ needful_rigid_known_any
@@ -1107,7 +1234,10 @@ void Needful_Panic_Abruptly(const char* error) {
     #define known_literal /* (T,expr) [3] */     needful_known_literal
 #endif
 
-#if !defined(NEEDFUL_DONT_DEFINE_COMMENT_SHORTHANDS)
+#if !defined(NEEDFUL_COMMENT_SHORTHANDS)
+    #define NEEDFUL_COMMENT_SHORTHANDS  NEEDFUL_DEFINE_ALL_SHORTHANDS
+#endif
+#if NEEDFUL_COMMENT_SHORTHANDS
     #define possibly /* (cond) */    needful_possibly
     #define impossible /* (cond) */  needful_impossible
     #define definitely /* (cond) */  needful_definitely
@@ -1127,7 +1257,10 @@ void Needful_Panic_Abruptly(const char* error) {
     #define CANT /* (expr) */            NEEDFUL_CANT
 #endif
 
-#if !defined(NEEDFUL_DONT_DEFINE_STATIC_ASSERT_SHORTHANDS)
+#if !defined(NEEDFUL_STATIC_ASSERT_SHORTHANDS)
+    #define NEEDFUL_STATIC_ASSERT_SHORTHANDS  NEEDFUL_DEFINE_ALL_SHORTHANDS
+#endif
+#if NEEDFUL_STATIC_ASSERT_SHORTHANDS
     #if !defined(STATIC_ASSERT)
         #define STATIC_ASSERT /* (...) */  NEEDFUL_STATIC_ASSERT
     #endif
@@ -1145,7 +1278,10 @@ void Needful_Panic_Abruptly(const char* error) {
     #endif
 #endif
 
-#if !defined(NEEDFUL_DONT_DEFINE_USAGE_SHORTHANDS)
+#if !defined(NEEDFUL_USAGE_SHORTHANDS)
+    #define NEEDFUL_USAGE_SHORTHANDS  NEEDFUL_DEFINE_ALL_SHORTHANDS
+#endif
+#if NEEDFUL_USAGE_SHORTHANDS
   #if !defined(USED)
     #define USED /* (...) */  NEEDFUL_USED
   #endif
@@ -1251,6 +1387,26 @@ void Needful_Panic_Abruptly(const char* error) {
     #if NEEDFUL_CAST_CALLS_HOOKS
         #error "NEEDFUL_CAST_CALLS_HOOKS requires NEEDFUL_CPP_ENHANCED"
     #endif
+#endif
+
+
+/*****************************************************************************
+**
+** You can't do things like return C's `NULL` for an Option(T*).  So nearly
+** any Needful client will want a nullptr definition for C.
+*/
+
+#if !defined(NEEDFUL_NULLPTR_SHIM)
+  #define NEEDFUL_NULLPTR_SHIM  NEEDFUL_NULLPTR_SHORTHANDS
+#endif
+#if NEEDFUL_NULLPTR_SHIM
+  #ifdef __cplusplus
+    #include <cstddef>  // defines `using nullptr_t = decltype(nullptr);`
+  #else
+    #if !defined(nullptr)
+      #define nullptr  (void*)0
+    #endif
+  #endif
 #endif
 
 

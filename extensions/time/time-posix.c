@@ -59,6 +59,7 @@
 #include "rebol.h"
 typedef RebolValue Value;
 
+#define NEEDFUL_DEFINE_ALL_SHORTHANDS  1
 #include "needful.h"
 #include "c-extras.h"  // for EXTERN_C, nullptr, etc.
 
