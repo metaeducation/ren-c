@@ -198,9 +198,17 @@ typedef RebolHandleCleaner HandleCleaner;
 // that name it will break the compilation).  Generally speaking you should
 // define your macros after including system headers, not before...
 //
+// We use shorter keywords vs. the NEEDFUL_DEFINE_RESULT_SHORTHANDS ones.
 
 #define NEEDFUL_DEFINE_ALL_SHORTHANDS  1
 #include "needful.h"
+
+#define fail     needful_make_failure
+#define trap     needful_return_if_failed
+#define require  needful_abort_if_failed
+#define assume   needful_assert_not_failed
+#define except   needful_catch_if_failed
+#define rescue   needful_extract_failure
 
 
 //=//// SOME EXTRA C THINGS ///////////////////////////////////////////////=//
