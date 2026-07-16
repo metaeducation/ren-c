@@ -378,25 +378,25 @@ typedef enum {
 #endif
 
 #define needful_unreachable  do { \
-    NEEDFUL_ASSERT(false); \
+    NEEDFUL_ASSERT(!"unreachable"); \
     needful_builtin_unreachable; \
     return needful_nocast_0; \
   } while (0)
 
 #define needful_unreachable_void  do { \
-    NEEDFUL_ASSERT(false); \
+    NEEDFUL_ASSERT(!"unreachable"); \
     needful_builtin_unreachable; \
     return; \
   } while (0)
 
 #define needful_unreachable_struct(T)  do { \
-    NEEDFUL_ASSERT(false); \
+    NEEDFUL_ASSERT(!"unreachable"); \
     needful_builtin_unreachable; \
     return (T)needful_struct_0; \
   } while (0)
 
   #define needful_unreachable_array  do { \
-    NEEDFUL_ASSERT(false); \
+    NEEDFUL_ASSERT(!"unreachable"); \
     needful_builtin_unreachable; \
     return needful_array_0; \
   } while (0)
@@ -424,7 +424,7 @@ typedef enum {
 #endif
 
 NEEDFUL_NORETURN static inline void needful_dead_end_inline(void) {
-    NEEDFUL_ASSERT(false);
+    NEEDFUL_ASSERT(!"dead_end");
     needful_builtin_unreachable;
 }
 
