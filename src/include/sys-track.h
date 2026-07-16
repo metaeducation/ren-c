@@ -64,18 +64,22 @@
 // (In the C build, Value*, Stable*, Element*, OnStack(Element*), etc. are
 // all just Cell* pointers.)
 //
-// 1. It's currently possible to enable or disable tick counting in the
+// 1. Macros like TRACK() may be "passthru" in some build variations, and that
+//    means you'd get warnings if you didn't say USED(TRACK(...)).  In order
+//    to get the warning in (more) builds, the functions are made nodiscard.
+//
+// 2. It's currently possible to enable or disable tick counting in the
 //    Trampoline.  This is because while tick counting is very useful even
 //    in release builds, it isn't free...and some configurations might not
 //    want to pay for counting them.  If not enabled, the tick will be 0.
 //
 #if DEBUG_TRACK_EXTEND_CELLS
 
-  POSSIBLY(TRAMPOLINE_COUNTS_TICKS);  // might not be enabled [1]
+  POSSIBLY(TRAMPOLINE_COUNTS_TICKS);  // might not be enabled [2]
 
   #if CPLUSPLUS_11
     template<typename T>
-    INLINE T Force_Cell_Tracking(
+    NEEDFUL_NODISCARD /* [1] */ INLINE T Force_Cell_Tracking(
         T&& cell,  // && to avoid Sink(T) "re-corrupting" (broken!)
         Flags track_flags,
         const char *file,
@@ -84,12 +88,12 @@
         cell->track_flags.bits = track_flags | FLAG_FOURTH_BYTE(0xBD);
         cell->file = file;
         cell->line = line;
-        cell->tick = TICK;  // TICK is 0 if not TRAMPOLINE_COUNTS_TICKS [1]
+        cell->tick = TICK;  // TICK is 0 if not TRAMPOLINE_COUNTS_TICKS [2]
         return cell;
     }
 
     template<typename T>
-    INLINE T Update_Cell_File_Line_Tick(
+    NEEDFUL_NODISCARD /* [1] */ INLINE T Update_Cell_File_Line_Tick(
         T&& cell,  // && to avoid Sink(T) "re-corrupting" (broken!)
         const char *file,
         int line
@@ -97,11 +101,11 @@
         assert(FOURTH_BYTE(&cell->track_flags.bits) == 0xBD);
         cell->file = file;
         cell->line = line;
-        cell->tick = TICK;  // TICK is 0 if not TRAMPOLINE_COUNTS_TICKS [1]
+        cell->tick = TICK;  // TICK is 0 if not TRAMPOLINE_COUNTS_TICKS [2]
         return cell;
     }
   #else
-    INLINE Cell* Force_Cell_Tracking(
+    NEEDFUL_NODISCARD /* [1] */ INLINE Cell* Force_Cell_Tracking(
         Cell* cell,
         Flags track_flags,
         const char *file,
@@ -110,11 +114,11 @@
         cell->track_flags.bits = track_flags | FLAG_FOURTH_BYTE(0xBD);
         cell->file = file;
         cell->line = line;
-        cell->tick = TICK;  // TICK is 0 if not TRAMPOLINE_COUNTS_TICKS [1]
+        cell->tick = TICK;  // TICK is 0 if not TRAMPOLINE_COUNTS_TICKS [2]
         return cell;
     }
 
-    INLINE Cell* Update_Cell_File_Line_Tick(
+    NEEDFUL_NODISCARD /* [1] */ INLINE Cell* Update_Cell_File_Line_Tick(
         Cell* cell,
         const char *file,
         int line
@@ -122,7 +126,7 @@
         assert(FOURTH_BYTE(&cell->track_flags.bits) == 0xBD);
         cell->file = file;
         cell->line = line;
-        cell->tick = TICK;  // TICK is 0 if not TRAMPOLINE_COUNTS_TICKS [1]
+        cell->tick = TICK;  // TICK is 0 if not TRAMPOLINE_COUNTS_TICKS [2]
         return cell;
     }
   #endif
@@ -146,16 +150,20 @@
 //    fully separate, and doesn't try to exploit that not all cell types use
 //    all bits to hide more information.
 //
+// 2. Must use USED(TRACK(...)) if you don't pass the result to a function.
+//    The functions are nodiscard in order to make sure you get the warning
+//    whether you're using DEBUG_TRACK_EXTEND_CELLS or not.
+//
 #if DEBUG_TRACK_EXTEND_CELLS
     #define TRACK(cell) /* see important note [1] above! */ \
-        Update_Cell_File_Line_Tick((cell), __FILE__, __LINE__)
+        Update_Cell_File_Line_Tick((cell), __FILE__, __LINE__)  // [2]
 
     #define FORCE_TRACK(cell,track_flags) \
-        Force_Cell_Tracking((cell), (track_flags), __FILE__, __LINE__)
+        Force_Cell_Tracking((cell), (track_flags), __FILE__, __LINE__)  // [2]
 #else
-    #define TRACK(cell)  PASSTHRU(cell)
+    #define TRACK(cell)  (cell)  // [2]
 
-    #define FORCE_TRACK(cell,track_flags)  PASSTHRU(cell)
+    #define FORCE_TRACK(cell,track_flags)  (cell)  // [2]
 #endif
 
 #define FORCE_TRACK_0(cell) \
@@ -163,7 +171,7 @@
 
 
 #if DEBUG_TRACK_COPY_PRESERVES
-    #define MAYBE_TRACK(cell)  PASSTHRU(cell)
+    #define MAYBE_TRACK(cell)  (cell)
 #else
     #define MAYBE_TRACK(cell)  TRACK(cell)
 #endif

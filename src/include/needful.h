@@ -792,18 +792,15 @@ NEEDFUL_NORETURN void Needful_Panic_Abruptly(const char* error) {
 **
 ** Used in coordination with the `-Wunused-variable` setting of the compiler.
 **
-** NEEDFUL_UNUSED() can actually randomize non-const variable contents to
-** help detect use of something that was meant to be unused.
+** NEEDFUL_USED() marks a variable as used, so the compiler doesn't warn.
 **
-** NEEDFUL_USED()
-**
-** PASSTHRU() is to make commentary macros that do nothing, but Clang would
-** warn about an unused result if you said `#define Some_Remark(expr) (expr)`
+** In the NEEDFUL_CPP_ENHANCED builds, NEEDFUL_UNUSED() can be redefined to
+** actually randomize non-const variable contents to help detect use of
+** something that was meant to be unused.
 */
 
-#define NEEDFUL_UNUSED(...)  ((void)(__VA_ARGS__))
 #define NEEDFUL_USED(...)    ((void)(__VA_ARGS__))
-#define NEEDFUL_PASSTHRU(...)  ((void)0, __VA_ARGS__)  /* (void)0 for Clang */
+#define NEEDFUL_UNUSED(...)  ((void)(__VA_ARGS__))
 
 
 /****[[ STATIC_ASSERT, STATIC_IGNORE, STATIC_FAIL ]]**************************
@@ -1121,10 +1118,6 @@ NEEDFUL_NORETURN void Needful_Panic_Abruptly(const char* error) {
 
   #if !defined(NOOP)
     #define NOOP  NEEDFUL_NOOP
-  #endif
-
-  #if !defined(PASSTHRU)
-    #define PASSTHRU  NEEDFUL_PASSTHRU
   #endif
 
   #if !defined(NODISCARD)

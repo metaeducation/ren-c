@@ -1323,7 +1323,7 @@ INLINE Value* Inherit_Const(Value* out, const Cell* influencer) {
 }
 
 #define Trust_Const(value) \
-    PASSTHRU(value)  // just mark to say the const is accounted for already
+    (value)  // must do USED(Trust_Const(...)) if not passing to a function
 
 INLINE Stable* Constify(Stable* v) {
     Set_Cell_Flag(v, CONST);
