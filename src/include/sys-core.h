@@ -205,7 +205,7 @@ typedef RebolHandleCleaner HandleCleaner;
 
 #define fail     needful_make_failure
 #define trap     needful_return_if_failed
-#define require  needful_abort_if_failed
+#define require  needful_panic_if_failed
 #define assume   needful_assert_not_failed
 #define except   needful_catch_if_failed
 #define rescue   needful_extract_failure

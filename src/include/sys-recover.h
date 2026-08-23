@@ -466,5 +466,6 @@ INLINE Error* Needful_Test_And_Clear_Failure(void) {
 #define Needful_Get_Failure() \
     g_failure
 
-#define Needful_Assert_Not_Failing() \
-    assert(not g_failure)
+/* Needful_Assert_Not_Failing() is no longer a hook -- needful.h derives it
+** from Needful_Get_Failure() so it routes through NEEDFUL_ASSERT().
+*/
