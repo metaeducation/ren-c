@@ -427,7 +427,7 @@ EXTERN_C intptr_t API_rebPromise(
     if (binding)
         info->binding = binding;
     else
-        info->binding = cast(RebolContext*, g_user_context);
+        info->binding = upcast(RebolContext*, g_user_context);
     info->next = PG_Promises;
     PG_Promises = info;
 
