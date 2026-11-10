@@ -177,16 +177,15 @@
 ** core benefit: in NEEDFUL_CPP_ENHANCED builds, testing a Need(T) in a
 ** boolean context is a compile error.
 **
-** Two prefix "keywords" get their C definitions here.  `needed` extracts the
-** raw value from a Need(T), and errors on an Option(T)--which makes it useful
-** for writing macros that must reject optional types.  `unwrap` is the shared
-** one: it works on Need(T) *and* on Option(T), where it also null-checks.
+** The prefix "keyword" `needed` extracts the raw value from a Need(T), and
+** errors on an Option(T)--which makes it useful for writing macros that must
+** reject optional types.  (Most code doesn't need it, as a Need(T) converts
+** to T implicitly.)  `unwrap` is Option(T)'s, and errors on a Need(T).
 ** (They are ordinary operators in disguise; see /precedence for when that
 ** disguise slips and you need parentheses.)
 */
 
 #define NeedfulNeed(T)  T
-#define needful_unwrap  /* no-op in C build; legal on Need(T) and Option(T) */
 #define needful_needed  /* no-op in C build; Need(T) only, errors on Option */
 
 
@@ -210,6 +209,7 @@ typedef enum {
 
 #define NeedfulOption(T)  T
 
+#define needful_unwrap  /* no-op in C build; Option(T) only, errors on Need */
 #define needful_opt  /* no-op in C build */
 
 #define needful_postfix_extract_option  /* no-op in C build */
@@ -1076,13 +1076,13 @@ NEEDFUL_NORETURN void Needful_Panic_Abruptly(const char* error) {
 #endif
 #if NEEDFUL_OPTION_SHORTHANDS
     #define Need /* (T) */          NeedfulNeed
-    #define unwrap /* ... */        needful_unwrap
     #define needed /* ... */        needful_needed
 
     #define None                    NeedfulNone
     #define none                    needful_none
 
     #define Option /* (T) */        NeedfulOption
+    #define unwrap /* ... */        needful_unwrap
     #define opt /* ... */           needful_opt
 #endif
 
