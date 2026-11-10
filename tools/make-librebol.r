@@ -877,14 +877,24 @@ typedef void (RebolHandleCleaner)(void* p, size_t length);
  * The API maps Rebol's ~null~ "antiform" to C's 0 pointer, **but don't
  * use C's NULL macro for that**.
  *
- * The reason is that some C compilers define NULL as simply the integer
- * constant 0, which breaks use with variadic APIs...as they will interpret
- * it as an integer and not a pointer.
+ * C allows NULL to be defined as just the integer constant 0.  That's a
+ * problem for variadic APIs like libRebol's, where a null is often passed
+ * in a pointer slot:
  *
- * **It's clearest to use C++'s `nullptr`**, or a suitable C shim for it,
- * e.g. `#define nullptr ((void*)0)`.  That helps avoid making it seem
- * like rebNull is some distinct concept which can't safely be assumed
- * as exactly equivalent to C's null.
+ *     rebValue("print", "pick", block, "1", NULL);  // WRONG
+ *
+ * The callee reads that slot with va_arg() as a pointer, but what was
+ * pushed was an int.  On platforms where int and pointer differ in size or
+ * representation, that's garbage.  Standards-compliant C would need a cast
+ * at every such callsite, e.g. `(RebolValue*)NULL`.  (C++ has a similar
+ * issue with NULL being ambiguous between integer and pointer overloads,
+ * which is why it added `nullptr`.)
+ *
+ * **It's clearest to use `nullptr`**: C++ and C23 have it, and for older C
+ * a shim like `#define nullptr ((void*)0)` works (needful.h provides one).
+ * That also avoids making rebNull seem like some distinct concept which
+ * can't safely be assumed as exactly equivalent to C's null.  Then the word
+ * "null" is free to mean Rebol's ~null~ antiform, while `nullptr` is C's.
  *
  * However, **using NULL is broken, so don't use it**.  This macro is
  * provided in case defining `nullptr` is not an option--for some reason.

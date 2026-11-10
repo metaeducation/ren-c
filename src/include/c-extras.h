@@ -182,46 +182,14 @@
 #endif
 
 
-//=//// nullptr SHIM FOR C ////////////////////////////////////////////////=//
+//=//// nullptr (FROM NEEDFUL) /////////////////////////////////////////////=//
 //
-// The C language definition allows compilers to simply define NULL as 0.
-// This creates ambiguity in C++ when one overloading of a function takes an
-// integer, and another a pointer...since 0 can be coerced to either.  So
-// a specific `nullptr` was defined to work around this.
+// The codebase says `nullptr` for C's 0 pointer, even in C builds, and
+// needful.h's shim provides it (see rebNull in %rebol.h for why not NULL).
+// That leaves "null" free to mean Rebol's ~null~ antiform in comments.
 //
-// But the problem isn't just with C++.  There is a common issue in variadics
-// where NULL is used to terminate a sequence of values that are interpreted
-// as pointers:
-//
-//     variadic_print("print me", "and me", "stop @ NULL", NULL);
-//
-// Yet there is no way to do this in standards-compliant C.  On a platform
-// where integers and pointers aren't compatible sizes or bit patterns, then
-// the `0` which NULL evaluates to in that last slot can't be interpreted
-// as a null pointer.  You'd have to write:
-//
-//     variadic_print("print me", "and me", "stop @ NULL", (char*)NULL);
-//
-// Since libRebol hinges on a premise of making the internal ~null~ signifier
-// interface as a C NULL pointer, and requires variadics, this is a problem.
-// Rather than introduce a "new" abstraction or macro, this adds a simple
-// macro to C.
-//
-// This also means that "null" can be used in comments for the Rebol concept,
-// as opposed to the C idea (though you might say "nulled cell" in contexts
-// where both are in play).  Either way, when when discussing C's "0 pointer",
-// say `nullptr`.
-//
-
-#if NO_CPLUSPLUS_11
-  #if !defined(nullptr)
-    #define nullptr  raw_cast(void*, 0)
-  #endif
-#else
-    // http://en.cppreference.com/w/cpp/language/nullptr
-    // is defined as `using nullptr_t = decltype(nullptr);` in <cstddef>
-    //
-    #include <cstddef>
+#if NEEDFUL_NO_NULLPTR_SHIM && !defined(__cplusplus) && !NEEDFUL_C23_NULLPTR
+    #error "Ren-C needs needful.h's nullptr shim (NEEDFUL_NO_NULLPTR_SHIM)"
 #endif
 
 
