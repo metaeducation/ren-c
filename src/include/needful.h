@@ -16,10 +16,6 @@
 ** Needful is a single-header library that adds typed options, typed results,
 ** visible casts, and compile-time intent checks to C.
 **
-** It is a type-discipline layer, not a memory-safety layer: it catches
-** nullability and API-usage mistakes, but does not prevent use-after-free,
-** buffer overruns, data races, or integer overflow.
-**
 ** The key trick: every Needful construct compiles as a transparent macro in C.
 ** But add companion needful-enhanced/ files, `#define NEEDFUL_CPP_ENHANCED 1`,
 ** and rebuild as C++.  The same macros light up with compile-time enforcement
@@ -46,8 +42,7 @@
 **                 boolean coercion: `if (ptr)` on a Need(T) is a compile
 **                 error--null-checking a guarantee signals a logic bug.
 **
-**   Option(T)     Need(T)'s dual: a value that legitimately may be absent.
-**                 Rust-like optional using T's falsey state as the sentinel--
+**   Option(T)     Rust-like optional using T's falsey state as the sentinel--
 **                 same size as T, no extra bool!  `unwrap` extracts with a
 **                 null-check panic; `opt` skips it (unsafe).  C++ enforces
 **                 that Option(T) can't silently pass as a plain T.
@@ -129,15 +124,9 @@
 **
 ****[[ BEFORE YOU INCLUDE ]]**************************************************
 **
-** A. Needful's runtime invariant checks route through `NEEDFUL_ASSERT(expr)`.
-**    If you don't define it, Needful includes `<assert.h>` and defaults it to
-**    the platform `assert()`.  Projects that need debugger-friendlier
-**    behavior can define `NEEDFUL_ASSERT(expr)` before including needful.h,
-**    or include their own assert replacement header first.
-**
-**    Likewise `abort_if_none()` routes through `NEEDFUL_ABORT()`, which
-**    defaults to `<stdlib.h>`'s `abort()`.  Define either macro beforehand and
-**    Needful will not include the corresponding standard header at all.
+** [A] If you don't define `NEEDFUL_ASSERT(expr)`, Needful includes <assert.h>
+**     and defaults to using the platform's `assert()`.  Likewise if you don't
+**     define `NEEDFUL_ABORT()` it will be defaulted to <stdlib.h>'s `abort()`.
 */
 
 #ifndef NEEDFUL_H_INCLUDED  /* "include guard" allows multiple #includes */
@@ -156,33 +145,19 @@
 
 /*****************************************************************************
 **
-**  PART 1: THE VOCABULARY
+**  PART 1: THE VOCABULARY (CONSTRUCTS YOU USE IN YOUR OWN CODE)
 **
-******************************************************************************
-**
-** These are the constructs you write in your own code.  Each section links to
-** its documentation page--the rationale, worked examples, and the details of
-** what each compilation mode enforces--all live there rather than here.
-**
-** The utilities these are built from (unreachable, SCOPE_GUARD, the static
-** assert family, the shims) are in PART 2, out of the way.
-*/
+*****************************************************************************/
 
 
 /***[[ Need(T): REQUIRED NON-NULL/NON-ZERO, BOOL-COERCION BLOCKED ]]*********
 **
 ** Docs: https://needful.metaeducation.com/need
 **
-** Need(T) marks a pointer or value as guaranteed non-null/non-zero.  The
-** core benefit: in NEEDFUL_CPP_ENHANCED builds, testing a Need(T) in a
-** boolean context is a compile error.
-**
-** The prefix "keyword" `needed` extracts the raw value from a Need(T), and
-** errors on an Option(T)--which makes it useful for writing macros that must
-** reject optional types.  (Most code doesn't need it, as a Need(T) converts
-** to T implicitly.)  `unwrap` is Option(T)'s, and errors on a Need(T).
-** (They are ordinary operators in disguise; see /precedence for when that
-** disguise slips and you need parentheses.)
+** Marks a pointer or value as guaranteed non-null/non-zero.  In enhanced C++
+** builds, testing a Need(T) in a boolean context is a compile error.  It
+** converts to T implicitly; `needed` extracts explicitly, and errors on an
+** Option(T) (useful in macros that must reject optional types).
 */
 
 #define NeedfulNeed(T)  T
@@ -193,11 +168,9 @@
 **
 ** Docs: https://needful.metaeducation.com/option
 **
-** Option() is a lightweight maybe-value in the vein of Rust `Option` or
-** C++ `std::optional`, using T's falsey state as disengaged.
-**
-** In enhanced C++ builds, Option(T) does not silently coerce to T; use
-** `unwrap` (checked) or `opt` (unchecked).
+** A lightweight maybe-value in the vein of `std::optional` or Rust's `Option`
+** using T's falsey state as disengaged.  In enhanced C++ builds, Option(T)
+** does not silently coerce to T; use `unwrap` (checked) or `opt` (unchecked).
 */
 
 typedef enum {
@@ -219,41 +192,24 @@ typedef enum {
 **
 ** Docs: https://needful.metaeducation.com/fallible
 **
-** Fallible(T) is a "must-use" Option(T)--like Rust's #[must_use].  Where
-** Result(T) multiplexes an error onto a return value through thread-global
-** state, Fallible(T) does something simpler: it just says you may not drop
-** this value on the floor without saying what you meant by that.
-**
-** The none-reactive macros in the next section (return_if_none, and friends)
-** discharge that obligation as a statement.  `infallible` is the expression
-** form, for when you know this particular call cannot come back disengaged:
+** An Option(T) whose absence means *failure*, so it may not be dropped on the
+** floor (like Rust's #[must_use]).  Discharge it with the macros in the next
+** section, or `infallible` to assert it as an expression:
 **
 **     char* buf = infallible Try_Allocate(size);  // asserts in debug
 **
-** Fallible(T) is for RETURN TYPES; FallibleVar(T) is the same type for every
-** other position--locals, parameters, struct members, typedefs.  The split
-** exists because the must-use annotation is diagnosed anywhere but a return
-** type, which is a feature: it means a value that must be checked cannot be
-** quietly parked in a struct field where nothing will ever look at it.
-**
-**     https://needful.metaeducation.com/fallible#enforcement
-**
-** ...documents which compilers check this, why the GNU spelling is preferred
-** over [[nodiscard]] (it may appear anywhere among the declaration specifiers,
-** which is what makes `static Fallible(int*) helper(void)` legal), and what
-** the two opt-in switches below buy you.
+** Option(T) => Fallible(T) is implicit; the reverse takes `fallible`.
+** FallibleVar(T) is the same type for non-return positions, as the must-use
+** annotation is only legal on a return type.  For which compilers enforce
+** it, and the opt-in switches below, see the docs:  /fallible#enforcement
 */
 
 #if !defined(NEEDFUL_PRECPP17_NODISCARD)
     #define NEEDFUL_PRECPP17_NODISCARD  0  /* [[nodiscard]] below C++17 */
 #endif
 
-/* This is the only diagnostic Needful ever touches, it fires only when you
-** opt in above, and it is C++-only--a C build of needful.h changes nothing
-** about your warnings.  It is file-scope and unpopped because it has to be:
-** the attribute is emitted at each callsite rather than here, and a pragma
-** cannot ride inside the macro, since pragmas may not appear in the middle
-** of a declaration.
+/* The only diagnostic Needful ever touches: opt-in, C++-only, and unpopped
+** as the attribute is emitted at callsites (pragmas can't ride in macros).
 */
 #if NEEDFUL_PRECPP17_NODISCARD && defined(__cplusplus) \
         && __cplusplus < 201703L && !defined(_MSC_VER)  /* MSVC is quiet */
@@ -282,16 +238,15 @@ typedef enum {
 #define NeedfulFallibleVar(T)  T  /* locals, parameters, members, typedefs */
 
 #define needful_infallible  /* no-op in C build */
+#define needful_fallible  /* no-op in C build; Fallible(T) => Option(T) */
 
 
 /****[[ NONE-REACTIVE MACROS: THE Fallible(T) DISCHARGE VOCABULARY ]]*********
 **
 ** Docs: https://needful.metaeducation.com/fallible#discharge-vocabulary
 **
-** These macros react to an expression coming back in its disengaged state.
-** They are how you satisfy a Fallible(T)'s must-use obligation, and they work
-** on a plain Option(T) as well.
-**
+** React to an expression coming back as `none`.  They discharge a
+** Fallible(T)'s must-use obligation, and work on a plain Option(T) too.
 ** They mirror the Result(T) vocabulary one-for-one:
 **
 **     propagate it        return_if_failed     return_if_none
@@ -299,17 +254,9 @@ typedef enum {
 **     assert impossible   assert_not_failed    assert_not_none
 **     ignore it           extract_failure      tolerate_none
 **
-** What they do NOT do is interoperate.  return_if_failed tests the global
-** failure state, while return_if_none tests the value itself...so reaching
-** for the wrong one silently does nothing.  The two families cannot be
-** merged into one; the reasons are worth reading before proposing it:
-**
-**   https://needful.metaeducation.com/faq#result-fallible-unification
-**
-** The test compares against `none`, not against a null pointer.  That is not
-** a stylistic choice; it is what keeps Option(SomeEnum) working:
-**
-**   https://needful.metaeducation.com/design#worked-example
+** But they don't interoperate: return_if_failed tests the failure state and
+** return_if_none tests the value, so the wrong one silently does nothing.
+** (Why they can't be merged:  /faq#result-fallible-unification)
 */
 
 #define needful_is_none(_expr_) /* doubled parens: callers pass assignments */ \
@@ -338,13 +285,9 @@ typedef enum {
 **
 ** Docs: https://needful.metaeducation.com/result
 **
-** These macros provide a C/C++-compatible mechanism for propagating and
-** handling errors in a style similar to Rust's `Result<T, E>`, without
-** requiring exceptions or setjmp/longjmp in C++ builds.
-**
-** Catch syntax remains plain C: catch_if_failed() uses a scoped `for` pattern
-** so catch variables can be introduced in a local scope and still pair with
-** an `else` clause naturally.  Full usage examples are in the docs.
+** Error propagation in the style of Rust's `Result<T, E>`, in plain C (no
+** exceptions or setjmp/longjmp).  catch_if_failed() uses a scoped `for`, so
+** it can introduce a catch variable and still pair with an `else`.
 **
 ** Your project supplies the failure storage, as four hooks:
 **
@@ -361,20 +304,11 @@ typedef enum {
 
 #define NEEDFUL_RESULT_0  needful_nocast_0  /* unique type if C++ enhanced */
 
-/* Derived from the hooks above rather than being a fifth one, so that it
-** honors a project's NEEDFUL_ASSERT() like every other Needful check does.
-** (`#undef` and redefine if you want the diagnostic to name the pending
-** error, which this spelling cannot do.)
-*/
-#define Needful_Assert_Not_Failing() \
+#define Needful_Assert_Not_Failing() /* derived, so honors NEEDFUL_ASSERT */ \
     NEEDFUL_ASSERT(! Needful_Get_Failure())
 
-/* Signalling a failure is a STATEMENT, not an expression that you `return`.
-** There is deliberately no `make_failure(...)` expression form; the reason is
-** worth reading before you write one, because it is the reason needful.h can
-** leave your compiler's diagnostics alone:
-**
-**     https://needful.metaeducation.com/result#no-make-failure
+/* Failing is a STATEMENT; there's deliberately no expression form (see
+** /result#no-make-failure before writing one).
 */
 #define needful_return_fail(...) do { \
     Needful_Assert_Not_Failing(); \
@@ -428,17 +362,13 @@ typedef enum {
 **
 ** Docs: https://needful.metaeducation.com/contra
 **
-** These mark pointer outputs in function interfaces.  Enhanced builds check
-** that the type rule runs *backwards* for an output slot: a function writing
-** Base bits may be handed a Derived slot, not the other way around.
+** Pointer output parameters.  Enhanced builds check the type rule *backwards*:
+** a function writing Base bits may be handed a Derived slot, not vice versa.
+** They differ in what happens to the slot's prior contents:
 **
-** They differ only in what they do to the slot's prior contents:
-**
-**     Sink(T)     scrambles it in debug builds (with corruptions enabled),
-**                 so reading before writing crashes instead of lurking
-**     Init(T)     skips that, promising to fill every field itself
-**     Contra(T)   never scrambles, under any setting--the one to use when
-**                 the existing value has to survive, as for an in/out param
+**     Sink(T)     scrambled in debug builds (with corruptions enabled)
+**     Init(T)     not scrambled; promises to fill every field itself
+**     Contra(T)   never scrambled, under any setting (for in/out params)
 **
 ** Exact(T) is the escape hatch: precisely T, with no variance either way.
 */
@@ -459,11 +389,8 @@ typedef enum {
 **     SomeType* ptr = nocast malloc(sizeof(SomeType));  // works in C++...
 **     SomeEnum  e   = nocast some_int_value;            // ...as does this!
 **
-** Empty macro in C.  In C++, generates a proxy object using `operator+` to
-** implicitly trigger the correct static_cast (or C-cast for deep pointers).
-** For why `+` (and not a tighter prefix operator), see:
-**
-**     https://needful.metaeducation.com/precedence
+** Empty macro in C.  In C++, a proxy object via `operator+` (see /precedence
+** for why `+`) triggers the right static_cast, or a C cast for deep pointers.
 **/
 
 #if !defined(__cplusplus)  /* need C++ variant even w/o NEEDFUL_CPP_ENHANCED */
@@ -517,16 +444,10 @@ typedef enum {
 **
 ** Docs: https://needful.metaeducation.com/nocast#needful_nocast_0
 **
-** `nocast_0` has the same meaning as `nocast 0` but just compiles faster.
-** It is required for macros used with Option(T) and Result(T) when compiled
-** in C++ environments w/o enabling the NEEDFUL_CPP_ENHANCED files.
-**
-** (These also have general utility in any code that targets both C and C++!)
-**
-** The comparison operators below are what make `x == none` mean the same thing
-** in a C++ build with no enhancement as it does in the other two build modes:
-**
-**     https://needful.metaeducation.com/design#worked-example
+** `nocast_0` means `nocast 0` but compiles faster.  Option(T) and Result(T)
+** macros need it in C++ builds without the enhanced files, and its comparison
+** operators keep `x == none` meaning the same there.  (Generally useful in
+** any code that targets both C and C++!)
 **/
 
 #if !defined(__cplusplus)
@@ -596,14 +517,10 @@ typedef enum {
 **
 ** Docs: https://needful.metaeducation.com/cast
 **
-** These macros make casts easy to spot and label their intent.
-**
-** The C definitions are trivial: they all act like a parenthesized cast.  But
-** NEEDFUL_CPP_ENHANCED builds enforce narrower policies.  In C++, casts are
-** also hookable for compile-time and runtime validation.
-**
-** Release builds are zero-overhead; debug builds are structured to minimize
-** non-inlined helper overhead.
+** Casts that are easy to spot and label their intent.  In C they're all a
+** parenthesized cast; enhanced builds enforce narrower policies, and casts
+** become hookable for compile-time and runtime validation.  Zero-overhead in
+** release builds.
 **
 *****[[ CAST SELECTION GUIDE ]]***********************************************
 **
@@ -688,14 +605,11 @@ typedef enum {
 **
 ** Docs: https://needful.metaeducation.com/known
 **
-** Type-checks an expression against T at compile-time without runtime cost.
-** Uses no function template, so not a call even in unoptimized debug builds!
-**
-** As with casts, lenient forms pass through a const T* if the input is const,
-** vs. needing `const T*` at callsites.  `rigid_known()` enforces mutability.
-**
-** `c_cast_known` exists because `cast(T, known(T, expr))` has macro-expansion
-** issues when T contains commas; the combined form sidesteps it.
+** Type-checks an expression against T at compile time, with no function
+** template--so not even a call in unoptimized debug builds.  As with casts,
+** lenient forms pass a const T* through; rigid ones enforce mutability.
+** (`c_cast_known` exists because `cast(T, known(T, expr))` breaks if T
+** contains commas.)
 */
 
 #define needful_lenient_known(T,expr)        (expr)
@@ -725,15 +639,12 @@ typedef enum {
 **
 ** Docs: https://needful.metaeducation.com/comments
 **
-** A prose comment mentioning a variable goes stale the moment somebody
-** renames that variable, and nothing tells you.  These macros wrap the
-** expression instead of describing it, so enhanced C++ builds verify that it
-** still compiles--while C builds discard it entirely.
+** Prose comments go stale silently when a variable is renamed.  These wrap
+** the expression instead, so enhanced builds check it still compiles (C
+** builds discard it).  Uppercase versions work at global scope.
 **
 **     int i = Get_Integer(...);
 **     possibly(i < 0);   // rename `i` and this fails the build
-**
-** Uppercase versions can be used at global scope (more limited abilities).
 */
 
 #define needful_possibly /* (cond) */     NEEDFUL_STATIC_ASSERT_DECLTYPE_BOOL
@@ -760,13 +671,10 @@ typedef enum {
 **
 ** Docs: https://needful.metaeducation.com/contra
 **
-** Scrambling a variable when it is meant to be dead turns "reads a stale
-** value and misbehaves later" into "crashes here."  Enhanced builds apply it
-** to Sink(T) output slots on first use; Corrupt_If_Needful() lets you do it by
-** hand.  Off by default, since it costs real cycles.
-**
-** Do not enable it under static analysis: memset makes variables look assigned
-** to the analyzer, defeating its own uninitialized-use reporting.
+** Scrambling dead variables turns "reads a stale value, misbehaves later"
+** into "crashes here."  Enhanced builds do it to Sink(T) slots, and
+** Corrupt_If_Needful() does it by hand.  Off by default (costs cycles); keep it
+** off under static analysis, where memset hides uninitialized-use bugs.
 */
 
 #if !defined(NEEDFUL_DOES_CORRUPTIONS)
@@ -793,41 +701,50 @@ typedef enum {
 
 /*****************************************************************************
 **
-**  PART 2: THE PLUMBING
+**  PART 2: THE PLUMBING (PORTABILITY SHIMS AND UTILITIES USED BY PART 1)
 **
-******************************************************************************
+*****************************************************************************/
+
+
+/****[[ NEEDFUL_NULLPTR AND OPTIONAL nullptr SHIM ]]**************************
 **
-** Portability shims and small utilities that PART 1 is built out of.  There
-** is nothing here you have to read to use Needful; the vocabulary above is
-** the whole interface.  These are `#define`s, so the vocabulary macros may
-** reference them despite appearing earlier in the file.
+** C's `NULL` may be a plain `0`, which variadics read as an int and Option(T*)
+** rejects.  So the shim gives pre-C23 C a `nullptr`; Needful's own code uses
+** NEEDFUL_NULLPTR either way.  (Why not NULL:  /setup#nullptr)
 */
 
-
-/****[[ NEEDFUL_NULLPTR: INTERNAL SPELLING OF THE NULL POINTER ]]*************
-**
-** Needful's own machinery needs a null pointer constant whether or not you
-** asked for the cosmetic `nullptr` shim at the bottom of this file.  This is
-** one of the few places an `#ifdef __cplusplus` is unavoidable: C++ will not
-** implicitly convert `(void*)0` to an arbitrary `T*`.
-*/
-
-#if !defined(__cplusplus)
-    #define NEEDFUL_NULLPTR  ((void*)0)
+#if !defined(__cplusplus) && defined(__STDC_VERSION__) \
+    && __STDC_VERSION__ >= 202311L \
+    && (!defined(_MSC_VER) || defined(__clang__))  /* MSVC lacks it so far */
+    #define NEEDFUL_C23_NULLPTR  1  /* a real keyword (not a macro) */
 #else
+    #define NEEDFUL_C23_NULLPTR  0
+#endif
+
+#if defined(__cplusplus) || NEEDFUL_C23_NULLPTR
     #define NEEDFUL_NULLPTR  nullptr
+#else
+    #define NEEDFUL_NULLPTR  ((void*)0)
+#endif
+
+#if !defined(NEEDFUL_NO_NULLPTR_SHIM)
+    #define NEEDFUL_NO_NULLPTR_SHIM  0
+#endif
+#if (! NEEDFUL_NO_NULLPTR_SHIM)
+  #if defined(__cplusplus)
+    #include <cstddef>  /* defines `using nullptr_t = decltype(nullptr);` */
+  #elif !NEEDFUL_C23_NULLPTR && !defined(nullptr)  /* don't shadow keyword */
+    #define nullptr  ((void*)0)
+  #endif
 #endif
 
 
 /****[[ NOOP, UNIQUE_NAME, USED/UNUSED, SCOPE_GUARD ]]***********************
 **
-** NEEDFUL_USED() marks a variable as used so `-Wunused-variable` stays quiet.
-** In NEEDFUL_CPP_ENHANCED builds NEEDFUL_UNUSED() can be redefined to actually
-** randomize non-const contents, to catch use of something meant to be unused.
-**
-** NEEDFUL_SCOPE_GUARD creates a uniquely-named unused variable, so that
-** statement macros like return_if_failed produce a compile error if used in
-** an unbraced branch slot.
+** NEEDFUL_USED() quiets `-Wunused-variable`.  Enhanced builds can make
+** NEEDFUL_UNUSED() scramble non-const contents, to catch later use.
+** NEEDFUL_SCOPE_GUARD declares a dummy variable, so statement macros like
+** return_if_failed are a compile error in an unbraced branch slot.
 */
 
 #define NEEDFUL_NOOP  ((void)0)
@@ -853,13 +770,9 @@ typedef enum {
 **
 ** Docs: https://needful.metaeducation.com/unreachable
 **
-** In Release mode (-O3/NDEBUG), the compiler aggressively deletes the dead
-** branch and optimizes switch jump tables.  Triggers an assert in Debug mode.
-**
-** Uses `needful_nocast_0` and `needful_struct_0` to polymorphically satisfy
-** function return signatures without manual type boilerplate.
-**
-** (Note you can `#undef needful_builtin_unreachable` and redefine if needed.)
+** Asserts in debug builds; in release, the compiler deletes the dead branch
+** and tightens switch jump tables.  The `return` uses nocast_0 / struct_0 to
+** satisfy any return type.  (needful_builtin_unreachable may be redefined.)
 **/
 
 #if defined(_MSC_VER)  /* MSVC __assume(0) even works with /Ob0 (no-inline) */
@@ -891,21 +804,15 @@ typedef enum {
     return (T)needful_struct_0; \
   } while (0)
 
-/* (There is deliberately no `needful_unreachable_array`.  C cannot return an
-   array type at all, so no C caller could exist--and the C expansion
-   `return { 0 };` was a syntax error.  Aggregates go through
-   needful_unreachable_struct(T), which forms a C99 compound literal.) */
+/* (No unreachable_array: C functions can't return arrays.) */
 
 
 /****[[ NORETURN shim ]]******************************************************
 **
-** The Result(T) macros use noreturn in Needful_Panic_Abruptly(), so we define
-** it here in a way that works in both C and C++.
-**
-** `needful_dead_end;` can dodge using return-type-correct unreachable forms
-** (e.g. needful_unreachable_struct(T)) in *MOST* C compilers.  But some will
-** still warn about "control reaches end of non-void function".  If you seek
-** maximum generality in C environments, use `needful_unreachable_*` macros.
+** Needful_Panic_Abruptly() is noreturn, so this works in both C and C++.
+** `needful_dead_end;` avoids return-type-correct unreachable forms, but some
+** C compilers still warn "control reaches end of non-void function"; the
+** `needful_unreachable_*` macros are the fully portable choice.
 */
 
  #if !defined(__cplusplus)
@@ -928,20 +835,11 @@ NEEDFUL_NORETURN static inline void needful_dead_end_inline(void) {
 
 /****[[ STATIC_ASSERT, STATIC_IGNORE, STATIC_FAIL ]]**************************
 **
-** C11 added _Static_assert(), so use that when available in C builds.  Pre-C11
-** C has too many edge cases for a portable shim, so STATIC_ASSERT remains a
-** no-op there.  The C++ enhanced build enforces it in all standards.
-**
-** NEEDFUL_STATIC_FAIL(msg) takes a STRING LITERAL in every build mode, which
-** matches static_assert convention and lets the message contain spaces.  Pre-
-** C11 C falls back to a negative-size array typedef: still a hard error, but
-** the message is lost, as there is nowhere to put it.
-**
-** NEEDFUL_STATIC_ASSERT_LVALUE() rules out temporaries and most side-effecting
-** expressions at the callsite, which makes argument-repeating macros safe.
-**
-** The DECLTYPE ones are the plumbing under the comment macros; they are no-ops
-** in C, and in C++ they check that the expression is well-formed.
+** STATIC_ASSERT uses C11's _Static_assert() (a no-op in pre-C11 C; enforced
+** in all enhanced C++ builds).  STATIC_FAIL(msg) takes a string literal; pre-
+** C11 it's still a hard error, but the message is lost.  ASSERT_LVALUE rules
+** out temporaries, making argument-repeating macros safe.  The DECLTYPE ones
+** underlie the comment macros: no-ops in C, well-formedness checks in C++.
 */
 
 #define NEEDFUL_STATIC_IGNORE(expr) /* https://stackoverflow.com/q/53923706 */ \
@@ -994,13 +892,9 @@ NEEDFUL_NORETURN static inline void needful_dead_end_inline(void) {
 
 /****[[ NODISCARD and ALWAYS_INLINE shims ]]**********************************
 **
-** NEEDFUL_NODISCARD is redefined by the C++ enhancements as `[[nodiscard]]`.
-** It is what makes an unhandled Result(T) return value visible, and catches
-** things like dropping a Result(T) return value on the floor.
-**
-** NEEDFUL_ALWAYS_INLINE hints that a function should be inlined even in
-** non-optimized builds.  Its primary use is marking the trivial no-op default
-** CastHook::Validate_Bits, so debug builds pay zero cost with no hook set.
+** NEEDFUL_NODISCARD becomes `[[nodiscard]]` in enhanced builds, which is what
+** flags a Result(T) dropped on the floor.  NEEDFUL_ALWAYS_INLINE inlines even
+** in unoptimized builds (so e.g. a no-op cast hook costs nothing in debug).
 */
 
 #define NEEDFUL_NODISCARD  /* default to no-op in C or pre-C++17 */
@@ -1018,13 +912,12 @@ NEEDFUL_NORETURN static inline void needful_dead_end_inline(void) {
 **
 ** Docs: https://needful.metaeducation.com/result#setup-result-hooks
 **
-** Result(T) needs somewhere to store a pending failure, and your project
-** normally supplies that.  Define NEEDFUL_DECLARE_SINGLETHREADED_RESULT_HOOKS
-** in exactly one translation unit gets a minimal single-threaded set, for
-** prototyping and for the test suite.
+** Defining NEEDFUL_DECLARE_SINGLETHREADED_RESULT_HOOKS in exactly one
+** translation unit gives a minimal set of the four hooks, for prototyping.
 */
 
-#if defined(NEEDFUL_DECLARE_SINGLETHREADED_RESULT_HOOKS) && NEEDFUL_DECLARE_SINGLETHREADED_RESULT_HOOKS
+#if defined(NEEDFUL_DECLARE_SINGLETHREADED_RESULT_HOOKS) \
+    && NEEDFUL_DECLARE_SINGLETHREADED_RESULT_HOOKS
 
 #include <stdio.h>   /* fprintf, fflush, stderr */
 #include <stdlib.h>  /* exit */
@@ -1048,24 +941,14 @@ NEEDFUL_NORETURN void Needful_Panic_Abruptly(const char* error) {
     fflush(stderr);
     exit(1);
 }
-
-/* (Needful_Assert_Not_Failing() is derived in the Result(T) section, not
-** supplied here -- it is not one of the four hooks.)
-*/
-
 #endif  /* NEEDFUL_DECLARE_SINGLETHREADED_RESULT_HOOKS */
 
 
 /*****************************************************************************
 **
-**  OPTIONAL SHORTHANDS FOR THE `NEEDFUL_XXX` MACROS AS JUST `XXX` MACROS
+**  PART 3: OPTIONAL ALIASES FOR `NEEDFUL_XXX` MACROS AS JUST `XXX` MACROS
 **
-******************************************************************************
-**
-** These are simple aliases; signatures are documented in comments.
-** Avoiding variadic forwarding here sidesteps comma-in-angle-bracket macro
-** breakage in C++ and keeps compile times predictable.
-*/
+*****************************************************************************/
 
 #if !defined(NEEDFUL_DEFINE_ALL_SHORTHANDS)
     #define NEEDFUL_DEFINE_ALL_SHORTHANDS  0
@@ -1144,6 +1027,7 @@ NEEDFUL_NORETURN void Needful_Panic_Abruptly(const char* error) {
     #define Fallible /* (T) */              NeedfulFallible
     #define FallibleVar /* (T) */           NeedfulFallibleVar
     #define infallible /* ... */            needful_infallible
+    #define fallible /* ... */              needful_fallible
 
     #define is_none /* (expr) */            needful_is_none
     #define return_if_none /* (expr) */     needful_return_if_none
@@ -1174,10 +1058,7 @@ NEEDFUL_NORETURN void Needful_Panic_Abruptly(const char* error) {
     #define lenient_known_not /* (T,expr) */     needful_lenient_known_not
     /*  no lenient_known_any at this time */
 
-    /* The unprefixed spellings below pick the *lenient* variant, which passes
-    ** a const T* through when the input is const.  Say `rigid_` when you want
-    ** mutability enforced at the callsite instead.
-    */
+    /* Unprefixed spellings are the lenient variants (const T* passes thru) */
     #define known /* (T,expr) */                 needful_lenient_known
     #define known_not /* (T,expr) */             needful_lenient_known_not
     /* (known_any is the exception: it is rigid, as there is no lenient one) */
@@ -1269,14 +1150,9 @@ NEEDFUL_NORETURN void Needful_Panic_Abruptly(const char* error) {
 
 /*****************************************************************************
 **
-**  OPTIONAL C++ OVERRIDES FOR ABOVE DEFINITIONS TO BRING THE MACROS TO LIFE
+**  PART 4: OPTIONALLY HAVE NEEDFUL_CPP_ENHANCED #undef AND re-#define MACROS
 **
-******************************************************************************
-**
-** When NEEDFUL_CPP_ENHANCED builds are activated, then supplemental C++
-** headers will #undef the simple definitions given above, and redefine them
-** with elaborately-designed machinery!
-*/
+*****************************************************************************/
 
 #if !defined(NEEDFUL_CPP_ENHANCED)
     #define NEEDFUL_CPP_ENHANCED  0  /* Note: can still be compiled as C++ */
@@ -1340,28 +1216,6 @@ NEEDFUL_NORETURN void Needful_Panic_Abruptly(const char* error) {
     #if NEEDFUL_CAST_CALLS_HOOKS
         #error "NEEDFUL_CAST_CALLS_HOOKS requires NEEDFUL_CPP_ENHANCED"
     #endif
-#endif
-
-
-/*****************************************************************************
-**
-** You can't do things like return C's `NULL` for an Option(T*).  So nearly
-** any Needful client will want a nullptr definition for C.  This is cosmetic
-** and independent of the Fallible(T) vocabulary; NEEDFUL_NULLPTR above is
-** what Needful's own machinery uses.
-*/
-
-#if !defined(NEEDFUL_NULLPTR_SHIM)
-    #define NEEDFUL_NULLPTR_SHIM  NEEDFUL_DEFINE_ALL_SHORTHANDS
-#endif
-#if NEEDFUL_NULLPTR_SHIM
-  #ifdef __cplusplus
-    #include <cstddef>  /* defines `using nullptr_t = decltype(nullptr);` */
-  #else
-    #if !defined(nullptr)
-      #define nullptr  (void*)0
-    #endif
-  #endif
 #endif
 
 
