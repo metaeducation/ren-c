@@ -93,7 +93,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_List)
     Index b_index = Series_Index(b);
 
     if (a_array == b_array)
-        return fail ("Temporarily disallow compare unequal length lists");
+        return_fail ("Temporarily disallow compare unequal length lists");
 
     const Element* a_tail = Array_Tail(a_array);
     const Element* b_tail = Array_Tail(b_array);
@@ -117,7 +117,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_List)
         if (equal)
             continue;  // don't fret they couldn't compare with LESSER?
 
-        return fail ("Couldn't compare values");  // fret
+        return_fail ("Couldn't compare values");  // fret
     }
 
     assert(b_item == b_tail);  // they were the same length
@@ -213,7 +213,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
             if (Typecheck_Use_Toplevel(
                 LEVEL, LIB(NULL), Known_Unspecialized(param), SPECIFIED
             )){
-                return fail (Error_Null_Vararg_List_Raw());
+                return_fail (Error_Null_Vararg_List_Raw());
             }
         }
 
@@ -245,7 +245,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
         return BOUNCE_OUT;
     }
 
-    return fail (Error_Bad_Make(heart, arg));
+    return_fail (Error_Bad_Make(heart, arg));
 }
 
 
@@ -820,7 +820,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         Length len;
         const Element* item = List_Len_At(&len, list);
         if (Series_Len_At(list) != 1)
-            return fail ("Can't TO ANY-SEQUENCE? on list with length > 1");
+            return_fail ("Can't TO ANY-SEQUENCE? on list with length > 1");
 
         if (
             (Is_Path(item) and to == HEART_PATH)
@@ -831,16 +831,16 @@ IMPLEMENT_GENERIC(TO, Any_List)
             return BOUNCE_OUT;
         }
 
-        return fail ("TO ANY-SEQUENCE? needs list with a sequence in it");
+        return_fail ("TO ANY-SEQUENCE? needs list with a sequence in it");
     }
 
     if (to == HEART_WORD) {  // to word! '{a} -> a, see [3]
         Length len;
         const Element* item = List_Len_At(&len, list);
         if (Series_Len_At(list) != 1)
-            return fail ("Can't TO ANY-WORD? on list with length > 1");
+            return_fail ("Can't TO ANY-WORD? on list with length > 1");
         if (not Is_Word(item))
-            return fail ("TO ANY-WORD? needs list with one word in it");
+            return_fail ("TO ANY-WORD? needs list with one word in it");
         Copy_Cell(OUT, item);
         return BOUNCE_OUT;
     }
@@ -873,14 +873,14 @@ IMPLEMENT_GENERIC(TO, Any_List)
         Length len;
         const Element* at = List_Len_At(&len, list);
         if (len != 1 or not Is_Integer(at))
-            return fail ("TO INTEGER! works on 1-element integer lists");
+            return_fail ("TO INTEGER! works on 1-element integer lists");
         return COPY_TO_OUT(at);
     }
 
     if (to == HEART_MAP) {  // to map! [key1 val1 key2 val2 key3 val3]
         Length len = Series_Len_At(list);
         if (len % 2 != 0)
-            return fail ("TO MAP! of list must have even number of items");
+            return_fail ("TO MAP! of list must have even number of items");
 
         const Element* tail;
         const Element* at = List_At(&tail, list);
@@ -949,7 +949,7 @@ Result(Element*) Alias_Any_List_As(
         return Copy_Cell_May_Bind(out, temp, Cell_Binding(list));  // (?)
     }
 
-    return fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
+    return_fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
 }
 
 
@@ -1169,7 +1169,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
 
     if (index >= Series_Len_Head(list)) {
         if (not ARG(PART))
-            return fail (Error_Nothing_To_Take_Raw());
+            return_fail (Error_Nothing_To_Take_Raw());
 
         Init_List(OUT, heart, Make_Source_Managed(0));
         return BOUNCE_OUT;
@@ -1277,7 +1277,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_List)
 
     Index index = Series_Index(list);
     if (index >= Series_Len_Head(list))
-        return fail (Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
+        return_fail (Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
     Element* spare = Init_Integer(
         SPARE,
@@ -1369,7 +1369,7 @@ IMPLEMENT_GENERIC(FILE_OF, Any_List)
 
     Option(const Strand*) file = Link_Filename(s);
     if (not file)
-        return fail ("No file available for list");
+        return_fail ("No file available for list");
     Init_File(OUT, unwrap file);  // !!! or URL! (track with bit...)
     return BOUNCE_OUT;
 }
@@ -1383,7 +1383,7 @@ IMPLEMENT_GENERIC(LINE_OF, Any_List)
     const Source* s = Cell_Array(list);
 
     if (MISC_SOURCE_LINE(s) == 0)
-        return fail ("No line available for list");
+        return_fail ("No line available for list");
     Init_Integer(OUT, MISC_SOURCE_LINE(s));
     return BOUNCE_OUT;
 }

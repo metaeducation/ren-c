@@ -689,7 +689,7 @@ static Result(const Byte*) Scan_String_Into_Mold_Core(
                 ++cp;
             }
             if (count > VAL_INT32(TOP_ELEMENT))
-                return fail ("Nested -- level closure too long");
+                return_fail ("Nested -- level closure too long");
             if (count == VAL_INT32(TOP_ELEMENT)) {
                 DROP();
                 if (TOP_INDEX == base)
@@ -712,11 +712,11 @@ static Result(const Byte*) Scan_String_Into_Mold_Core(
 
         switch (c) {
           case '\0': {
-            return fail (Error_Missing(S, right)); }
+            return_fail (Error_Missing(S, right)); }
 
           case '^':
             if (not (cp = opt Try_Scan_UTF8_Char_Escapable(&c, cp)))
-                return fail ("Bad character literal in string");
+                return_fail ("Bad character literal in string");
             --cp;  // unlike Back_Scan_XXX, no compensation for ++cp later
             break;
 
@@ -751,12 +751,12 @@ static Result(const Byte*) Scan_String_Into_Mold_Core(
             }
             else
                 assert(strmode == STRMODE_NO_CR);
-            return fail (Error_Illegal_Cr(cp, S->begin)); }
+            return_fail (Error_Illegal_Cr(cp, S->begin)); }
 
           case LF:
           linefeed:
             if (left == '"' and dashes == 0)
-                return fail ("Plain quoted strings not multi-line");
+                return_fail ("Plain quoted strings not multi-line");
             ++S->transcode->line;
             break;
 
@@ -771,7 +771,7 @@ static Result(const Byte*) Scan_String_Into_Mold_Core(
         ++cp;
 
         if (c == '\0')  // e.g. ^(00) or ^@
-            return fail (Error_Illegal_Zero_Byte_Raw());  // not in strings [2]
+            return_fail (Error_Illegal_Zero_Byte_Raw());  // not in strings [2]
 
         Append_Codepoint(Mold_Buffer(mo), c);
     }
@@ -797,7 +797,7 @@ static Result(const Byte*) Scan_String_Push_Mold(
     ) except (Error* e) {
         Drop_Data_Stack_To(base);
         Drop_Mold(mo);
-        return fail (e);
+        return_fail (e);
     }
     return ep;
 }
@@ -873,7 +873,7 @@ Result(const Byte*) Scan_Utf8_Item_Into_Mold(
                 DECLARE_VALUE (arg);
                 CATCH_THROWN(arg, TOP_LEVEL);
 
-                return fail (Cell_Error(label));
+                return_fail (Cell_Error(label));
             }
 
             Size size = transcode.at - cp;
@@ -904,10 +904,10 @@ Result(const Byte*) Scan_Utf8_Item_Into_Mold(
         if (token == TOKEN_FILE and c == '%') {
             Byte decoded;
             if (not (cp = opt Try_Scan_Hex2(&decoded, cp + 1)))
-                return fail ("Bad Hex Encoded Character");
+                return_fail ("Bad Hex Encoded Character");
             c = decoded;
             if (Is_Utf8_Lead_Byte(c))
-                return fail (  // [1]
+                return_fail (  // [1]
                     "Hex encoding for UTF-8 in Filenames not supported yet"
                 );
             goto check_for_invalid_ascii;
@@ -919,7 +919,7 @@ Result(const Byte*) Scan_Utf8_Item_Into_Mold(
 
         if (c == '^') {  // Accept ^X encoded char:
             if (not (cp = opt Try_Scan_UTF8_Char_Escapable(&c, cp)))
-                return fail ("Bad caret encoded literal in string");
+                return_fail ("Bad caret encoded literal in string");
             goto check_for_invalid_unicode;
         }
 
@@ -951,13 +951,13 @@ Result(const Byte*) Scan_Utf8_Item_Into_Mold(
             // Is char as literal valid? (e.g. () [] etc.)
             // Only searches ASCII characters.
             //
-            return fail ("Invalid character in filename");
+            return_fail ("Invalid character in filename");
         }
         else if (c < ' ') {
-            return fail ("Control characters not allowed in filenames");
+            return_fail ("Control characters not allowed in filenames");
         }
         else if (c == '\\') {
-            return fail ("Backslash not allowed in filenames");  // [1]
+            return_fail ("Backslash not allowed in filenames");  // [1]
         }
 
     } append_codepoint_and_continue: { ///////////////////////////////////////
@@ -1483,7 +1483,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
             else
                 assert(strmode == STRMODE_NO_CR);
 
-            return fail (Error_Illegal_Cr(cp, S->begin)); }
+            return_fail (Error_Illegal_Cr(cp, S->begin)); }
 
           case LEX_DELIMIT_LINEFEED:
           delimit_line_feed:
@@ -1527,10 +1527,10 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
             S->end = cp;
 
             if (S->begin[0] == '"')
-                return fail (Error_Missing(S, '"'));
+                return_fail (Error_Missing(S, '"'));
 
             if (S->begin[0] == '[')
-                return fail (Error_Missing(S, ']'));
+                return_fail (Error_Missing(S, ']'));
 
             crash ("Invalid string start delimiter");
 
@@ -1570,7 +1570,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
               default:
                 assert(false);
             }
-            return fail (Error_Unknown_Error_Raw()); }
+            return_fail (Error_Unknown_Error_Raw()); }
 
           case LEX_DELIMIT_END:
             //
@@ -1589,7 +1589,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
             S->end = cp;
             if (*cp == ',' or not Is_Lex_Delimit(*cp)) {
                 ++S->end;  // don't allow `,,` or `a,b` etc.
-                return fail (Error_Syntax(S, TOKEN_COMMA));
+                return_fail (Error_Syntax(S, TOKEN_COMMA));
             }
             return TOKEN_COMMA;
 
@@ -1621,7 +1621,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
             and *cp != '#'  // want #@ to be an RUNE! (charlike)
         ){
             if (*cp == '@')  // consider `@a@b`, `@@`, etc. ambiguous
-                return fail (Error_Syntax(S, TOKEN_EMAIL));
+                return_fail (Error_Syntax(S, TOKEN_EMAIL));
 
             token = TOKEN_EMAIL;
             goto prescan_subsume_all_dots;
@@ -1659,7 +1659,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
 
             if (cp != S->begin + 1) {  // prefix more than one % in a row
                 S->end = cp + 1;
-                return fail (Error_Syntax(S, TOKEN_FILE));
+                return_fail (Error_Syntax(S, TOKEN_FILE));
             }
 
             token = TOKEN_FILE;
@@ -1688,7 +1688,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
                 mo, cp, token, S
             ) except (Error* e) {
                 Drop_Mold(mo);
-                return fail (e);
+                return_fail (e);
             }
 
             S->end = cp;
@@ -1701,7 +1701,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
             return TOKEN_APOSTROPHE;
 
           case LEX_SPECIAL_GREATER:  // arrow words like `>` handled above
-            return fail (Error_Syntax(S, TOKEN_TAG));
+            return_fail (Error_Syntax(S, TOKEN_TAG));
 
           case LEX_SPECIAL_LESSER:
             cp = Seek_To_End_Of_Tag(cp);
@@ -1712,7 +1712,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
                     or Is_Lex_Whitespace(*cp)  // `<abc>def` not legal
                 )
             ){
-                return fail (Error_Syntax(S, TOKEN_TAG));
+                return_fail (Error_Syntax(S, TOKEN_TAG));
             }
             S->end = cp;
             return TOKEN_TAG;
@@ -1737,7 +1737,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
                     goto next_lex_special;
                 if (*cp == '+' or *cp == '-')
                     goto prescan_word;
-                return fail (Error_Syntax(S, TOKEN_WORD));
+                return_fail (Error_Syntax(S, TOKEN_WORD));
             }
             goto prescan_word;
 
@@ -1806,7 +1806,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
                 // have bad characters in it, but that would be detected by
                 // the caller, so we mention the missing `}` first.)
                 //
-                return fail (Error_Missing(S, '}'));
+                return_fail (Error_Missing(S, '}'));
             }
             token = TOKEN_RUNE;
             goto rune_or_file_token;  // different policies on / : .
@@ -1816,10 +1816,10 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
             return TOKEN_DOLLAR;
 
           case LEX_SPECIAL_UTF8_ERROR:
-            return fail (Error_Syntax(S, TOKEN_WORD));
+            return_fail (Error_Syntax(S, TOKEN_WORD));
 
           default:
-            return fail (Error_Syntax(S, TOKEN_WORD));
+            return_fail (Error_Syntax(S, TOKEN_WORD));
         }
 
       case LEX_CLASS_WORD:
@@ -1877,7 +1877,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
                     goto pound;  // base-2 binary, "very rare"
                 }
             }
-            return fail (Error_Syntax(S, TOKEN_INTEGER));
+            return_fail (Error_Syntax(S, TOKEN_INTEGER));
         }
 
         if (Has_Lex_Flag(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
@@ -1891,7 +1891,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
                     )
                 )
             ){
-                return fail (Error_Syntax(S, TOKEN_INTEGER));
+                return_fail (Error_Syntax(S, TOKEN_INTEGER));
             }
             return TOKEN_INTEGER;
         }
@@ -1922,7 +1922,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
         }
         if (Has_Lex_Flag(flags, LEX_SPECIAL_APOSTROPHE))  // 1'200
             return TOKEN_INTEGER;
-        return fail (Error_Syntax(S, TOKEN_INTEGER));
+        return_fail (Error_Syntax(S, TOKEN_INTEGER));
 
       default:
         break;  // crash() after switch, so no cases fall through accidentally
@@ -1979,7 +1979,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
                 );
                 if (*cp != want) {
                     Drop_Data_Stack_To(base);
-                    return fail (Error_Mismatch(want, *cp));
+                    return_fail (Error_Mismatch(want, *cp));
                 }
                 DROP();
                 continue; }  // loop will increment
@@ -1999,7 +1999,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
                 TOP_STABLE
             );
             Drop_Data_Stack_To(base);
-            return fail (Error_Mismatch(want, *cp));
+            return_fail (Error_Mismatch(want, *cp));
         }
 
         S->end = cp;
@@ -2010,14 +2010,14 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
         goto prescan_subsume_all_dots;
     }
     if (Has_Lex_Flag(flags, LEX_SPECIAL_DOLLAR))  // !!! XYZ$10.20 ??
-        return fail ("Dollar sign in invalid position");
+        return_fail ("Dollar sign in invalid position");
     if (Has_Lex_Flags(flags, LEX_FLAGS_NONWORD_SPECIALS))
-        return fail (Error_Syntax(S, TOKEN_WORD));  // non-word chars (eg % \ )
+        return_fail (Error_Syntax(S, TOKEN_WORD));  // non-word chars (eg % \ )
     if (
         Has_Lex_Flag(flags, LEX_SPECIAL_LESSER)
         or Has_Lex_Flag(flags, LEX_SPECIAL_GREATER)
     ){
-        return fail (Error_Syntax(S, TOKEN_WORD));  // arrow words way above
+        return_fail (Error_Syntax(S, TOKEN_WORD));  // arrow words way above
     }
 
     return TOKEN_WORD;
@@ -2363,7 +2363,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     assert(*S->begin == ',' and len == 1);
 
     if (*S->end == '~')
-        return fail ("Comma can't be followed by ~");
+        return_fail ("Comma can't be followed by ~");
 
     if (S->quasi_pending or S->sigil_pending) {  // ['$, 10] => '$ , 10
         trap (
@@ -2388,7 +2388,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     assert(len == 1 and Is_Lex_Sigil(*S->begin));
 
     if (S->sigil_pending)
-        return fail (Error_Syntax(S, token));  // can't do @$foo or ^@$bar
+        return_fail (Error_Syntax(S, token));  // can't do @$foo or ^@$bar
 
     S->sigil_pending = Sigil_From_Token(token);
     goto loop_if_next_token_decorable;
@@ -2398,7 +2398,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     assert(*S->begin == '\'');  // should be `len` sequential apostrophes
 
     if (S->sigil_pending)  // can't do @'foo: or :'foo or ~'foo~
-        return fail (Error_Syntax(S, token));
+        return_fail (Error_Syntax(S, token));
 
     S->num_quotes_pending = len;  // apply quoting to next token
     goto loop_if_next_token_decorable;
@@ -2414,7 +2414,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
             --transcode->at;  // let lookahead see the `~`
             goto lookahead;
         }
-        return fail (Error_Syntax(S, token));  // no @~foo:~ or ~~foo~~
+        return_fail (Error_Syntax(S, token));  // no @~foo:~ or ~~foo~~
     }
 
     S->quasi_pending = true;  // apply to next token
@@ -2499,9 +2499,9 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     }
 
     if (Is_List_Scan(L))  // expected ']' before ')' or vice-versa
-        return fail (Error_Mismatch(STATE, end_delimiter));
+        return_fail (Error_Mismatch(STATE, end_delimiter));
 
-    return fail (Error_Extra(end_delimiter));
+    return_fail (Error_Extra(end_delimiter));
 
 } case TOKEN_TUPLE:  //// OUT-OF-TURN '.' or '/' or ':' //////////////////////
   case TOKEN_CHAIN:
@@ -2578,7 +2578,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     // Wasn't beginning of a DECIMAL!, so scan as a normal INTEGER!
     //
     if (S->end != Try_Scan_Integer_To_Stack(S->begin, len))
-        return fail (Error_Syntax(S, token));
+        return_fail (Error_Syntax(S, token));
 
     goto lookahead;
 
@@ -2588,10 +2588,10 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
     if (Is_Lex_Interstitial(*S->end)) {
         ++S->end;  // include / in error
-        return fail (Error_Syntax(S, token));  // No `1.2/abc`
+        return_fail (Error_Syntax(S, token));  // No `1.2/abc`
     }
     if (S->end != Try_Scan_Decimal_To_Stack(S->begin, len, false))
-        return fail (Error_Syntax(S, token));
+        return_fail (Error_Syntax(S, token));
 
     if (S->begin[len - 1] == '%')
         Tweak_Cell_Type_Matching_Heart(TOP_ELEMENT, HEART_PERCENT);
@@ -2601,7 +2601,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 } case TOKEN_TIME: { /////////////////////////////////////////////////////////
 
     if (S->end != Try_Scan_Time_To_Stack(S->begin, len))
-        return fail (Error_Syntax(S, token));
+        return_fail (Error_Syntax(S, token));
 
     goto lookahead;
 
@@ -2618,7 +2618,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         S->end = ep;
     }
     if (S->end != Try_Scan_Date_To_Stack(S->begin, len))
-        return fail (Error_Syntax(S, token));
+        return_fail (Error_Syntax(S, token));
     transcode->at = S->end;  // consume extended token
     goto lookahead;
 
@@ -2658,7 +2658,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     Length utf8_len = Strand_Len(mo->strand) - mo->base.index;
 
     if (utf8_size == 0)
-        return fail ("Codepoint 0 RUNE! not currently supported (REVIEW)");
+        return_fail ("Codepoint 0 RUNE! not currently supported (REVIEW)");
 
     Init_Rune(PUSH(), utf8, utf8_size, utf8_len);
     Drop_Mold(mo);
@@ -2676,13 +2676,13 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 } case TOKEN_BINARY: { ///////////////////////////////////////////////////////
 
     if (S->end != Try_Scan_Binary_To_Stack(S->begin, len))
-        return fail (Error_Syntax(S, token));
+        return_fail (Error_Syntax(S, token));
     goto lookahead;
 
 } case TOKEN_PAIR: { /////////////////////////////////////////////////////////
 
     if (S->end != Try_Scan_Pair_To_Stack(S->begin, len))
-        return fail (Error_Syntax(S, token));
+        return_fail (Error_Syntax(S, token));
     goto lookahead;
 
 } case TOKEN_FILE: { /////////////////////////////////////////////////////////
@@ -2697,13 +2697,13 @@ static Bounce Scanner_Executor_Core(Level* const L) {
       const Byte* ep = Scan_Email_To_Stack(S->begin, len)
     );
     if (S->end != ep)
-        return fail (Error_Syntax(S, token));
+        return_fail (Error_Syntax(S, token));
     goto lookahead;
 
 } case TOKEN_URL: { //////////////////////////////////////////////////////////
 
     if (S->end != Try_Scan_URL_To_Stack(S->begin, len))
-        return fail (Error_Syntax(S, token));
+        return_fail (Error_Syntax(S, token));
     goto lookahead;
 
 } case TOKEN_TAG: { //////////////////////////////////////////////////////////
@@ -2722,7 +2722,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     );
 
     if (S->end - 1 != S->begin + 1 + size)
-        return fail (Error_Syntax(S, token));
+        return_fail (Error_Syntax(S, token));
 
     Init_String(PUSH(), HEART_TAG, s);
     goto lookahead;
@@ -2743,7 +2743,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
     if (threw) {
         Drop_Level(sub);  // should not have accured stack if threw
-        return fail (Error_No_Catch_For_Throw(L));
+        return_fail (Error_No_Catch_For_Throw(L));
     }
 
     if (Is_Failure(SUBOUT)) {
@@ -2782,7 +2782,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
     if (S->quasi_pending) {
         if (*transcode->at != '~')
-            return fail (Error_Syntax(S, TOKEN_TILDE));
+            return_fail (Error_Syntax(S, TOKEN_TILDE));
 
         trap (
           Coerce_To_Quasiform(TOP_ELEMENT)
@@ -2879,7 +2879,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         goto done;
     }
 
-    return fail ("Malformed sequence scan...something like a.b()");
+    return_fail ("Malformed sequence scan...something like a.b()");
 
 } child_array_scanned: {  ////////////////////////////////////////////////////
 
@@ -2909,7 +2909,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
     if (Get_Scan_Executor_Flag(L, SAVE_LEVEL_DONT_POP_ARRAY)) {  // see flag
         if (*transcode->at != STATE)
-            return fail ("Delimiters malformed in interpolation");
+            return_fail ("Delimiters malformed in interpolation");
         ++transcode->at;
 
         assert(sub->prior == L);  // sanity check
@@ -3000,10 +3000,10 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
     if (threw) {  // automatically drops failing stack before throwing
         Drop_Level_Unbalanced(sub);  // allow stack accrual
-        return fail (Error_No_Catch_For_Throw(L));
+        return_fail (Error_No_Catch_For_Throw(L));
     }
 
-    if (Is_Failure(Level_Out(sub))) {  // no auto-drop without `return fail ()`
+    if (Is_Failure(Level_Out(sub))) {  // no auto-drop without `return_fail ()`
         Copy_Cell(OUT, Level_Out(sub));
         Drop_Level_Unbalanced(sub);  // allow stack accrual
         Drop_Data_Stack_To(STACK_BASE);
@@ -3034,7 +3034,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     for (; stackindex != stackindex_path_head - 1; --stackindex) {
         if (Is_Email(Data_Stack_At(Element, stackindex))) {
             if (any_email)
-                return fail (Error_Syntax(S, TOKEN_TUPLE));
+                return_fail (Error_Syntax(S, TOKEN_TUPLE));
             any_email = true;
         }
     }
@@ -3186,7 +3186,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
     DECLARE_ELEMENT (temp);
     Init_Block(temp, array);
-    return fail (Error_Malconstruct_Raw(temp));  // !!! no behavior ATM
+    return_fail (Error_Malconstruct_Raw(temp));  // !!! no behavior ATM
 
 } reached_end_token: { ///////////////////////////////////////////////////////
 
@@ -3195,7 +3195,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
   // there was never a proper closing.
 
     if (Is_List_Scan(L))
-        return fail (Error_Missing(S, STATE));
+        return_fail (Error_Missing(S, STATE));
 
     trap (
       Flush_Pending_On_End(S)
@@ -3463,7 +3463,7 @@ Result(Option(Source*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
     Push_Level(L);
 
     if (Trampoline_With_Top_As_Root_Throws())
-        return fail (Error_No_Catch_For_Throw(L));
+        return_fail (Error_No_Catch_For_Throw(L));
 
     if (TOP_INDEX == L->baseline.stack_base) {
         Drop_Level(L);

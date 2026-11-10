@@ -498,7 +498,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Error)
         Init_Text(Slot_Init_Hack(&vars->message), copy);
     }
     else
-        return fail (PARAM(DEF));  // PANIC or FAIL in this case?
+        return_fail (PARAM(DEF));  // PANIC or FAIL in this case?
 
     DECLARE_STABLE (id);
     require (Read_Slot(id, &vars->id));
@@ -545,7 +545,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Error)
                     or Is_Block(Stable_Slot_Hack(correct_message))
                 );
                 if (not Is_Null(message))
-                    return fail (Error_Invalid_Error_Raw(arg));
+                    return_fail (Error_Invalid_Error_Raw(arg));
 
                 Copy_Cell(
                     Slot_Init_Hack(&vars->message), Slot_Hack(correct_message)
@@ -564,7 +564,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Error)
                 //
                 //     make error! [type: 'script id: 'set-self]
 
-                return fail (
+                return_fail (
                     Error_Invalid_Error_Raw(Init_Error_Cell(SPARE, varlist))
                 );
             }

@@ -280,7 +280,7 @@ INLINE Result(None) Reuse_Sublevel_Same_Feed_For_Step_Core(Level* L)
     possibly(sub->baseline.stack_base != L->baseline.stack_base);   // [0]
 
     if (Is_Feed_At_End(L->feed))  // `eval [x:]`, `eval [o.x:]`, etc. illegal
-        return fail (Error_Need_Non_End(CURRENT));
+        return_fail (Error_Need_Non_End(CURRENT));
 
     sub->executor = &Stepper_Executor;
 

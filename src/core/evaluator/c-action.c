@@ -1030,7 +1030,7 @@ Bounce Action_Executor(Level* L)
 }}} check_output: {  /////////////////////////////////////////////////////////
 
   // Here we know the function finished and nothing threw past it or had an
-  // abrupt panic().  (It may have done a `return fail (...)`, however.)
+  // abrupt panic().  (It may have done a `return_fail (...)`, however.)
 
   #if RUNTIME_CHECKS
     Do_After_Action_Checks(L);
@@ -1120,7 +1120,7 @@ Result(None) Push_Action(
     ) except (Error* e) {
         Set_Stub_Unreadable(s);
         GC_Kill_Stub(s);  // ^-- needs non-null data unless free
-        return fail (e);
+        return_fail (e);
     }
 
     L->varlist = raw_cast(ParamList*, s);

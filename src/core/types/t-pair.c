@@ -108,7 +108,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
         return rebValue(CANON(TO), CANON(PAIR_X), CANON(REDUCE), arg);
     }
 
-    return fail (Error_Bad_Make(HEART_PAIR, arg));
+    return_fail (Error_Bad_Make(HEART_PAIR, arg));
 }
 
 

@@ -122,7 +122,7 @@ INLINE Result(None) Check_Sequence_Element(
             Is_Quoted(v)  // 'foo:bar has quote on foo:bar, not foo
             or Cell_Underlying_Sigil(v)  // $a.b => $[a b], not [$a b]
         ){
-            return fail (Error_Bad_Sequence_Head_Raw(v));
+            return_fail (Error_Bad_Sequence_Head_Raw(v));
         }
     }
 
@@ -144,7 +144,7 @@ INLINE Result(None) Check_Sequence_Element(
     if (h == HEART_BLANK) {  // heart of quasars, sigils, lone quote
         assert(not is_head or Is_Quasar(v));  // callers check blanks/sigils
         if (Is_Blank(v))  // undecorated blank (not [$ ^ @ ~ '])
-            return fail (
+            return_fail (
                 Error_Bad_Sequence_Blank_Raw()  // blank only legal at head
             );
         return none;  // ~:$:~ etc. are legal
@@ -173,7 +173,7 @@ INLINE Result(None) Check_Sequence_Element(
 
   bad_sequence_item:
 
-    return fail (
+    return_fail (
         Error_Bad_Sequence_Item_Raw(Datatype_From_Heart(sequence_heart), v)
     );
 }
@@ -240,7 +240,7 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
 
     if (Is_Integer(v)) {
         if (heart == HEART_TUPLE) {
-            return fail (  // reserve notation for future use [1]
+            return_fail (  // reserve notation for future use [1]
                 "5. and .5 currently reserved, please use 5.0 and 0.5"
             );
         }
@@ -493,7 +493,7 @@ INLINE Result(Element*) Init_Any_Sequence_Pairlike(
     );
 
     if (not Any_Sequence(out))
-        return fail (Error_Conflated_Sequence_Raw(Datatype_Of(out), out));
+        return_fail (Error_Conflated_Sequence_Raw(Datatype_Of(out), out));
 
     return out;
 }
@@ -505,7 +505,7 @@ INLINE Result(Element*) Pop_Sequence_Or_Conflation(
 ){
     if (TOP_INDEX - base < 2) {
         Drop_Data_Stack_To(base);
-        return fail (Error_Sequence_Too_Short_Raw());
+        return_fail (Error_Sequence_Too_Short_Raw());
     }
 
     if (TOP_INDEX - base == 2) {  // two-element path optimization
@@ -521,7 +521,7 @@ INLINE Result(Element*) Pop_Sequence_Or_Conflation(
         };
         Drop_Data_Stack_To(base);
         if (error)
-            return fail (unwrap error);
+            return_fail (unwrap error);
         return out;
     }
 
@@ -550,7 +550,7 @@ INLINE Result(Element*) Pop_Sequence(
       Pop_Sequence_Or_Conflation(out, heart, base)
     );
     if (not Any_Sequence(out))
-        return fail (Error_Conflated_Sequence_Raw(Datatype_Of(out), out));
+        return_fail (Error_Conflated_Sequence_Raw(Datatype_Of(out), out));
 
     return out;
 }

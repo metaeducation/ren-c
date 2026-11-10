@@ -305,7 +305,7 @@ Result(Managed(const Symbol*)) Intern_Symbol_Core(  // implicitly managed [1]
             Clear_Flavor_Flag(SYMBOL, b, ALL_ASCII);
 
         if (utf8[i] == 0xC2 and utf8[i + 1] == 0xA0)
-            return fail ("Non-breaking space illegal in WORD!");
+            return_fail ("Non-breaking space illegal in WORD!");
 
         assert(
             utf8[i] != '$'

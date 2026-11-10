@@ -82,7 +82,7 @@ Result(None) Get_Var_To_Out_Use_Toplevel(
     );
 
     if (e)
-        return fail (unwrap e);
+        return_fail (unwrap e);
 
     Value* got = Copy_Cell(OUT, SPARE);  // !!! extra copy
 
@@ -131,7 +131,7 @@ Result(None) Get_Var_To_Out_Use_Toplevel(
             and not Is_Hot_Potato(got)  // !!! review exception, probably bad
         ){
             if (Is_Void(got))
-                return fail (Error_Bad_Pick_Raw(var));
+                return_fail (Error_Bad_Pick_Raw(var));
 
             panic ("GET of non-meta WORD!/TUPLE! should always be stable");
         }
@@ -176,7 +176,7 @@ Result(None) Get_Word_Or_Tuple(Sink(Value) out, const Element* var)
     ) except (Error* e) {
         Drop_Level(sub);
         Corrupt_Cell_If_Needful(out);
-        return fail (e);
+        return_fail (e);
     }
 
     Copy_Cell(out, Level_Out(sub));
@@ -397,7 +397,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
     }
 
     if (at + 1 != tail and not Is_Blank(at + 1))
-        return fail ("PATH! can only be two items max at this time");
+        return_fail ("PATH! can only be two items max at this time");
 
     // When we see `lib/append` for instance, we want to pick APPEND out of
     // LIB and make sure it is an action.
@@ -505,7 +505,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
     Track_Unshield_Cell(SCRATCH);
 
     if (error)
-        return fail (unwrap error);
+        return_fail (unwrap error);
 
     return none;
 }}
@@ -569,7 +569,7 @@ Result(Value*) Meta_Get_Var(
         }
 
         if (error)
-            return fail (unwrap error);
+            return_fail (unwrap error);
 
         assert(Is_Action(out));
 
@@ -660,14 +660,14 @@ Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, const Param* param)
     );
 
     if (Is_Group(out))
-        return fail ("GROUP! result from SET/GET of GROUP! target not legal");
+        return_fail ("GROUP! result from SET/GET of GROUP! target not legal");
 
     require (
       bool check = Typecheck_Coerce_Use_Toplevel(LEVEL, param, out)
     );
 
     if (not check)
-        return fail (Error_Bad_Value(out));
+        return_fail (Error_Bad_Value(out));
 
     Copy_Cell(target, As_Element(out));  // update ARG(TARGET)
     Corrupt_Cell_If_Needful(OUT);
@@ -725,7 +725,7 @@ DECLARE_NATIVE(GET)
 
     if (Is_Group(target)) {
         if (not ARG(GROUPS))
-            return fail ("GET of GROUP! target without :GROUPS not allowed");
+            return_fail ("GET of GROUP! target without :GROUPS not allowed");
 
         require (
           bool vanished = Recalculate_Group_Arg_Vanishes(LEVEL, PARAM(TARGET))

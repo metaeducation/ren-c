@@ -140,7 +140,7 @@ Strand* Append_Codepoint(Strand* dst, Codepoint c)
 Result(Strand*) Make_Codepoint_Strand(Codepoint c)
 {
     if (c == '\0')
-        return fail (Error_Illegal_Zero_Byte_Raw());
+        return_fail (Error_Illegal_Zero_Byte_Raw());
 
     Size size = Encoded_Size_For_Codepoint(c);
     trap (

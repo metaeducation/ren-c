@@ -40,7 +40,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blank)
     UNUSED(mo);
     UNUSED(form);
 
-    return fail ("BLANK! does not have a molded/formed representation");
+    return_fail ("BLANK! does not have a molded/formed representation");
 }
 
 

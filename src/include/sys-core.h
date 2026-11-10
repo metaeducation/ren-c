@@ -203,7 +203,11 @@ typedef RebolHandleCleaner HandleCleaner;
 #define NEEDFUL_DEFINE_ALL_SHORTHANDS  1
 #include "needful.h"
 
-#define fail     needful_make_failure
+// `return_fail` is NOT aliased here: it is Needful's own shorthand, and it
+// already reads the way Ren-C the language writes it (`return fail ...`).
+// Signalling a failure is a statement in C -- the `return` is fused in, and
+// cannot be peeled off the way Ren-C's FAIL expression can be LIFT-ed.
+//
 #define trap     needful_return_if_failed
 #define require  needful_panic_if_failed
 #define assume   needful_assert_not_failed

@@ -238,7 +238,7 @@ INLINE Result(void*) Raw_Pooled_Alloc(PoolId pool_id)
   #if TRAMPOLINE_COUNTS_TICKS && RUNTIME_CHECKS
     if (g_mem.fuzz_factor != 0) {
         if (SPORADICALLY(g_mem.fuzz_factor))
-            return fail ("Artificial allocation failure (fuzz_factor)");
+            return_fail ("Artificial allocation failure (fuzz_factor)");
     }
   #endif
 

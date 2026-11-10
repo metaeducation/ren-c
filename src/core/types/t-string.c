@@ -331,7 +331,7 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
         return BOUNCE_OUT;
     }
 
-    return fail (Error_Bad_Make(heart, def));
+    return_fail (Error_Bad_Make(heart, def));
 }
 
 
@@ -1113,7 +1113,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
 
     if (Series_Index(v) >= tail) {
         if (not ARG(PART))
-            return fail (Error_Nothing_To_Take_Raw());
+            return_fail (Error_Nothing_To_Take_Raw());
         Heart heart = Heart_Of_Builtin_Fundamental(v);
         require (
           Strand* strand = Make_Strand(0)
@@ -1164,7 +1164,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_String)
     REBLEN tail = Series_Len_Head(v);
 
     if (index >= tail)
-        return fail (Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
+        return_fail (Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
     index += Random_Int(ARG(SECURE)) % (tail - index);
 
@@ -1237,7 +1237,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Any_String)
         Init_Integer(OUT, c);
         return BOUNCE_OUT;
     }
-    return fail (Error_Not_One_Codepoint_Raw());
+    return_fail (Error_Not_One_Codepoint_Raw());
 }
 
 

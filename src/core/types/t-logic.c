@@ -45,7 +45,7 @@ DECLARE_NATIVE(NULL_Q)
         return LOGIC_OUT(true);
 
     if (Is_Heavy_Null(v))
-        return fail (
+        return_fail (
             "Heavy null detected by NULL?, use NOT or NULL? DECAY if meant"
        );
 

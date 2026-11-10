@@ -93,7 +93,7 @@ Result(None) Set_Var_To_Out_Use_Toplevel(
             }
         }
         else if (Is_Failure(SCRATCH)) {
-            return fail (Cell_Error(SCRATCH));
+            return_fail (Cell_Error(SCRATCH));
         }
         else {
             // we leave ACTION!, TRASH!, VOID! despite instability
@@ -123,7 +123,7 @@ Result(None) Set_Var_To_Out_Use_Toplevel(
 
     if (Get_Cell_Flag(var, SCRATCH_VAR_NOTE_ONLY_ACTION)) {
         if (not Is_Action(SCRATCH)) {
-            return fail (
+            return_fail (
                 "/word: and /obj.field: assignments need ACTION!"
             );
         }
@@ -144,7 +144,7 @@ Result(None) Set_Var_To_Out_Use_Toplevel(
     );
 
     if (e)
-        return fail (unwrap e);
+        return_fail (unwrap e);
 
     return none;
 }}
@@ -645,7 +645,7 @@ DECLARE_NATIVE(SET)
 
     if (Is_Group(target)) {  // Group before error passthru [A]
         if (not ARG(GROUPS))
-            return fail ("SET of GROUP! target without :GROUPS not allowed");
+            return_fail ("SET of GROUP! target without :GROUPS not allowed");
 
         require (
           bool vanished = Recalculate_Group_Arg_Vanishes(LEVEL, PARAM(TARGET))

@@ -455,7 +455,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
             return THROWN;
         }
         if (Is_Void(OUT))
-            return fail (Error_Nothing_To_Take_Raw());
+            return_fail (Error_Nothing_To_Take_Raw());
         return BOUNCE_OUT;
     }
 

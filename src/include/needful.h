@@ -1,6 +1,6 @@
 /*
 **  file: %needful.h
-**  summary: "Needful: Safer C without changing your C"
+**  summary: "Needful: Stricter C checks without changing your C"
 **  homepage: https://needful.metaeducation.com
 **
 ******************************************************************************
@@ -15,6 +15,10 @@
 **
 ** Needful is a single-header library that adds typed options, typed results,
 ** visible casts, and compile-time intent checks to C.
+**
+** It is a type-discipline layer, not a memory-safety layer: it catches
+** nullability and API-usage mistakes, but does not prevent use-after-free,
+** buffer overruns, data races, or integer overflow.
 **
 ** The key trick: every Needful construct compiles as a transparent macro in C.
 ** But add companion needful-enhanced/ files, `#define NEEDFUL_CPP_ENHANCED 1`,
@@ -107,6 +111,15 @@
 **      Then `#define NEEDFUL_CPP_ENHANCED 1` and build as C++11+.
 **      Same source, stricter checking.
 **
+**      For CI enforcement, run the checked build with warnings as errors
+**      (`-Werror` / `/WX`).  Without that, many "must use / must handle"
+**      diagnostics remain warnings and do not fail the build.
+**
+**      - Still meaningful without `-Werror`/`/WX`: most hard type checks
+**        (Need/Option/Sink-Init-Contra/known and comment expression checks)
+**      - Depends on `-Werror`/`/WX` for hard enforcement: Fallible/Result
+**        dropped-value and must-use diagnostics
+**
 **   4. CI can run both modes: C for production, C++ for stronger checks.
 **
 ** The C definitions below are written out in full so you can see how simple
@@ -116,18 +129,7 @@
 **
 ****[[ BEFORE YOU INCLUDE ]]**************************************************
 **
-** A. Needful globally disables `-Wint-conversion` in C mode.  This is needed
-**    because `make_failure(...)` and `none` expand to comma expressions, and
-**    the comma operator strips the "null pointer constant" status of 0,
-**    causing GCC/Clang to warn on every `return make_failure(...)` in a
-**    pointer-returning function.  The C++ enhanced build catches real
-**    type mistakes anyway.
-**
-**    See: https://needful.metaeducation.com/faq#int-conversion-warning
-**
-**    To restore the warning, set `#define NEEDFUL_DISABLE_INT_WARNING 0`.
-**
-** B. Needful's runtime invariant checks route through `NEEDFUL_ASSERT(expr)`.
+** A. Needful's runtime invariant checks route through `NEEDFUL_ASSERT(expr)`.
 **    If you don't define it, Needful includes `<assert.h>` and defaults it to
 **    the platform `assert()`.  Projects that need debugger-friendlier
 **    behavior can define `NEEDFUL_ASSERT(expr)` before including needful.h,
@@ -141,18 +143,12 @@
 #ifndef NEEDFUL_H_INCLUDED  /* "include guard" allows multiple #includes */
 #define NEEDFUL_H_INCLUDED
 
-#if !defined(NEEDFUL_DISABLE_INT_WARNING) || NEEDFUL_DISABLE_INT_WARNING
-  #if !defined(__cplusplus) && (defined(__GNUC__) || defined(__clang__))
-    #pragma GCC diagnostic ignored "-Wint-conversion"  /* See [A] above */
-  #endif
-#endif
-
-#if !defined(NEEDFUL_ASSERT)  /* See [B] above */
+#if !defined(NEEDFUL_ASSERT)  /* See [A] above */
     #include <assert.h>
     #define NEEDFUL_ASSERT(expr)  assert(expr)
 #endif
 
-#if !defined(NEEDFUL_ABORT)  /* See [B] above */
+#if !defined(NEEDFUL_ABORT)  /* See [A] above */
     #include <stdlib.h>
     #define NEEDFUL_ABORT()  abort()
 #endif
@@ -252,10 +248,12 @@ typedef enum {
     #define NEEDFUL_PRECPP17_NODISCARD  0  /* [[nodiscard]] below C++17 */
 #endif
 
-/* This suppression is file-scope and unpopped, like the one in note [A].  It
-** has to be: the attribute is emitted at each callsite rather than here, and
-** a pragma cannot ride inside the macro, since pragmas may not appear in the
-** middle of a declaration.
+/* This is the only diagnostic Needful ever touches, it fires only when you
+** opt in above, and it is C++-only--a C build of needful.h changes nothing
+** about your warnings.  It is file-scope and unpopped because it has to be:
+** the attribute is emitted at each callsite rather than here, and a pragma
+** cannot ride inside the macro, since pragmas may not appear in the middle
+** of a declaration.
 */
 #if NEEDFUL_PRECPP17_NODISCARD && defined(__cplusplus) \
         && __cplusplus < 201703L && !defined(_MSC_VER)  /* MSVC is quiet */
@@ -355,7 +353,8 @@ typedef enum {
 **     Needful_Test_And_Clear_Failure()  take it, leaving none pending
 **     Needful_Panic_Abruptly(error)     report it and do not come back
 **
-** Or define NEEDFUL_DECLARE_RESULT_HOOKS for a single-threaded default set.
+** Or define NEEDFUL_DECLARE_SINGLETHREADED_RESULT_HOOKS for a
+** single-threaded default set.
 */
 
 #define NeedfulResult(T)  T
@@ -370,10 +369,18 @@ typedef enum {
 #define Needful_Assert_Not_Failing() \
     NEEDFUL_ASSERT(! Needful_Get_Failure())
 
-#define needful_make_failure(...) \
-    (Needful_Assert_Not_Failing(), \
-        Needful_Set_Failure(__VA_ARGS__), \
-        NEEDFUL_RESULT_0)
+/* Signalling a failure is a STATEMENT, not an expression that you `return`.
+** There is deliberately no `make_failure(...)` expression form; the reason is
+** worth reading before you write one, because it is the reason needful.h can
+** leave your compiler's diagnostics alone:
+**
+**     https://needful.metaeducation.com/result#no-make-failure
+*/
+#define needful_return_fail(...) do { \
+    Needful_Assert_Not_Failing(); \
+    Needful_Set_Failure(__VA_ARGS__); \
+    return NEEDFUL_RESULT_0; \
+} while (0)
 
 #define needful_panic(...) do { \
     Needful_Assert_Not_Failing(); \
@@ -523,7 +530,7 @@ typedef enum {
 **/
 
 #if !defined(__cplusplus)
-    #define needful_nocast_0    0    /* may need warning disablement [A] */
+    #define needful_nocast_0    0    /* a genuine null pointer constant */
     #define needful_struct_0  { 0 }  /* {} works only in C23 or later... */
     #define needful_array_0   { 0 }
 
@@ -989,7 +996,7 @@ NEEDFUL_NORETURN static inline void needful_dead_end_inline(void) {
 **
 ** NEEDFUL_NODISCARD is redefined by the C++ enhancements as `[[nodiscard]]`.
 ** It is what makes an unhandled Result(T) return value visible, and catches
-** things like writing `make_failure(...)` instead of `return make_failure(...)`.
+** things like dropping a Result(T) return value on the floor.
 **
 ** NEEDFUL_ALWAYS_INLINE hints that a function should be inlined even in
 ** non-optimized builds.  Its primary use is marking the trivial no-op default
@@ -1012,12 +1019,12 @@ NEEDFUL_NORETURN static inline void needful_dead_end_inline(void) {
 ** Docs: https://needful.metaeducation.com/result#setup-result-hooks
 **
 ** Result(T) needs somewhere to store a pending failure, and your project
-** normally supplies that.  Defining NEEDFUL_DECLARE_RESULT_HOOKS in exactly
-** one translation unit gets a minimal single-threaded set, for prototyping
-** and for the test suite.
+** normally supplies that.  Define NEEDFUL_DECLARE_SINGLETHREADED_RESULT_HOOKS
+** in exactly one translation unit gets a minimal single-threaded set, for
+** prototyping and for the test suite.
 */
 
-#if defined(NEEDFUL_DECLARE_RESULT_HOOKS) && NEEDFUL_DECLARE_RESULT_HOOKS
+#if defined(NEEDFUL_DECLARE_SINGLETHREADED_RESULT_HOOKS) && NEEDFUL_DECLARE_SINGLETHREADED_RESULT_HOOKS
 
 #include <stdio.h>   /* fprintf, fflush, stderr */
 #include <stdlib.h>  /* exit */
@@ -1046,7 +1053,7 @@ NEEDFUL_NORETURN void Needful_Panic_Abruptly(const char* error) {
 ** supplied here -- it is not one of the four hooks.)
 */
 
-#endif  /* NEEDFUL_DECLARE_RESULT_HOOKS */
+#endif  /* NEEDFUL_DECLARE_SINGLETHREADED_RESULT_HOOKS */
 
 
 /*****************************************************************************
@@ -1120,7 +1127,7 @@ NEEDFUL_NORETURN void Needful_Panic_Abruptly(const char* error) {
 #if NEEDFUL_RESULT_SHORTHANDS
     #define Result /* (T) */             NeedfulResult
 
-    #define make_failure /* (...) */     needful_make_failure
+    #define return_fail /* (...) */      needful_return_fail
     #define panic /* (...) */            needful_panic
 
     #define return_if_failed /* (stmt) */    needful_return_if_failed

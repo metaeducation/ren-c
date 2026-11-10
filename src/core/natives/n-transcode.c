@@ -61,11 +61,11 @@ Result(Element*) Transcode_One(
     if (warning) {
         Error* error = Cell_Error(warning);
         rebRelease(warning);
-        return fail (error);
+        return_fail (error);
     }
     if (heart and (Heart_Of(result) != unwrap heart)) {
         rebRelease(result);
-        return fail ("Transcode_One() gave unwanted type");
+        return_fail ("Transcode_One() gave unwanted type");
     }
     Copy_Cell(out, As_Element(result));
     rebRelease(result);
@@ -268,7 +268,7 @@ DECLARE_NATIVE(TRANSCODE)
 
     if (ARG(ONE)) {  // want *exactly* one element
         if (TOP_INDEX == STACK_BASE)
-            return fail ("Transcode was empty (or all comments)");
+            return_fail ("Transcode was empty (or all comments)");
         assert(TOP_INDEX == STACK_BASE + 1);
         STATE = ST_TRANSCODE_ENSURE_NO_MORE;
         return CONTINUE_SUBLEVEL;

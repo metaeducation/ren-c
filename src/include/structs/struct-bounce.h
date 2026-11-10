@@ -50,7 +50,7 @@ typedef Byte WildTwo[2];
 //
 //    The importance of compile-time checking Bounce in the core is high,
 //    because it's very easy to say `return Error_Xxx()` instead of writing
-//    `return fail (Error_Xxx())` or `panic (Error_Xxx())`.
+//    `return_fail (Error_Xxx())` or `panic (Error_Xxx())`.
 //
 // 2. While the API clients use RebolBounce as void* and accept Value* as
 //    a parameter, internal code doesn't let you pass arbitrary cells.  So you

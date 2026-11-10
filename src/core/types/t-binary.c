@@ -162,7 +162,7 @@ DECLARE_NATIVE(DECODE_IEEE_754)
     Size size;
     const Byte* at = Blob_Size_At(&size, blob);
     if (size < 8)
-        return fail (PARAM(BLOB));
+        return_fail (PARAM(BLOB));
 
     Init(Element) out = OUT;
     Reset_Cell_Header(TRACK(out), CELL_MASK_DECIMAL);
@@ -227,7 +227,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
         break;
     }
 
-    return fail (Error_Bad_Make(HEART_BLOB, arg));
+    return_fail (Error_Bad_Make(HEART_BLOB, arg));
 }
 
 
@@ -621,14 +621,14 @@ Result(Element*) Alias_Blob_As(
     if (Any_Utf8_Heart(as)) {  // convert to a string as first step [1]
         if (as == HEART_WORD) {  // early fail on this, to save time
             if (Blob_Offset(blob) != 0)  // (vs. failing on AS WORD! of string)
-                return fail ("Can't alias BLOB! as WORD! unless at head");
+                return_fail ("Can't alias BLOB! as WORD! unless at head");
         }
 
         Size byteoffset = Blob_Offset(blob);
 
         const Byte* at_ptr = Binary_At(bin, byteoffset);
         if (Is_Continuation_Byte(*at_ptr))  // must be on codepoint start
-            return fail (
+            return_fail (
                 "Index must be at codepoint to convert BLOB! to ANY-STRING?"
             );
 
@@ -642,7 +642,7 @@ Result(Element*) Alias_Blob_As(
         ){
             if (not Is_Flex_Frozen(bin))
                 if (Get_Cell_Flag(blob, CONST))
-                    return fail (Error_Alias_Constrains_Raw());
+                    return_fail (Error_Alias_Constrains_Raw());
 
             Length num_codepoints = 0;
 
@@ -700,7 +700,7 @@ Result(Element*) Alias_Blob_As(
         return Alias_Any_String_As(out, string, as);
     }
 
-    return fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
+    return_fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
 }
 
 
@@ -767,7 +767,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
 
     if (index >= tail) {
         if (not ARG(PART))
-            return fail (Error_Nothing_To_Take_Raw());
+            return_fail (Error_Nothing_To_Take_Raw());
 
         Init_Blob(OUT, Make_Binary(0));
         return BOUNCE_OUT;
@@ -840,7 +840,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Is_Blob)
     Index index = Series_Index(blob);
 
     if (index >= tail)
-        return fail (Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
+        return_fail (Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
     index += Random_Int(ARG(SECURE)) % (tail - index);
     const Binary* bin = Cell_Binary(blob);
@@ -913,7 +913,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Blob)
     ++bp;  // Back_Scan() requires increment
 
     if (bp != Binary_Tail(Cell_Binary(blob)))
-        return fail (Error_Not_One_Codepoint_Raw());
+        return_fail (Error_Not_One_Codepoint_Raw());
 
     Init_Integer(OUT, c);
     return BOUNCE_OUT;
@@ -1284,7 +1284,7 @@ DECLARE_NATIVE(ADD_TO_BINARY)
         return COPY_TO_OUT(blob);
 
     if (Series_Len_At(blob) == 0) // add/subtract to #{} otherwise
-        return fail (Error_Overflow_Raw());
+        return_fail (Error_Overflow_Raw());
 
     while (delta != 0) {
         REBLEN wheel = Series_Len_Head(blob) - 1;
@@ -1293,7 +1293,7 @@ DECLARE_NATIVE(ADD_TO_BINARY)
             if (delta > 0) {
                 if (*b == 255) {
                     if (wheel == Series_Index(blob))
-                        return fail (Error_Overflow_Raw());
+                        return_fail (Error_Overflow_Raw());
 
                     *b = 0;
                     --wheel;
@@ -1306,7 +1306,7 @@ DECLARE_NATIVE(ADD_TO_BINARY)
             else {
                 if (*b == 0) {
                     if (wheel == Series_Index(blob))
-                        return fail (Error_Overflow_Raw());
+                        return_fail (Error_Overflow_Raw());
 
                     *b = 255;
                     --wheel;

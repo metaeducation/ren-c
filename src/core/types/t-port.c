@@ -102,7 +102,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
       Stable* out = Decay_If_Unstable(OUT)
     );
     if (not Is_Port(out))  // should always create a port
-        return fail (Error_Bad_Value(out));
+        return_fail (Error_Bad_Value(out));
 
     return BOUNCE_OUT;
 }
@@ -333,13 +333,13 @@ Result(Option(Stable*)) Get_Port_Path_From_Spec(
       Read_Slot(spec, Varlist_Slot(ctx, STD_PORT_SPEC))
     );
     if (not Is_Object(spec))
-        return fail (Error_Invalid_Spec_Raw(spec));
+        return_fail (Error_Invalid_Spec_Raw(spec));
 
     require (
       Read_Slot(out, Obj_Slot(spec, STD_PORT_SPEC_HEAD_REF))
     );
     if (Is_Null(out))
-        return fail (Error_Invalid_Spec_Raw(spec));
+        return_fail (Error_Invalid_Spec_Raw(spec));
 
     if (Is_Url(out)) {
         require (
@@ -347,7 +347,7 @@ Result(Option(Stable*)) Get_Port_Path_From_Spec(
         );
     }
     else if (not Is_File(out))
-        return fail (Error_Invalid_Spec_Raw(spec));
+        return_fail (Error_Invalid_Spec_Raw(spec));
 
     return out;
 }

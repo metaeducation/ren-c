@@ -264,7 +264,7 @@ INLINE Result(None) Push_Reified_Feed_Cell_May_Rewrite_Stack(
 
   return_fail: { /////////////////////////////////////////////////////////////
 
-    return fail ("Antiform in feed with no @ or ^ to handle it");
+    return_fail ("Antiform in feed with no @ or ^ to handle it");
 }}
 
 

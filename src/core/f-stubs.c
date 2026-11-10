@@ -571,7 +571,7 @@ Result(Element*) Unsingleheart_Sequence(Element* seq)
 
 }} report_error: { ///////////////////////////////////////////////////////////
 
-    return fail (
+    return_fail (
         "UNCHAIN/UNPATH/UNTUPLE only on length 2 chains (when 1 item is BLANK)"
     );
 }}
@@ -664,13 +664,13 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
             }
         }
 
-        return fail (
+        return_fail (
             "Trying to add Sigil to already metaform/tied/pinned value"
         );
     }
     then {
         if (not Any_Sigilable(v))
-            return fail (Error_Bad_Sigil_Raw(v));
+            return_fail (Error_Bad_Sigil_Raw(v));
     }
 
     return COPY_TO_OUT(Add_Cell_Sigil(v, sigil));
@@ -740,7 +740,7 @@ static Bounce Unsigilize_Native_Core(Level* level_, Sigil sigil)
         panic (nullptr);  // !!! this should only happen in typecheckers
 
     if (Sigil_Of(v) != sigil)
-        return fail ("Trying to remove Sigil from value without that Sigil");
+        return_fail ("Trying to remove Sigil from value without that Sigil");
 
     return COPY_TO_OUT(Clear_Cell_Sigil(v));
 }

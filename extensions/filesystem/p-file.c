@@ -305,7 +305,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         }
 
         if (result and Is_Error(result))
-            return fail (result);
+            return_fail (result);
 
         assert(result == nullptr or Is_Blob(result));
         return result;
@@ -698,7 +698,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             //
             DECLARE_ELEMENT (adjusted);
             Init_Integer(adjusted, offset + file->offset);
-            return fail (Error_Out_Of_Range(adjusted));
+            return_fail (Error_Out_Of_Range(adjusted));
         }
 
         file->offset += offset;

@@ -560,7 +560,7 @@ INLINE Result(Flex*) Make_Flex_Into(
     if (i_cast(REBU64, capacity) * wide > INT32_MAX) {
         Size requested_size = i_cast(REBU64, capacity) * wide;
         UNUSED(requested_size);  // can't alloc memory, how to report?
-        return fail (Cell_Error(g_error_no_memory));
+        return_fail (Cell_Error(g_error_no_memory));
     }
 
     assume (
@@ -578,7 +578,7 @@ INLINE Result(Flex*) Make_Flex_Into(
             Set_Stub_Unreadable(s);
             GC_Kill_Stub(s);
 
-            return fail (e);
+            return_fail (e);
         }
 
       #if DEBUG_COLLECT_STATS
@@ -592,7 +592,7 @@ INLINE Result(Flex*) Make_Flex_Into(
                 g_gc.manuals, 8
             ) except (Error* e) {
                 Free_Unmanaged_Flex(s);
-                return fail (e);
+                return_fail (e);
             }
         }
 

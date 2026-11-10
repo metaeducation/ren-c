@@ -61,10 +61,10 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
             != FLAG_TYPE(TYPE_QUASIFORM)
     ){
         if (Type_Of(elem) != TYPE_QUASIFORM)
-            return fail (
+            return_fail (
                 Error_User("Can only coerce quasiforms to antiforms")
             );
-        return fail (Error_User("Cells with sigils cannot become antiforms"));
+        return_fail (Error_User("Cells with sigils cannot become antiforms"));
     }
 
 } coerce_to_antiform: {
@@ -112,7 +112,7 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
                 true
             ))
         ){
-            return fail (Error_Bad_Value(elem));
+            return_fail (Error_Bad_Value(elem));
         }
         v->payload = Stub_Cell(unwrap patch)->payload;
         v->extra = Stub_Cell(unwrap patch)->extra;
@@ -131,7 +131,7 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
             break;
 
           default:
-            return fail (Error_Illegal_Anti_Word_Raw(elem));  // limited [2]
+            return_fail (Error_Illegal_Anti_Word_Raw(elem));  // limited [2]
         }
         break; }
 
@@ -149,7 +149,7 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
         break;
 
       default:
-        return fail (Error_Non_Isotopic_Type_Raw(elem));
+        return_fail (Error_Non_Isotopic_Type_Raw(elem));
     }
 
     return v;
@@ -165,7 +165,7 @@ INLINE Result(Element*) Coerce_To_Quasiform(Element* v) {
 
     if (not Any_Isotopic_Heart(heart)) {  // Note: all words have quasiforms [1]
         Clear_Cell_Quotes_And_Quasi(v);
-        return fail (Error_Non_Isotopic_Type_Raw(v));
+        return_fail (Error_Non_Isotopic_Type_Raw(v));
     }
 
     Tweak_Cell_Lift_Byte(v, TYPE_QUASIFORM);
@@ -228,7 +228,7 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
 
     if (not Is_Pack(v)) {
         if (Is_Failure(v))
-            return fail (Cell_Error(v));
+            return_fail (Cell_Error(v));
 
         if (not want_value)
             goto finished_no_value;
@@ -239,10 +239,10 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
         }
 
         if (Is_Void(v))
-            return fail ("Cannot decay VOID! to a stable value");
+            return_fail ("Cannot decay VOID! to a stable value");
 
         if (Is_Trash(v))
-            return fail ("Cannot decay TRASH! to a stable value");
+            return_fail ("Cannot decay TRASH! to a stable value");
 
         goto finished;
     }
@@ -263,18 +263,18 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
     const Dual* first = raw_cast(Dual*, List_At(&tail, v));
 
     if (want_value and first == tail)
-        return fail ("Empty PACK! cannot decay to single value");
+        return_fail ("Empty PACK! cannot decay to single value");
 
     for (const Dual* at = first; at != tail; ++at) {
         if (not Any_Lifted(at)) {
             if (Is_Dual_Alias(at))  // !!! new concept
                 continue;  // !!! try this for alias first, others later...
 
-            return fail ("Non-lifted element in PACK!");
+            return_fail ("Non-lifted element in PACK!");
         }
 
         if (Is_Lifted_Failure(at))
-            return fail (Cell_Error(at));
+            return_fail (Cell_Error(at));
 
         if (not Is_Lifted_Pack(at))
             continue;
@@ -284,7 +284,7 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
             Unlift_Cell_No_Decay(v)
         );
         Decay_Or_Elide_Core(v, false) except (Error* e) {  // [1]
-            return fail (e);
+            return_fail (e);
         }
     }
 
@@ -293,16 +293,16 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
 
     if (Is_Lifted_Unstable_Antiform(first)) {  // don't decay first slot [2]
         if (Is_Lifted_Pack(first))
-            return fail ("PACK! cannot decay PACK! in first slot");
+            return_fail ("PACK! cannot decay PACK! in first slot");
 
         if (Is_Lifted_Void(first))
-            return fail ("PACK! cannot decay VOID! in first slot");
+            return_fail ("PACK! cannot decay VOID! in first slot");
 
         if (Is_Lifted_Trash(first))
-            return fail ("PACK! cannot decay TRASH! in first slot");
+            return_fail ("PACK! cannot decay TRASH! in first slot");
 
         assert(Is_Lifted_Action(first));
-        return fail ("PACK! cannot decay ACTION! in first slot");
+        return_fail ("PACK! cannot decay ACTION! in first slot");
     }
 
     assert(not Is_Lifted_Failure(first));  // we ruled these out already

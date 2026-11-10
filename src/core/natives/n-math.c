@@ -143,7 +143,7 @@ DECLARE_NATIVE(SUBTRACT)
             Init_Integer(OUT, i_cast(REBINT, 0) - c2);
             return BOUNCE_OUT;
         }
-        return fail (Error_Codepoint_Negative_Raw());
+        return_fail (Error_Codepoint_Negative_Raw());
     }
 
     if (Is_Blob_And_Is_Zero(e2)) {  // localize NUL to SUBTRACT native [1]
@@ -315,7 +315,7 @@ DECLARE_NATIVE(ROUND)
         ++num_refinements;
 
     if (num_refinements > 1)
-        return fail ("ROUND only accepts one of EVEN, DOWN, HALF-DOWN,"
+        return_fail ("ROUND only accepts one of EVEN, DOWN, HALF-DOWN,"
             " FLOOR, CEILING, or HALF-CEILING refinements");
 
     Element* elem = Element_ARG(VALUE);
@@ -421,7 +421,7 @@ DECLARE_NATIVE(RANDOM_BETWEEN)
     USED(ARG(SECURE));  // passed through via LEVEL
 
     if (not Have_Same_Type(min, max))
-        return fail ("RANDOM-BETWEEN requires MIN and MAX of same type");
+        return_fail ("RANDOM-BETWEEN requires MIN and MAX of same type");
 
     return Dispatch_Generic(RANDOM_BETWEEN, min, LEVEL);
 }
@@ -575,7 +575,7 @@ static Result(None) Arc_Trans(
 ){
     REBDEC dval = AS_DECIMAL(value);
     if (which != SYM_TANGENT and (dval < -1 or dval > 1))
-        return fail (Error_Overflow_Raw());
+        return_fail (Error_Overflow_Raw());
 
     if (which == SYM_SINE)
         dval = asin(dval);
@@ -958,13 +958,13 @@ DECLARE_NATIVE(LESSER_Q)
     Element* v2 = Element_ARG(VALUE2);
 
     if (not Have_Matching_Lift_Levels(v1, v2))
-        return fail ("Differing lift levels are not comparable");
+        return_fail ("Differing lift levels are not comparable");
 
     Clear_Cell_Quotes_And_Quasi(v1);
     Clear_Cell_Quotes_And_Quasi(v2);
 
     if (Sigil_Of(v1) != Sigil_Of(v2))
-        return fail ("Differing sigils are not comparable");
+        return_fail ("Differing sigils are not comparable");
 
     Clear_Cell_Sigil(v1);
     Clear_Cell_Sigil(v2);
@@ -975,7 +975,7 @@ DECLARE_NATIVE(LESSER_Q)
         else if (Is_Decimal(v1) and Is_Integer(v2))
             Init_Decimal(v2, cast(REBDEC, VAL_INT64(v2)));
         else
-            return fail ("Types are not comparable");
+            return_fail ("Types are not comparable");
     }
 
     return Dispatch_Generic(LESSER_Q, v1, LEVEL);
@@ -998,7 +998,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Element)
     UNUSED(ARG(VALUE1));
     UNUSED(ARG(VALUE2));
 
-    return fail ("Types are not comparable");
+    return_fail ("Types are not comparable");
 }
 
 

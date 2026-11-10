@@ -132,7 +132,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Bitset)
 
     REBINT len = Find_Max_Bit(arg);
     if (len == NOT_FOUND)
-        return fail (PARAM(DEF));
+        return_fail (PARAM(DEF));
 
     Binary* bset = Make_Bitset(len);
     Manage_Stub(bset);
@@ -806,7 +806,7 @@ IMPLEMENT_GENERIC(INTERSECT, Is_Bitset)
         &blob1, &blob2, SYM_INTERSECT, LEVEL
     );
     if (e)
-        return fail (unwrap e);
+        return_fail (unwrap e);
 
     Api(Stable*) processed = rebStable(CANON(BITWISE_AND), blob1, blob2);
 
@@ -828,7 +828,7 @@ IMPLEMENT_GENERIC(UNION, Is_Bitset)
         &blob1, &blob2, SYM_UNION, LEVEL
     );
     if (e)
-        return fail (unwrap e);
+        return_fail (unwrap e);
 
     Api(Stable*) processed = rebStable(CANON(BITWISE_OR), blob1, blob2);
 
@@ -850,7 +850,7 @@ IMPLEMENT_GENERIC(DIFFERENCE, Is_Bitset)
         &blob1, &blob2, SYM_DIFFERENCE, LEVEL
     );
     if (e)
-        return fail (unwrap e);
+        return_fail (unwrap e);
 
     Api(Stable*) processed = rebStable(CANON(BITWISE_XOR), blob1, blob2);
 
@@ -878,7 +878,7 @@ IMPLEMENT_GENERIC(EXCLUDE, Is_Bitset)
         &blob1, &blob2, SYM_EXCLUDE, LEVEL
     );
     if (e)
-        return fail (unwrap e);
+        return_fail (unwrap e);
 
     const Symbol* operation =   // use UNION semantics if negated
         negated_result ? CANON(BITWISE_OR) : CANON(BITWISE_AND_NOT);

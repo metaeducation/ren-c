@@ -932,7 +932,7 @@ DECLARE_NATIVE(TWEAK)
         steps
     );
     if (e)
-        return fail (unwrap e);
+        return_fail (unwrap e);
 
   return_value_even_if_we_dont_assign: {
 

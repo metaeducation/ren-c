@@ -453,7 +453,7 @@ Result(None) Collect_Inner_Loop(
                 if (flags & COLLECT_TOLERATE_PREBOUND)
                     continue;
 
-                return fail (Error_Collectable_Bound_Raw(e));
+                return_fail (Error_Collectable_Bound_Raw(e));
             }
 
             if (cl->sea) {
@@ -472,7 +472,7 @@ Result(None) Collect_Inner_Loop(
             else if (flags & COLLECT_NO_DUP) {
                 DECLARE_ELEMENT (duplicate);
                 Init_Word(duplicate, unwrap symbol);
-                return fail (Error_Dup_Vars_Raw(duplicate));
+                return_fail (Error_Dup_Vars_Raw(duplicate));
             }
             else {
                 // tolerate duplicate
@@ -537,7 +537,7 @@ Result(None) Wrap_Extend_Core(
         cl, flags, at, tail
     ) except (Error* e) {
         Destruct_Collector(cl);
-        return fail (e);
+        return_fail (e);
     }
 
     Option(Stump*) stump = cl->binder->stump_list;

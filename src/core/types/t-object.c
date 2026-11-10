@@ -461,7 +461,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
     StackIndex lowest_stackindex = TOP_INDEX;  // for refinements
 
     if (not Is_Frame(arg))
-        return fail (Error_Bad_Make(HEART_FRAME, arg));
+        return_fail (Error_Bad_Make(HEART_FRAME, arg));
 
     Option(VarList*) coupling = Frame_Coupling(arg);
 
@@ -489,7 +489,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Module)
     Element* arg = ARG(DEF);
 
     if (not Any_List(arg))
-        return fail ("Currently only (MAKE MODULE! LIST) is allowed");
+        return_fail ("Currently only (MAKE MODULE! LIST) is allowed");
 
     SeaOfVars* sea = Alloc_Sea_Core(BASE_FLAG_MANAGED);
     Tweak_Link_Inherit_Bind(sea, Cell_Binding(arg));
@@ -538,7 +538,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
             return BOUNCE_OUT;
         }
 
-        return fail (Error_Bad_Make(HEART_OBJECT, arg));
+        return_fail (Error_Bad_Make(HEART_OBJECT, arg));
     }
 
     assert(Datatype_Builtin_Heart(type) == HEART_OBJECT);
@@ -596,7 +596,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
         return BOUNCE_OUT;
     }
 
-    return fail (Error_Bad_Make(HEART_OBJECT, arg));
+    return_fail (Error_Bad_Make(HEART_OBJECT, arg));
 }
 
 
@@ -1596,7 +1596,7 @@ DECLARE_NATIVE(BODY_OF)  // !!! should this be SOURCE-OF ?
     Details* details = Ensure_Phase_Details(phase);
     DetailsQuerier* querier = Details_Querier(details);
     if (not (*querier)(OUT, details, SYM_BODY_OF))
-        return fail ("Frame Details does not offer BODY, use TRY for NULL");
+        return_fail ("Frame Details does not offer BODY, use TRY for NULL");
 
     return BOUNCE_OUT;
 }
@@ -1623,7 +1623,7 @@ DECLARE_NATIVE(COUPLING_OF)
 
     Details* details = Ensure_Phase_Details(Frame_Phase(frame));
     if (Not_Details_Flag(details, METHODIZED))
-        return fail ("FRAME! is not methodized, no COUPLING OF is applicable");
+        return_fail ("FRAME! is not methodized, no COUPLING OF is applicable");
 
     Option(VarList*) coupling = Frame_Coupling(frame);
 
@@ -1743,7 +1743,7 @@ IMPLEMENT_GENERIC(FILE_OF, Is_Frame)
         }
     }
 
-    return fail ("File not available for frame");
+    return_fail ("File not available for frame");
 }
 
 
@@ -1771,7 +1771,7 @@ IMPLEMENT_GENERIC(LINE_OF, Is_Frame)
         }
     }
 
-    return fail ("Line not available for frame");
+    return_fail ("Line not available for frame");
 }
 
 

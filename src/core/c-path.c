@@ -47,7 +47,7 @@ Result(Element*) Init_Any_Sequence_At_Listlike(
     Length len_at = Array_Len(a) - offset;
 
     if (len_at < 2)
-        return fail (Error_Sequence_Too_Short_Raw());
+        return_fail (Error_Sequence_Too_Short_Raw());
 
     if (len_at == 2) {  // use optimization
         return Init_Any_Sequence_Pairlike(
@@ -140,14 +140,14 @@ DECLARE_NATIVE(PICK)
     Drop_Data_Stack_To(STACK_BASE);
 
     if (e)  // should be willing to bounce to trampoline...
-        return fail (unwrap e);
+        return_fail (unwrap e);
 
     require (
       Unlift_Cell_No_Decay(SPARE)  // !!! faster version, known ok antiform?
     );
 
     if (Is_Void(SPARE)) // workaround for old pick tolerance on missing
-        return fail (Error_Bad_Pick_Raw(picker));
+        return_fail (Error_Bad_Pick_Raw(picker));
 
     require (
       Decay_If_Unstable(SPARE)
@@ -275,7 +275,7 @@ DECLARE_NATIVE(POKE)
     Drop_Data_Stack_To(STACK_BASE);
 
     if (e)
-        return fail (unwrap e);
+        return_fail (unwrap e);
 
     return COPY_TO_OUT(v);
 }
@@ -329,7 +329,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Sequence)
     Length b_len = Sequence_Len(b);
 
     if (a_len != b_len)
-        return fail ("Temporarily disallow compare unequal length sequences");
+        return_fail ("Temporarily disallow compare unequal length sequences");
 
     Sink(Element) a_item = SCRATCH;
     Sink(Element) b_item = SPARE;
@@ -350,7 +350,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Sequence)
         if (equal)
             continue;  // don't fret they couldn't compare with LESSER?
 
-        return fail ("Couldn't compare values");  // fret
+        return_fail ("Couldn't compare values");  // fret
     }
 
     return LOGIC_OUT(true);

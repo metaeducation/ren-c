@@ -416,11 +416,11 @@ static Result(Option(SymId)) Get_Parse_Value(
     }
 
     if (Is_Quasiform(out_value))
-        return fail ("RULE should not look up to quasiforms");
+        return_fail ("RULE should not look up to quasiforms");
 
     if (Is_Antiform(out_value)) {
         if (Is_Null(out_value))
-            return fail (Error_Bad_Null(rule));
+            return_fail (Error_Bad_Null(rule));
 
         if (Is_Logic(out_value) or Is_Splice(out_value))
             Quasify_Antiform(out_value);
@@ -433,12 +433,12 @@ static Result(Option(SymId)) Get_Parse_Value(
             assert(Is_Frame(out_value));
         }
         else {
-            return fail (Error_Bad_Antiform(out));
+            return_fail (Error_Bad_Antiform(out));
         }
     }
     else {
         if (Is_Integer(out))
-            return fail (
+            return_fail (
                 "Use REPEAT on integers https://forum.rebol.info/t/1578/6"
             );
     }
@@ -2573,7 +2573,7 @@ DECLARE_NATIVE(PARSE3)
     if (Is_Light_Null(OUT)) {  // a match failed (but may be at end of input)
         if (ARG(MATCH))
             return NULL_OUT;
-        return fail (Error_Parse3_Incomplete_Raw());
+        return_fail (Error_Parse3_Incomplete_Raw());
     }
 
     Index index = VAL_UINT32(As_Element(OUT));
@@ -2583,7 +2583,7 @@ DECLARE_NATIVE(PARSE3)
         if (ARG(MATCH))
             return NULL_OUT;
         if (not ARG(RELAX))
-            return fail (Error_Parse3_Incomplete_Raw());
+            return_fail (Error_Parse3_Incomplete_Raw());
     }
 
     if (ARG(MATCH))

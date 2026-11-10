@@ -137,19 +137,19 @@ Result(Codepoint) Back_Scan_Utf8_Char(  // no NUL or substitution chars [1]
 
     if (size) {  // Check that we have enough valid source bytes
         if (i_cast(Size, trail + 1) > *(unwrap size))
-            return fail (Cell_Error(g_error_utf8_too_short));  // cached [3]
+            return_fail (Cell_Error(g_error_utf8_too_short));  // cached [3]
     }
     else if (trail != 0) {
         do {
             if (source[trail] < 0x80)
-                return fail (Cell_Error(g_error_utf8_trail_bad_bit));  // [3]
+                return_fail (Cell_Error(g_error_utf8_trail_bad_bit));  // [3]
         } while (--trail != 0);
 
         trail = g_trailing_bytes_for_utf8[*source];
     }
 
     if (not Is_Legal_UTF8(source, trail + 1))  // was omitted in R3-Alpha [2]
-        return fail (Cell_Error(g_error_overlong_utf8));  // cached [3]
+        return_fail (Cell_Error(g_error_overlong_utf8));  // cached [3]
 
     switch (trail) {
         case 5: c += *source++; c <<= 6;  // falls through
@@ -162,12 +162,12 @@ Result(Codepoint) Back_Scan_Utf8_Char(  // no NUL or substitution chars [1]
     c -= g_offsets_from_utf8[trail];
 
     if (c > UNI_MAX_LEGAL_UTF32)
-        return fail (Cell_Error(g_error_codepoint_too_high));  // cached [3]
+        return_fail (Cell_Error(g_error_codepoint_too_high));  // cached [3]
     if (c >= UNI_SUR_HIGH_START and c <= UNI_SUR_LOW_END)
-        return fail (Cell_Error(g_error_no_utf8_surrogates));  // cached [3]
+        return_fail (Cell_Error(g_error_no_utf8_surrogates));  // cached [3]
 
     if (c == 0)  // string types disallow internal 0 bytes in Ren-C [1]
-        return fail (Cell_Error(g_error_illegal_zero_byte));  // cached [3]
+        return_fail (Cell_Error(g_error_illegal_zero_byte));  // cached [3]
 
     if (size)
         *(unwrap size) -= trail;
@@ -306,7 +306,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 
   bad_make:
 
-    return fail (Error_Bad_Make(heart, arg));
+    return_fail (Error_Bad_Make(heart, arg));
 }
 
 
@@ -398,7 +398,7 @@ DECLARE_NATIVE(TO_CHAR)
     }
 
     if (size == 0)
-        return fail (Error_Not_One_Codepoint_Raw());
+        return_fail (Error_Not_One_Codepoint_Raw());
 
     Codepoint c;
     const Byte* bp = at;
@@ -411,7 +411,7 @@ DECLARE_NATIVE(TO_CHAR)
     }
     ++bp;
     if (bp != at + size)
-        return fail (Error_Not_One_Codepoint_Raw());
+        return_fail (Error_Not_One_Codepoint_Raw());
 
     Init_Char_Unchecked(OUT, c);  // scan checked it
     return BOUNCE_OUT;
@@ -452,7 +452,7 @@ static Result(REBI64) Get_Math_Arg_For_Char(
         return cast(REBINT, VAL_DECIMAL(arg));
 
       default:
-        return fail (Error_Math_Args(TYPE_RUNE, verb));
+        return_fail (Error_Math_Args(TYPE_RUNE, verb));
     }
 }
 
@@ -616,7 +616,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     }
 
     if (chr < 0)
-        return fail (Error_Codepoint_Negative_Raw());
+        return_fail (Error_Codepoint_Negative_Raw());
 
     trap (
       Init_Single_Codepoint_Rune(OUT, cast(Codepoint, chr))
@@ -710,7 +710,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
               const Byte* ep = Scan_Email_To_Stack(utf8, size)
             );
             if (ep != cast(const Byte*, utf8) + size)
-                return fail (Error_Scan_Invalid_Raw(ARG(TYPE), v));
+                return_fail (Error_Scan_Invalid_Raw(ARG(TYPE), v));
 
             Move_Cell(OUT, TOP_ELEMENT);
             DROP();
@@ -721,7 +721,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
             cast(const Byte*, utf8) + size
             != Try_Scan_URL_To_Stack(utf8, size)
         ){
-            return fail (Error_Scan_Invalid_Raw(ARG(TYPE), v));
+            return_fail (Error_Scan_Invalid_Raw(ARG(TYPE), v));
         }
         Move_Cell(OUT, TOP_ELEMENT);
         DROP();
@@ -819,14 +819,14 @@ Result(Element*) Alias_Any_Utf8_As(
         if (Stringlike_Has_Stub(v)) {
             const Strand* str = Cell_Strand(v);
             if (Series_Index(v) != 0)
-                return fail ("Can't alias string as WORD! unless at head");
+                return_fail ("Can't alias string as WORD! unless at head");
 
             if (Is_Strand_Symbol(str))  // already frozen and checked!
                 return Init_Word(out, cast(const Symbol*, str));
 
             if (not Is_Flex_Frozen(str)) {  // always force frozen
                 if (Get_Cell_Flag(v, CONST))
-                    return fail (Error_Alias_Constrains_Raw());
+                    return_fail (Error_Alias_Constrains_Raw());
                 Freeze_Flex(str);
             }
         }
@@ -866,7 +866,7 @@ Result(Element*) Alias_Any_Utf8_As(
             const Strand *s = Cell_Strand(v);
             if (not Is_Flex_Frozen(s)) {  // always force frozen
                 if (Get_Cell_Flag(v, CONST))
-                    return fail (Error_Alias_Constrains_Raw());
+                    return_fail (Error_Alias_Constrains_Raw());
                 Freeze_Flex(s);
             }
         }
@@ -887,7 +887,7 @@ Result(Element*) Alias_Any_Utf8_As(
             const Strand *s = Cell_Strand(v);
             if (not Is_Flex_Frozen(s)) {  // always force frozen
                 if (Get_Cell_Flag(v, CONST))
-                    return fail (Error_Alias_Constrains_Raw());
+                    return_fail (Error_Alias_Constrains_Raw());
                 Freeze_Flex(s);
             }
         }
@@ -901,7 +901,7 @@ Result(Element*) Alias_Any_Utf8_As(
         return out;
     }
 
-    return fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
+    return_fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
 }
 
 
@@ -1079,7 +1079,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Rune)
     Option(Codepoint) c = Codepoint_Of_Rune_If_Single_Char(rune);
 
     if (not c)
-        return fail (Error_Not_One_Codepoint_Raw());
+        return_fail (Error_Not_One_Codepoint_Raw());
 
     Init_Integer(OUT, unwrap c);
     return BOUNCE_OUT;

@@ -73,7 +73,7 @@ static Result(None) Push_Keys_And_Params_For_Fence(const Element* fence)
             must_be_action = true;
         }
         else
-            return fail (Error_Bad_Value(item));
+            return_fail (Error_Bad_Value(item));
 
         Init_Word(PUSH(), symbol);
 
@@ -96,13 +96,13 @@ static Result(None) Push_Keys_And_Params_For_Fence(const Element* fence)
 
         if (Trampoline_With_Top_As_Root_Throws()) {  // run the group
             Drop_Level_Unbalanced(sub);
-            return fail (Error_No_Catch_For_Throw(sub));
+            return_fail (Error_No_Catch_For_Throw(sub));
         }
 
 
         if (meta or Is_Non_Meta_Assignable_Unstable_Antiform(Level_Out(sub))) {
             if (Is_Failure(Level_Out(sub)))  // don't quietly store errors
-                return fail (Cell_Error(Level_Out(sub)));
+                return_fail (Cell_Error(Level_Out(sub)));
 
             Move_Cell(PUSH(), Level_Out(sub));
         }
@@ -115,7 +115,7 @@ static Result(None) Push_Keys_And_Params_For_Fence(const Element* fence)
 
             if (must_be_action) {
                 if (not Is_Frame(TOP_ELEMENT))
-                    return fail (
+                    return_fail (
                         "Assignment using /FOO must be an action or frame"
                     );
 
@@ -214,13 +214,13 @@ static Result(None) Push_Keys_And_Params_Core(
   handle_description_or_parameter_note: { ////////////////////////////////////
 
     if (augment_initial_entry) {
-        return fail (
+        return_fail (
             "Function description not allowed in AUGMENT spec"
         );
     }
 
     if (not Is_Cell_A_Bedrock_Hole(TOP_SLOT))
-        return fail (
+        return_fail (
             "Text strings must describe parameters, not locals"
         );
 
@@ -237,13 +237,13 @@ static Result(None) Push_Keys_And_Params_Core(
   // Includes parameter tags, like <opt>
 
     if (augment_initial_entry) {
-        return fail (
+        return_fail (
             "Function return spec block not allowed in AUGMENT spec"
         );
     }
 
     if (Parameter_Spec(TOP_SLOT))  // `func [x [word!] [word!]]`
-        return fail (Error_Bad_Func_Def_Raw(v));  // too many blocks
+        return_fail (Error_Bad_Func_Def_Raw(v));  // too many blocks
 
     Context* derived = Derive_Binding(Level_Binding(L), v);
     bool is_returner = (TOP_INDEX == returner_index);
@@ -277,14 +277,14 @@ static Result(None) Push_Keys_And_Params_Core(
     bool strict = false;
 
     if (augment_initial_entry) {
-        return fail (
+        return_fail (
             "Augmentation cannot add methodization via <.>"
         );
     }
 
     if (0 == CT_Utf8(v, g_tag_dot_1, strict)) {
         if (not Is_Quasar(methodization))
-            return fail ("Duplicate <.> in spec");
+            return_fail ("Duplicate <.> in spec");
 
         Init_Unconstrained_Parameter(
             methodization,
@@ -294,7 +294,7 @@ static Result(None) Push_Keys_And_Params_Core(
         goto next_spec_item;
     }
 
-    return fail (Error_Bad_Value(v));
+    return_fail (Error_Bad_Value(v));
 
 } handle_any_word_parameters_themselves: { ///////////////////////////////////
 
@@ -305,7 +305,7 @@ static Result(None) Push_Keys_And_Params_Core(
 
     if (Quotes_Of(v) > 0) {
         if (Type_Of(v) != TYPE_QUOTED_1_TIME_NONQUASI)
-            return fail (Error_Bad_Func_Def_Raw(v));
+            return_fail (Error_Bad_Func_Def_Raw(v));
 
         Clear_Cell_Quotes_And_Quasi(spare);
         quoted = true;
@@ -325,7 +325,7 @@ static Result(None) Push_Keys_And_Params_Core(
 
     Option(SingleHeart) singleheart = Try_Get_Sequence_Singleheart(v);
     if (not singleheart)
-        return fail (Error_Bad_Func_Def_Raw(v));
+        return_fail (Error_Bad_Func_Def_Raw(v));
 
     trap (
       Unsingleheart_Sequence(spare)  // updates v
@@ -337,7 +337,7 @@ static Result(None) Push_Keys_And_Params_Core(
             returner_id != SYM_DUMMY1  // used by LAMBDA (hack)
             or Series_Len_At(spare) != 0
         ){
-            return fail (
+            return_fail (
                 "SET-BLOCK! result spec only allowed as []: in LAMBDA"
             );
         }
@@ -351,7 +351,7 @@ static Result(None) Push_Keys_And_Params_Core(
             or not returner_id
             or Word_Id(v) != unwrap returner_id
         ){
-            return fail (
+            return_fail (
                 "SET-WORD in spec must match RETURN:/YIELD: name"
             );
         }
@@ -360,7 +360,7 @@ static Result(None) Push_Keys_And_Params_Core(
 
       default: {
         if (not Singleheart_Has_Leading_Blank(unwrap singleheart))
-            return fail (Error_Bad_Func_Def_Raw(v));
+            return_fail (Error_Bad_Func_Def_Raw(v));
 
         refinement = true;
         goto post_chain_handling; }
@@ -372,11 +372,11 @@ static Result(None) Push_Keys_And_Params_Core(
     ){
         if (seen_returner) {
             if (SYM_DUMMY1 == unwrap returner_id)
-                return fail ("Duplicate []: in lambda spec");
+                return_fail ("Duplicate []: in lambda spec");
             if (SYM_RETURN == unwrap returner_id)
-                return fail ("Duplicate RETURN: in function spec");
+                return_fail ("Duplicate RETURN: in function spec");
             assert(SYM_YIELD == unwrap returner_id);
-            return fail ("Duplicate YIELD: in yielder spec");
+            return_fail ("Duplicate YIELD: in yielder spec");
         }
         goto next_spec_item;
     }
@@ -402,7 +402,7 @@ static Result(None) Push_Keys_And_Params_Core(
             break;
 
           case SIGIL_TIE:  // aliasable parmaeters... coming soon!
-            return fail (Error_Bad_Func_Def_Raw(v));
+            return_fail (Error_Bad_Func_Def_Raw(v));
         }
 
         goto push_parameter;
@@ -419,24 +419,24 @@ static Result(None) Push_Keys_And_Params_Core(
         goto push_parameter;
     }
 
-    return fail (Error_Bad_Func_Def_Raw(v));
+    return_fail (Error_Bad_Func_Def_Raw(v));
 
 } push_parameter: { //////////////////////////////////////////////////////////
 
     if (pclass == PARAMCLASS_0)  // didn't match
-        return fail (Error_Bad_Func_Def_Raw(v));
+        return_fail (Error_Bad_Func_Def_Raw(v));
 
     if (returner_id and Symbol_Id(symbol) == unwrap returner_id) {
         if (SYM_DUMMY1 == unwrap returner_id)
-            return fail (
+            return_fail (
                 "DUMMY1 is a reserved arg name in LAMBDA due to a hack :-("
             );
         if (SYM_RETURN == unwrap returner_id)
-            return fail (
+            return_fail (
                 "Generator provides RETURN:, use LAMBDA if not desired"
             );
         assert(SYM_YIELD == unwrap returner_id);
-        return fail (
+        return_fail (
             "Generator provides YIELD:, can't have YIELD parameter"
         );
     }
@@ -484,7 +484,7 @@ static Result(None) Push_Keys_And_Params_Core(
 //
 //  Push_Keys_And_Params: C
 //
-// Wrapper allowing `return fail` from Push_Keys_And_Params_Core() to properly
+// Wrapper allowing `return_fail` from Push_Keys_And_Params_Core() to properly
 // balance the stack.
 //
 Result(None) Push_Keys_And_Params(
@@ -505,7 +505,7 @@ Result(None) Push_Keys_And_Params(
     ) except (Error* e) {
         Drop_Data_Stack_To(L->baseline.stack_base);
         Drop_Level(L);
-        return fail (e);
+        return_fail (e);
     }
 
     Drop_Level_Unbalanced(L);  // pushed values on stack meant to be there
@@ -580,7 +580,7 @@ Result(ParamList*) Pop_Paramlist(
             cl, flags, at, tail
         ) except (Error* e) {
             Destruct_Collector(cl);
-            return fail (e);
+            return_fail (e);
         }
 
         Option(Stump*) stump = cl->binder->stump_list;
@@ -699,7 +699,7 @@ Result(ParamList*) Pop_Paramlist(
     Destruct_Binder(binder);
 
     if (duplicate)
-        return fail (Error_Dup_Vars_Raw(duplicate));
+        return_fail (Error_Dup_Vars_Raw(duplicate));
 
     Assert_Flex_Term_If_Needed(paramlist);
     return cast(ParamList*, paramlist);
@@ -740,7 +740,7 @@ Result(ParamList*) Make_Paramlist_Managed(
     Push_Keys_And_Params(  // separate Push() phase [1]
         methodization, spec, flags, returner
     ) except (Error* e) {
-        return fail (e);
+        return_fail (e);
     }
 
     Option(Phase*) prior = nullptr;
@@ -970,7 +970,7 @@ DECLARE_NATIVE(COUPLE)
 
     Details* details = Ensure_Phase_Details(Frame_Phase(OUT));
     if (Not_Details_Flag(details, METHODIZED))
-        return fail ("FRAME! is not methodized, cannot COUPLE it");
+        return_fail ("FRAME! is not methodized, cannot COUPLE it");
 
     Option(Stable*) coupling = ARG(COUPLING);
 

@@ -533,7 +533,7 @@ DECLARE_NATIVE(SKIP)
     if (Is_None(ARG(SERIES))) {
         Element* offset = Element_ARG(OFFSET);
         if (not Is_Integer(offset) or 0 != VAL_UINT32(offset))
-            return fail ("Cannot SKIP a NONE by a non-zero offset");
+            return_fail ("Cannot SKIP a NONE by a non-zero offset");
         Init_None(OUT);
         return BOUNCE_OUT;
     }

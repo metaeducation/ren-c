@@ -137,7 +137,7 @@ INLINE Option(Codepoint) Codepoint_Of_Rune_If_Single_Char(const Cell* cell)
 
 INLINE Result(Codepoint) Get_Rune_Single_Codepoint(const Cell* cell){
     if (not Rune_Is_Single_Codepoint(cell))
-        return fail (
+        return_fail (
             "Can't get Codepoint if RUNE! has more than one character"
         );
 
@@ -269,10 +269,10 @@ INLINE Result(Element*) Init_Single_Codepoint_Rune_Untracked(
     uint32_t c
 ){
     if (c > MAX_UNI)
-        return fail (Cell_Error(g_error_codepoint_too_high));  // no param [1]
+        return_fail (Cell_Error(g_error_codepoint_too_high));  // no param [1]
 
     if (c >= UNI_SUR_HIGH_START and c <= UNI_SUR_LOW_END)
-        return fail (Cell_Error(g_error_no_utf8_surrogates));  // param [1]
+        return_fail (Cell_Error(g_error_no_utf8_surrogates));  // param [1]
 
     // !!! Should other values that can't be read be forbidden?  Byte order
     // mark?  UTF-16 surrogate stuff?  If something is not legitimate in a

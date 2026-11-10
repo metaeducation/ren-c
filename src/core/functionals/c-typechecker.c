@@ -67,7 +67,7 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
         bool check_datatype = ARG(TYPE);
         if (check_datatype) {
             if (not Is_Datatype(v))
-                return fail (
+                return_fail (
                     "Datatype check on non-datatype (use TRY for NULL)"
                 );
 
@@ -75,7 +75,7 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
                 ARG(QUOTED)
                 or ARG(TIED) or ARG(PINNED) or ARG(METAFORM)
             ){
-                return fail (Error_Bad_Refines_Raw());
+                return_fail (Error_Bad_Refines_Raw());
             }
 
             type = Datatype_Type(v);
@@ -99,7 +99,7 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
 
             if (ARG(TIED)) {
                 if (ARG(PINNED) or ARG(METAFORM))
-                    return fail (Error_Bad_Refines_Raw());
+                    return_fail (Error_Bad_Refines_Raw());
 
                 if (type != TYPE_TIED)
                     return LOGIC_OUT(false);
@@ -108,7 +108,7 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
             }
             else if (ARG(PINNED)) {
                 if (ARG(METAFORM))
-                    return fail (Error_Bad_Refines_Raw());
+                    return_fail (Error_Bad_Refines_Raw());
 
                 if (type != TYPE_PINNED)
                     return LOGIC_OUT(false);

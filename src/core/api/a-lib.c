@@ -1262,7 +1262,7 @@ static Result(Level*) Run_Valist_And_Call_Va_End(  // va_end()s [1]
             | (not LEVEL_FLAG_VANISHABLE_VOIDS_ONLY)  // !!! correct?
     ) except (Error* e) {
         Free_Feed(feed);
-        return fail (e);
+        return_fail (e);
     }
 
     if (run_flags & RUN_VA_FLAG_INTERRUPTIBLE)
@@ -1275,7 +1275,7 @@ static Result(Level*) Run_Valist_And_Call_Va_End(  // va_end()s [1]
 
     if (threw) {
         Drop_Level(L);
-        return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+        return_fail (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
 
     return L;

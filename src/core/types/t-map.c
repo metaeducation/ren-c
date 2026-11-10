@@ -82,7 +82,7 @@ Result(Map*) Make_Map(REBLEN capacity)
 
     HashList* hashlist = Make_Hashlist(capacity) except (Error* e) {
         Free_Unmanaged_Flex(pairlist);
-        return fail (e);
+        return_fail (e);
     }
 
     Tweak_Link_Hashlist(pairlist, hashlist);

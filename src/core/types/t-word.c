@@ -103,7 +103,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
     Element* arg = ARG(DEF);
 
     if (not Any_Sequence(arg))
-        return fail (Error_Bad_Make(heart, arg));
+        return_fail (Error_Bad_Make(heart, arg));
 
   make_word_from_sequence: {
 
@@ -126,7 +126,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
         return COPY_TO_OUT(arg);
     }
 
-    return fail (
+    return_fail (
         "Can't MAKE ANY-WORD? from sequence unless it wraps one WORD!"
     );
 }}
@@ -207,7 +207,7 @@ Result(Element*) Alias_Any_Word_As(
     if (as == HEART_BLOB)  // will be an immutable blob
         return Init_Blob(out, Word_Symbol(word));
 
-    return fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
+    return_fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
 }
 
 

@@ -144,7 +144,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
     Count quotes = Quotes_Of(spec);
     if (quotes) {
         if (quotes > 1)
-            return fail (
+            return_fail (
                 "Only one level of quote to suppress checking of types in spec"
             );
 
@@ -712,7 +712,7 @@ Result(None) Decorate_Element(const Element* decoration, Element* element)
     if (sigil_to_add) {
         assert(not Sigil_Of(element));  // took PLAIN? in the type spec
         if (not Any_Sigilable(element))
-            return fail ("DECORATE cannot apply Sigils to this type");
+            return_fail ("DECORATE cannot apply Sigils to this type");
 
         Add_Cell_Sigil(element, unwrap sigil_to_add);
     }
@@ -951,7 +951,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
         break;
     }
 
-    return fail (Error_Bad_Pick_Raw(picker));
+    return_fail (Error_Bad_Pick_Raw(picker));
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 

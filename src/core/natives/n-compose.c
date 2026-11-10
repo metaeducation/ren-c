@@ -228,7 +228,7 @@ static Result(Stable*) Finalize_Composer_Level(
             not Any_Sequence(out)  // so instead, things like [~/~ . ///]
             and not conflate  // don't rewrite as "sequence-looking" words
         ){
-            return fail (Error_Conflated_Sequence_Raw(Datatype_Of(out), out));
+            return_fail (Error_Conflated_Sequence_Raw(Datatype_Of(out), out));
         }
 
         assert(  // no anti/quasi forms

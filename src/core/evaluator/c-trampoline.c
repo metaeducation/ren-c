@@ -562,7 +562,7 @@ void Shutdown_Trampoline(void)
 //
 // 1. On normal completion with a return result, we do not allow API handles
 //    attached to a level to leak--you are expected to release everything.
-//    But panic () or return fail () cases are exempt.
+//    But panic () or return_fail () cases are exempt.
 //
 //    !!! This may be reviewed in light of wanting to make API programming
 //    easier, especially for JavaScript.

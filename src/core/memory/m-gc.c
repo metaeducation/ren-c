@@ -1249,7 +1249,7 @@ Count Recycle_Core(Flex* sweeplist)
 } mark_failure_state: {
 
   // Currently it's possible for the failure to be set during a GC, because
-  // you can do `return fail` from an executor, which runs a GC.  Rather than
+  // you can do `return_fail` from an executor, which runs a GC.  Rather than
   // prohibit it, allow it for now--though the policy should be reviewed.
 
     if (g_failure)

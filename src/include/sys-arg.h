@@ -357,7 +357,7 @@ INLINE Result(Option(Element*)) Typecheck_Element_Intrinsic_Arg(
     if (Is_Antiform(arg)) {
         if (Get_Level_Flag(L, RUNNING_TYPECHECK))  // [1]
             return nullptr;  // [2]
-        return fail (Error_Bad_Intrinsic_Arg_1(L));
+        return_fail (Error_Bad_Intrinsic_Arg_1(L));
     }
 
     return As_Element(arg);

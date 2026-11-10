@@ -45,7 +45,7 @@ IMPLEMENT_GENERIC(SKIP, Any_Series)
 
     if (not ARG(UNBOUNDED)) {
         if (i < 0 or i > i_cast(REBI64, Series_Len_Head(v)))
-            return fail (Error_Index_Out_Of_Range_Raw());
+            return_fail (Error_Index_Out_Of_Range_Raw());
     }
 
     SERIES_INDEX_UNBOUNDED(v) = i;
@@ -449,7 +449,7 @@ Result(bool) Equal_Values(const Stable* s, const Stable* t, bool strict)
     Option(Heart) t_heart = Heart_Of(t);
 
     if (not s_heart and not t_heart)
-        return fail ("Custom type Equal_Values not implemented yet");
+        return_fail ("Custom type Equal_Values not implemented yet");
 
     if (not s_heart or not t_heart)
         return false;  // one is a custom type, the other is not, so not equal
@@ -487,7 +487,7 @@ Result(bool) Equal_Values(const Stable* s, const Stable* t, bool strict)
 
     bool threw = Trampoline_With_Top_As_Root_Throws();
     if (threw)
-        return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+        return_fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     bool logic;
 

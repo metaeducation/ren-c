@@ -120,7 +120,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
         if (Is_Decimal(out))
             return rebDelegate(CANON(ROUND), out);  // out is legal ATM [2]
 
-        return fail ("Transcode_One() gave unwanted type");
+        return_fail ("Transcode_One() gave unwanted type");
     }
 
     dont(Is_Blob(arg));  // [3]
@@ -265,22 +265,22 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
       case SYM_ADD: {
         REBI64 anum;
         if (Add_I64_Overflows(&anum, num, arg))
-            return fail (Error_Overflow_Raw());
+            return_fail (Error_Overflow_Raw());
         Init_Integer(OUT, anum);
         return BOUNCE_OUT; }
 
       case SYM_SUBTRACT: {
         REBI64 anum;
         if (Subtract_I64_Overflows(&anum, num, arg))
-            return fail (Error_Overflow_Raw());
+            return_fail (Error_Overflow_Raw());
         Init_Integer(OUT, anum);
         return BOUNCE_OUT; }
 
       case SYM_DIVIDE:
         if (arg == 0)
-            return fail (Error_Zero_Divide_Raw());
+            return_fail (Error_Zero_Divide_Raw());
         if (num == INT64_MIN && arg == -1)
-            return fail (Error_Overflow_Raw());
+            return_fail (Error_Overflow_Raw());
         if (num % arg == 0) {
             Init_Integer(OUT, num / arg);
             return BOUNCE_OUT;
@@ -293,7 +293,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
 
       case SYM_REMAINDER:
         if (arg == 0)
-            return fail (Error_Zero_Divide_Raw());
+            return_fail (Error_Zero_Divide_Raw());
         Init_Integer(OUT, (arg != -1) ? (num % arg) : 0);
         return BOUNCE_OUT;
 
@@ -383,7 +383,7 @@ IMPLEMENT_GENERIC(NEGATE, Is_Integer)
     REBI64 num = VAL_INT64(Element_ARG(VALUE));
 
     if (num == INT64_MIN)
-        return fail (Error_Overflow_Raw());
+        return_fail (Error_Overflow_Raw());
     Init_Integer(OUT, -num);
     return BOUNCE_OUT;
 }
@@ -396,7 +396,7 @@ IMPLEMENT_GENERIC(ABSOLUTE, Is_Integer)
     REBI64 num = VAL_INT64(Element_ARG(VALUE));
 
     if (num == INT64_MIN)
-        return fail (Error_Overflow_Raw());
+        return_fail (Error_Overflow_Raw());
     Init_Integer(OUT, num < 0 ? -num : num);
     return BOUNCE_OUT;
 }
@@ -468,7 +468,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Integer)
 
     REBI64 result;
     if (Multipy_I64_Overflows(&result, num1, num2))
-        return fail (Error_Overflow_Raw());
+        return_fail (Error_Overflow_Raw());
     Init_Integer(OUT, result);
     return BOUNCE_OUT;
 }

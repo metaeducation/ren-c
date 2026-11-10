@@ -320,7 +320,7 @@ INLINE bool Is_Lifted_Unstable_Antiform(const Value* v) {  // costs more [3]
 MUTABLE_IF_C(Result(Stable*), INLINE) Ensure_Stable(CONST_IF_C(Value*) v_) {
     CONSTABLE(Value*) v = m_cast(Value*, v_);
     if (Not_Cell_Stable(v))
-        return fail ("Value is an unstable antiform");
+        return_fail ("Value is an unstable antiform");
     return raw_cast(Stable*, v);
 }
 

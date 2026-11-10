@@ -77,7 +77,7 @@ static Result(bool) Return_Out_For_Conditional_Or_Optional(Level* level_)
     Value* v = Possibly_Unstable(ARG(VALUE));
 
     if (Is_Failure(v))
-        return fail (Cell_Error(v));
+        return_fail (Cell_Error(v));
 
     if (Is_Void(v))  // [1]
         return false;  // [2]

@@ -657,7 +657,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
 
             tz = cast(REBINT, VAL_NANO(item) / (ZONE_MINS * MIN_SEC));
             if (tz < -MAX_ZONE or tz > MAX_ZONE)
-                return fail (Error_Out_Of_Range(item));
+                return_fail (Error_Out_Of_Range(item));
             ++item;
 
             if (item != tail)
@@ -676,7 +676,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
 
 } bad_make: {  ///////////////////////////////////////////////////////////////
 
-    return fail (Error_Bad_Make(HEART_DATE, arg));
+    return_fail (Error_Bad_Make(HEART_DATE, arg));
 }}
 
 

@@ -236,7 +236,7 @@ DECLARE_NATIVE(SIZE_OF)
 DECLARE_NATIVE(INDEX_OF)
 //
 // !!! Should there be a generalized error catch all for ANY-ELEMENT? which
-// says `return fail (Error_Type_Has_No_Index_Raw(Datatype_Of(elem)));`?  Review.
+// says `return_fail (Error_Type_Has_No_Index_Raw(Datatype_Of(elem)));`?  Review.
 {
     INCLUDE_PARAMS_OF_INDEX_OF;
 
@@ -303,7 +303,7 @@ IMPLEMENT_GENERIC(ADDRESS_OF, Is_Frame)
     Details* details = cast(Details*, phase);
     DetailsQuerier* querier = Details_Querier(details);
     if (not (*querier)(OUT, details, SYM_ADDRESS_OF))
-        return fail (
+        return_fail (
             "Frame Details does not offer ADDRESS-OF, use TRY for NULL"
         );
 
@@ -915,17 +915,17 @@ Result(const Byte*) Scan_Email_To_Stack(const Byte* cp, REBLEN len)
     for (; len > 0; len--) {
         if (*cp == '@') {
             if (found_at)
-                return fail ("Email address cannot have multiple '@' symbols");
+                return_fail ("Email address cannot have multiple '@' symbols");
             found_at = true;
         }
 
         if (*cp == '%') {
             if (len <= 2)
-                return fail ("Email must have at least 2 characters after %");
+                return_fail ("Email must have at least 2 characters after %");
 
             Byte decoded;
             if (not (cp = opt Try_Scan_Hex2(&decoded, cp + 1)))
-                return fail ("Coudn't Scan_Hex() in email address");
+                return_fail ("Coudn't Scan_Hex() in email address");
 
             up = Write_Codepoint(up, decoded);
             ++num_chars;
@@ -938,7 +938,7 @@ Result(const Byte*) Scan_Email_To_Stack(const Byte* cp, REBLEN len)
     }
 
     if (not found_at)
-        return fail ("Email address must contain an '@' symbol");
+        return_fail ("Email address must contain an '@' symbol");
 
     Term_Strand_Len_Size(s, num_chars, up - Strand_Head(s));
 

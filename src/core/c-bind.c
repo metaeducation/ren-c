@@ -1285,18 +1285,18 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
     if (Is_Group(spec)) {
         DECLARE_VALUE (temp);
         if (Eval_Any_List_At_Throws(temp, spec, SPECIFIED))
-            return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+            return_fail (Error_No_Catch_For_Throw(TOP_LEVEL));
         require (
           Decay_If_Unstable(temp)
         );
         if (Is_Antiform(temp))
-            return fail (Error_Bad_Antiform(temp));
+            return_fail (Error_Bad_Antiform(temp));
         Move_Cell(spec, As_Element(temp));
     }
 
     REBLEN num_vars = Is_Block(spec) ? Series_Len_At(spec) : 1;
     if (num_vars == 0)
-        return fail (Error_Bad_Value(spec));
+        return_fail (Error_Bad_Value(spec));
 
     const Element* tail;
     const Element* item;
@@ -1343,7 +1343,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             }
         }
 
-        return fail (Error_Bad_Value(check));
+        return_fail (Error_Bad_Value(check));
     }
 
 } make_object: {
@@ -1448,7 +1448,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             Destruct_Binder(binder);  // remove bind indices even if failing
 
         Free_Unmanaged_Flex(Varlist_Array(varlist));
-        return fail (unwrap error);
+        return_fail (unwrap error);
     }
 
     Manage_Stub(varlist);  // must be managed to use in binding
@@ -1521,7 +1521,7 @@ Result(None) Read_Slot_Meta(Sink(Value) out, const Slot* slot)
     unnecessary(Push_Lifeguard(temp));  // slot protects it.
 
     if (rebRunThrows(out, CANON(GET), temp))
-        return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+        return_fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     return none;
 }}
@@ -1536,7 +1536,7 @@ Result(None) Read_Slot(Sink(Stable) out, const Slot* slot) {
       Read_Slot_Meta(atom_out, slot)
     );
     if (Not_Cell_Stable(atom_out))
-        return fail ("Cannot read unstable slot with Read_Slot()");
+        return_fail ("Cannot read unstable slot with Read_Slot()");
     return none;  // out is As_Stable()
 }
 

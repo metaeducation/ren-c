@@ -188,7 +188,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         const Element* item = List_Len_At(&len, arg);
 
         if (len != 2)
-            return fail (Error_Bad_Make(HEART_DECIMAL, arg));
+            return_fail (Error_Bad_Make(HEART_DECIMAL, arg));
 
         REBDEC d;
         if (Is_Integer(item))
@@ -196,7 +196,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         else if (Is_Decimal(item) || Is_Percent(item))
             d = VAL_DECIMAL(item);
         else
-            return fail (Error_Bad_Value(item));
+            return_fail (Error_Bad_Value(item));
 
         ++item;
 
@@ -206,13 +206,13 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         else if (Is_Decimal(item) || Is_Percent(item))
             exp = VAL_DECIMAL(item);
         else
-            return fail (Error_Bad_Value(item));
+            return_fail (Error_Bad_Value(item));
 
         while (exp >= 1) {
             --exp;
             d *= 10.0;
             if (!FINITE(d))
-                return fail (Error_Overflow_Raw());
+                return_fail (Error_Overflow_Raw());
         }
 
         while (exp <= -1) {
@@ -226,7 +226,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         break;
     }
 
-    return fail (Error_Bad_Make(HEART_DECIMAL, arg));
+    return_fail (Error_Bad_Make(HEART_DECIMAL, arg));
 }
 
 

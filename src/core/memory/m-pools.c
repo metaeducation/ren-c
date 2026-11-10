@@ -104,13 +104,13 @@ Result(void*) Raw_Heap_Alloc(Size size)
         and g_mem.usage > unwrap g_mem.usage_limit
     ){
         g_mem.usage -= size;
-        return fail (Cell_Error(g_error_no_memory));  // distinguish error?
+        return_fail (Cell_Error(g_error_no_memory));  // distinguish error?
     }
 
   #if TRAMPOLINE_COUNTS_TICKS && RUNTIME_CHECKS
     if (g_mem.fuzz_factor != 0) {
         if (SPORADICALLY(g_mem.fuzz_factor))
-            return fail ("Artificial allocation failure (fuzz_factor)");
+            return_fail ("Artificial allocation failure (fuzz_factor)");
     }
   #endif
 
@@ -130,7 +130,7 @@ Result(void*) Raw_Heap_Alloc(Size size)
 
     if (not p) {
         g_mem.usage -= size;
-        return fail (Cell_Error(g_error_no_memory));
+        return_fail (Cell_Error(g_error_no_memory));
     }
 
     return p;
@@ -730,7 +730,7 @@ Result(None) Expand_Flex_At_Index_And_Update_Used(
 
     assert(index <= Flex_Used(f));
     if (delta & 0x80000000)
-        return fail (Error_Index_Out_Of_Range_Raw());  // 2GB max
+        return_fail (Error_Index_Out_Of_Range_Raw());  // 2GB max
 
     if (delta == 0)
         return none;
@@ -815,7 +815,7 @@ Result(None) Expand_Flex_At_Index_And_Update_Used(
 //=//// INSUFFICIENT CAPACITY, NEW ALLOCATION REQUIRED ////////////////////=//
 
     if (Get_Flex_Flag(f, FIXED_SIZE))
-        return fail (Error_Locked_Series_Raw());
+        return_fail (Error_Locked_Series_Raw());
 
   #if RUNTIME_CHECKS
     if (g_mem.watch_expand) {
@@ -1056,7 +1056,7 @@ Result(None) Remake_Flex(Flex* f, REBLEN units, Flags flags)
 
         Size requested_size = (units + 1) * wide;
         UNUSED(requested_size);  // can't alloc memory, how to report?
-        return fail (e);
+        return_fail (e);
     }
     assert(Get_Stub_Flag(f, DYNAMIC));
     if (Stub_Holds_Cells(f))

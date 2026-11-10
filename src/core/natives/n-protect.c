@@ -64,7 +64,7 @@ DECLARE_NATIVE(CONST_Q)
     INCLUDE_PARAMS_OF_CONST_Q;
 
     if (not Any_Series(ARG(VALUE)))
-        return fail ("CONST? only works on SERIES?");
+        return_fail ("CONST? only works on SERIES?");
 
     return LOGIC_OUT(Get_Cell_Flag(ARG(VALUE), CONST));
 }

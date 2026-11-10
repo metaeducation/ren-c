@@ -87,7 +87,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         return BOUNCE_OUT;
     }
 
-    return fail (Error_Bad_Make(HEART_TUPLE, arg));
+    return_fail (Error_Bad_Make(HEART_TUPLE, arg));
 }
 
 
@@ -341,13 +341,13 @@ Result(Element*) Alias_Any_Sequence_As(
 
             assert(not Is_Path(temp));  // impossible!
             if (Is_Chain(temp) and (as == HEART_TUPLE or as == HEART_CHAIN))
-                return fail (
+                return_fail (
                     "Can't AS alias CHAIN!-containing sequence"
                     "as TUPLE! or CHAIN!"
                 );
 
             if (Is_Tuple(temp) and as == HEART_TUPLE)
-                return fail (
+                return_fail (
                     "Can't AS alias TUPLE!-containing sequence as TUPLE!"
                 );
         }
@@ -430,7 +430,7 @@ Result(Element*) Alias_Any_Sequence_As(
         return out;
     }
 
-    return fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
+    return_fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
 }
 
 
