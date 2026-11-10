@@ -245,6 +245,22 @@
         }
     };
 
+    // Vouch OnStackPointer<T> safe for needful_void_waypoint_cast (see
+    // NeedfulVoidWaypointSafe in needful-utilities.hpp), *conditionally* on
+    // T being safe.  OnStackPointer's own `explicit operator void*()` always
+    // wins the overload-resolution contest against its implicit `operator
+    // W()` when casting to void* (an exact-match return type beats one
+    // needing a further conversion) -- and that explicit operator does
+    // `c_cast(void*, p)`, i.e. a bare (void*) cast forwarded straight to the
+    // wrapped field `p` of type T [see note 3 above].  So whether THIS
+    // wrapper is safe reduces entirely to whether T's own (void*) cast is.
+    //
+    namespace needful {
+        template<typename T>
+        struct NeedfulVoidWaypointSafe<OnStackPointer<T>>
+            : NeedfulVoidWaypointSafe<T> {};
+    }
+
     template<typename T>  // disallow OnStack(T) from being passed to the API
     inline const void* to_rebarg(const OnStack(T)& val) = delete;
 #endif
