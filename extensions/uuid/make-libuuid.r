@@ -63,7 +63,7 @@ fix-randutils-c: func [
             comment-out-includes
 
             ; randutils.c:137:12: error:
-            ; invalid conversion from ‘void*’ to ‘unsigned char*’
+            ; invalid conversion from `void*` to `unsigned char*`
             ;
             | change -[cp = buf]- -[cp = (unsigned char*)buf]-
 
