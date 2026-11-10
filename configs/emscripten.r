@@ -163,6 +163,13 @@ ldflags: compose [
     (spread switch abrupt-panic-model [
         #uses-try-catch [[
             "-fwasm-exceptions"  ; needed in cflags *and* ldflags
+
+            ; try/catch means the objects were compiled as C++ (`-x c++`),
+            ; but rebmake links with the `emcc` driver.  Newer emsdk won't
+            ; pull in libc++/libc++abi for that (__cxa_throw etc. undefined)
+            ; unless you link with `em++` or ask for C++ defaults like this.
+            ;
+            "-sDEFAULT_TO_CXX"
         ]]
         #uses-longjmp [[
             "-s DISABLE_EXCEPTION_CATCHING=1"

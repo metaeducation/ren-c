@@ -611,12 +611,14 @@ cc: make compiler-class [
         return spaced collect [
             keep file-to-local:pass .exec-file
 
-            ; !!! This was breaking emcc.  However, it is needed in order to
-            ; get shared libraries on Posix.  That feature is being resurrected
-            ; so turn it back on.
+            ; Needed to get shared libraries on Posix.  But not Emscripten:
+            ; newer emsdk treats `-shared` as asking for a wasm SIDE_MODULE
+            ; (no .js output, needs -fPIC), while libr3.js is a full module.
             ; https://github.com/emscripten-core/emscripten/issues/11814
             ;
-            if dynamic [keep "-shared"]
+            if all [dynamic, target-platform.name != 'Emscripten] [
+                keep "-shared"
+            ]
 
             keep "-o"
 
