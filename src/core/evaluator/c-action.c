@@ -649,7 +649,7 @@ Bounce Action_Executor(Level* L)
         Lookahead_To_Sync_Infix_Defer_Flag(L);  // [1]
 
         if (Is_Soft_Escapable_Group(As_Element(ARG))) {
-            Element* arg_in_spare = Move_Cell(SPARE, As_Element(ARG));
+            Element* arg_in_spare = Moved_Cell(SPARE, As_Element(ARG));
 
             if (Eval_Any_List_At_Throws(ARG, arg_in_spare, SPECIFIED))
                 goto handle_thrown;
@@ -688,7 +688,7 @@ Bounce Action_Executor(Level* L)
             assume (
               Refinify_Pushed_Refinement(TOP_ELEMENT)
             );
-            Element* spare = Copy_Cell(SPARE, TOP_ELEMENT);  // [1]
+            Element* spare = Copied_Cell(SPARE, TOP_ELEMENT);  // [1]
             panic (Error_Bad_Parameter_Raw(spare));
         }
 

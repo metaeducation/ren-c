@@ -977,7 +977,7 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Utf8)
     Value* part = LOCAL(PART);
     possibly(Is_Light_Null(part));
 
-    Stable* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
+    Stable* datatype = Copied_Cell(SPARE, Datatype_Of(any_utf8));
 
     return Delegate_Operation_With_Part(
         SYM_REVERSE, SYM_TEXT_X,
@@ -1044,7 +1044,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
     if (ARG(SECURE))
         panic (Error_Bad_Refines_Raw());
 
-    Stable* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
+    Stable* datatype = Copied_Cell(SPARE, Datatype_Of(any_utf8));
 
     return Delegate_Operation_With_Part(
         SYM_SHUFFLE, SYM_TEXT_X,

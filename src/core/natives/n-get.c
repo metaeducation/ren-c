@@ -84,7 +84,7 @@ Result(None) Get_Var_To_Out_Use_Toplevel(
     if (e)
         return_fail (unwrap e);
 
-    Value* got = Copy_Cell(OUT, SPARE);  // !!! extra copy
+    Value* got = Copied_Cell(OUT, SPARE);  // !!! extra copy
 
     require (
       Unlift_Cell_No_Decay(got)  // not unstable if wasn't ^META [1]
@@ -310,7 +310,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
     }
     else switch (Stub_Flavor(cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL: {  // `/a` or `a/`
-        Element* spare = Copy_Cell(SPARE, path);
+        Element* spare = Copied_Cell(SPARE, path);
         Tweak_Cell_Type_Matching_Heartsigil(spare, HEART_WORD, SIGIL_META);
 
         Get_Word_Or_Tuple(OUT, spare) except (Error* e) {
@@ -350,7 +350,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
         );
     }
     else if (Is_Word(at) or Is_Tuple(at)) {
-        Element *word_or_tuple = Copy_Cell(SPARE, at);
+        Element *word_or_tuple = Copied_Cell(SPARE, at);
         Bind_Cell_If_Unbound(word_or_tuple, binding);
         Add_Cell_Sigil(word_or_tuple, SIGIL_META);  // want ACTION!
 

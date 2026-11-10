@@ -121,13 +121,13 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     assert(Is_Possibly_Unstable_Value_Quoted(dual_spare));
-    location_arg = Copy_Cell(
+    location_arg = Copied_Cell(
         Erase_ARG(LOCATION),
         dual_spare
     );
     Unquote_Quoted_Cell(location_arg);
 
-    picker_arg = Copy_Cell(
+    picker_arg = Copied_Cell(
         Erase_ARG(PICKER),
         Data_Stack_At(Stable, picker_index)
     );
@@ -296,13 +296,13 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Writeback_Dual_In_Scratch_To_Spare(
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     assert(Is_Possibly_Unstable_Value_Quoted(dual_location_spare));
-    location_arg = Copy_Cell(
+    location_arg = Copied_Cell(
         Erase_ARG(LOCATION),
         dual_location_spare
     );
     Unquote_Quoted_Cell(location_arg);
 
-    picker_arg = Copy_Cell(
+    picker_arg = Copied_Cell(
         Erase_ARG(PICKER),
         Data_Stack_At(Element, picker_index)
     );
@@ -387,13 +387,13 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Writeback_Dual_In_Scratch_To_Spare(
   // an indirect poke--but not both at once.)
 
     if (Is_Bedrock_Dual_An_Accessor(dual_spare)) {  // FRAME!
-        Element* quoted = Copy_Cell(
+        Element* quoted = Copied_Cell(
             Level_Spare(sub), dual_writeback_scratch
         );
         rebElide(dual_spare, quoted);  // quote suppresses eval
     }
     else if (Is_Bedrock_Dual_An_Alias(dual_spare)) {  // ^WORD!, ^TUPLE!
-        Element* quoted = Copy_Lifted_Cell(
+        Element* quoted = Copied_Lifted_Cell(
             Level_Spare(sub), dual_writeback_scratch
         );
         Quote_Cell(dual_spare);

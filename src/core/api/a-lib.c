@@ -1138,7 +1138,7 @@ RebolValue* API_rebArg(
         return nullptr;
 
     const Stable* arg = cast(Stable*, argR);  // sneaky, but we know!
-    return Copy_Cell(Alloc_Value(), arg);  // don't give Stable* arg directly
+    return Copied_Cell(Alloc_Value(), arg);  // don't give Stable* arg directly
 }
 
 
@@ -1378,7 +1378,7 @@ RebolValue* API_rebValue(
         return nullptr;  // No Is_Null() in API, see Nullptr_If_Nulled_Cell()
     }
 
-    Value* v = Copy_Cell(Alloc_Value_Owned_By(L->prior), out);
+    Value* v = Copied_Cell(Alloc_Value_Owned_By(L->prior), out);
     Drop_Level(L);
     return v;  // caller must rebRelease()
 }
@@ -1485,7 +1485,7 @@ RebolValue* API_rebUndecayed(
         return nullptr;  // No Is_Null() in API, see Nullptr_If_Nulled_Cell()
     }
 
-    Value* v = Copy_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
+    Value* v = Copied_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
     Drop_Level(L);
     return v;  // caller must rebRelease()
 }
@@ -1511,7 +1511,7 @@ RebolValue* API_rebEnrescue(
         panic (e);
     }
 
-    Value* v = Copy_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
+    Value* v = Copied_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
     Drop_Level(L);
 
     Lift_Cell(v);
@@ -1546,7 +1546,7 @@ RebolValue* API_rebRescue2(
         panic (e);
     }
 
-    Value* v = Copy_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
+    Value* v = Copied_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
     Drop_Level(L);
 
     Lift_Cell(v);
@@ -1602,7 +1602,7 @@ RebolValue* API_rebRecover(
       Value* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    *value = Copy_Cell(Alloc_Value_Owned_By(L->prior), out);
+    *value = Copied_Cell(Alloc_Value_Owned_By(L->prior), out);
     Drop_Level(L);
     return nullptr;
 }
@@ -1635,7 +1635,7 @@ RebolValue* API_rebRecoverInterruptible(
       Value* out = Decay_If_Unstable(Level_Out(L))
     );
 
-    *value = Copy_Cell(Alloc_Value_Owned_By(L->prior), out);
+    *value = Copied_Cell(Alloc_Value_Owned_By(L->prior), out);
     Drop_Level(L);
     return nullptr;
 }
@@ -1665,7 +1665,7 @@ RebolValue* API_rebLift(
         panic (e);
     }
 
-    Value* v = Copy_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
+    Value* v = Copied_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
     Drop_Level(L);
 
     Lift_Cell(v);
@@ -1694,7 +1694,7 @@ RebolValue* API_rebQuote(
     if (Is_Antiform(Level_Out(L)))
         panic ("rebQuote() called on expression that returned an antiform");
 
-    Value* v = Copy_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
+    Value* v = Copied_Cell(Alloc_Value_Owned_By(L->prior), Level_Out(L));
     Drop_Level(L);
 
     Quote_Cell(As_Element(v));
@@ -2858,7 +2858,7 @@ RebolBaseInternal* API_rebUNQUOTING(const void* p)
         break; }
 
       case DETECTED_AS_CELL: {
-        Value* v = Copy_Cell(Alloc_Value(), cast(Value*, p));
+        Value* v = Copied_Cell(Alloc_Value(), cast(Value*, p));
         stub = Compact_Stub_From_Cell(v);
         Set_Flavor_Flag(VALUE_HOLDER, stub, RELEASE);
         break; }
@@ -2957,7 +2957,7 @@ RebolBaseInternal* API_rebRUN(const void* p)
         break; }
 
       case DETECTED_AS_CELL: {
-        v = Copy_Cell(Alloc_Value(), cast(const Value*, p));
+        v = Copied_Cell(Alloc_Value(), cast(const Value*, p));
         stub = Compact_Stub_From_Cell(v);
         Set_Flavor_Flag(VALUE_HOLDER, stub, RELEASE);
         break; }
@@ -3337,7 +3337,7 @@ DECLARE_NATIVE(API_TRANSIENT)
 {
     INCLUDE_PARAMS_OF_API_TRANSIENT;
 
-    Value* v = Copy_Cell(Alloc_Value(), ARG(VALUE));
+    Value* v = Copied_Cell(Alloc_Value(), ARG(VALUE));
     rebUnmanage(v);  // has to survive the API-TRANSIENT's frame
     Stub* stub = Compact_Stub_From_Cell(v);
     Set_Flavor_Flag(VALUE_HOLDER, stub, RELEASE);

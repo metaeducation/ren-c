@@ -298,7 +298,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         }
         else {
             assert(Is_Quoted(single));
-            Unquote_Quoted_Cell(Copy_Cell(&feed->fetched, single));
+            Unquote_Quoted_Cell(Copied_Cell(&feed->fetched, single));
             feed->p = &feed->fetched;
         }
         GC_Kill_Flex(inst1);
@@ -326,7 +326,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         // this more convoluted.  Review.
 
         Value* v = Stub_Cell(inst1);
-        feed->p = Copy_Cell(&feed->fetched, v);
+        feed->p = Copied_Cell(&feed->fetched, v);
         rebRelease(v);  // *is* the instruction
         break; }
 

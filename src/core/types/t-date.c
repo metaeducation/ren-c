@@ -877,7 +877,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
         break;
 
       case SYM_DATE: {
-        Element* out = Copy_Cell(OUT, adjusted);  // want the adjusted date
+        Element* out = Copied_Cell(OUT, adjusted);  // want the adjusted date
         Tweak_Cell_Nanoseconds(out, NO_DATE_TIME);  // with no time
         assert(not Does_Date_Have_Zone(out));  // time zone removed
         break; }
@@ -900,7 +900,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
         // We really just want the original un-adjusted stored time but
         // with the time zone component set to 0:00
         //
-        Element* out = Move_Cell(OUT, date);
+        Element* out = Moved_Cell(OUT, date);
         VAL_ZONE(out) = 0;  // GMT
         break; }
 

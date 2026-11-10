@@ -548,7 +548,7 @@ IMPLEMENT_GENERIC(CHANGE, Is_Blob)
         ARG(PART) ? &part : UNLIMITED,
         dups
     ));
-    Element* out = Copy_Cell(OUT, Element_ARG(SERIES));
+    Element* out = Copied_Cell(OUT, Element_ARG(SERIES));
     SERIES_INDEX_UNBOUNDED(out) = tail;
 
     return BOUNCE_OUT;
@@ -616,7 +616,7 @@ Result(Element*) Alias_Blob_As(
     const Binary* bin = Cell_Binary(blob);
 
     if (as == HEART_BLOB)  // (as blob! data) when data may be text or blob
-        return Copy_Cell(out, blob);
+        return Copied_Cell(out, blob);
 
     if (Any_Utf8_Heart(as)) {  // convert to a string as first step [1]
         if (as == HEART_WORD) {  // early fail on this, to save time

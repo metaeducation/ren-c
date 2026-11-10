@@ -666,7 +666,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
 } adjust_quote_level_and_run_type_constraint: {
 
     Copy_Cell(SPARE, v);
-    Element* scratch = Copy_Cell(SCRATCH, at);
+    Element* scratch = Copied_Cell(SCRATCH, at);
 
     if (Type_Of_Raw(scratch) > MAX_TYPE_NOQUOTE_NOQUASI) {
         if (not Have_Matching_Lift_Levels(scratch, As_Stable(SPARE)))

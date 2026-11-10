@@ -141,7 +141,7 @@ Bounce Inliner_Dispatcher(Level* const L)
 
     Inject_Methodization_If_Any(L);
 
-    Element* body_in_spare = Copy_Cell(SPARE, body);
+    Element* body_in_spare = Copied_Cell(SPARE, body);
     Tweak_Cell_Binding(body_in_spare, L->varlist);
 
     STATE = ST_INLINER_RUNNING_BODY;

@@ -675,7 +675,7 @@ INLINE Element* Copy_Sequence_At_Untracked(
             return out;
         }
         assert(n == 1);
-        Copy_Cell_Untracked(out, Pairing_Second(p));
+        Copied_Cell_Untracked(out, Pairing_Second(p));
         return out;
     }
 
@@ -703,7 +703,7 @@ INLINE Element* Copy_Sequence_At_Untracked(
         }
         assert(Array_Len(a) >= 2);
         assert(Is_Source_Frozen_Shallow(a));
-        return Copy_Cell(out, Array_At(a, n)); }
+        return Copied_Cell(out, Array_At(a, n)); }
 
       default :
         assert(false);

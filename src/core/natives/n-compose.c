@@ -575,7 +575,7 @@ Bounce Composer_Executor(Level* const L)
         panic (e);
     }
 
-    Stable* out = Copy_Cell(OUT, subout);
+    Stable* out = Copied_Cell(OUT, subout);
     Drop_Level(SUBLEVEL);
 
     if (Is_Null(out)) {
@@ -973,7 +973,7 @@ DECLARE_NATIVE(COMPOSE2)
     Tweak_Cell_Binding(code, Cell_Binding(pattern));  // bind unbound code
 
     STATE = ST_COMPOSE2_STRING_EVAL;
-    return CONTINUE(Copy_Cell(SPARE, code));  // pass non-stack code
+    return CONTINUE(Copied_Cell(SPARE, code));  // pass non-stack code
 
 } string_eval_in_out: { //////////////////////////////////////////////////////
 

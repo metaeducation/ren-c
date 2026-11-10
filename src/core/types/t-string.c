@@ -992,7 +992,7 @@ IMPLEMENT_GENERIC(CHANGE, Any_String)
         dups
     ));
 
-    Element* out = Copy_Cell(OUT, Element_ARG(SERIES));
+    Element* out = Copied_Cell(OUT, Element_ARG(SERIES));
     SERIES_INDEX_UNBOUNDED(out) = tail;
 
     return BOUNCE_OUT;

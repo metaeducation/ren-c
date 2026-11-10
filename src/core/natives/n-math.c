@@ -192,7 +192,7 @@ DECLARE_NATIVE(MULTIPLY)
         not Heart_Of(e1)  // left is not an extension type v-- see [1]
         and i_cast(HeartByte, Heart_Of(e1)) < i_cast(HeartByte, Heart_Of(e2))
     ){
-        Element* spare = Move_Cell(SPARE, e2);
+        Element* spare = Moved_Cell(SPARE, e2);
         Move_Cell(e2, e1);  // ...so move simpler type to be on the right
         Move_Cell(e1, spare);
     }

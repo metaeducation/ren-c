@@ -1136,6 +1136,8 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 
 #if DONT_CHECK_CELL_SUBCLASSES
     #define TransferredCellType(out,v)  Cell*  // no subclasses, all is Cell!
+
+    #define Check_Cell_Transfer(out,v)  NOOP
 #else
     template<typename Dst, typename Src>
     struct CellTransferValidator {
@@ -1158,6 +1160,9 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 
     #define TransferredCellType(out,v) \
         TransferredCellTypeHelper<decltype(out), decltype(v)>
+
+    #define Check_Cell_Transfer(out,v) /* validate w/o computing a result */ \
+        ((void)sizeof(CellTransferValidator<decltype(out), decltype(v)>))
 #endif
 
 
@@ -1182,6 +1187,15 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 //    The default is knowing the last point touched--but you can change this
 //    using the DEBUG_TRACK_COPY_PRESERVES setting, in which case MAYBE_TRACK
 //    is a no-op and the information inside the Cell is migrated.
+//
+// 3. Most copies are done as statements, and the result is ignored.  But
+//    when TRACK() is a passthru, a value-returning macro triggers "unused
+//    value" warnings (and TRACK() is NODISCARD in the tracked builds, so it
+//    warns there too).  There's no portable way to suppress that inside the
+//    macro while still allowing the result to be used.  So there are two
+//    forms: Copy_Cell() is void (it's a statement), while Copied_Cell()
+//    gives back the typed pointer for use in expressions.  The void form
+//    still validates the transfer, but skips computing the result type.
 //
 
 #define CELL_MASK_COPY \
@@ -1215,15 +1229,22 @@ INLINE Cell* Copy_Cell_Core_Untracked(
     return out;
 }
 
-#define Copy_Cell_Untracked(out, v) \
+#define Copied_Cell_Untracked(out, v) \
     c_cast(TransferredCellType((out), (v)), \
         Copy_Cell_Core_Untracked((out), (v), CELL_MASK_COPY))
 
-#define Copy_Cell_Core(out,v,copy_mask) \
+#define Copied_Cell_Core(out,v,copy_mask) \
     MAYBE_TRACK(Copy_Cell_Core_Untracked((out), (v), (copy_mask)))  // [2]
 
-#define Copy_Cell(out,v) \
-    MAYBE_TRACK(Copy_Cell_Untracked((out), (v)))  // [2]
+#define Copy_Cell_Core(out,v,copy_mask) /* void [3] */ \
+    USED(Copied_Cell_Core((out), (v), (copy_mask)))
+
+#define Copied_Cell(out,v) \
+    MAYBE_TRACK(Copied_Cell_Untracked((out), (v)))  // [2]
+
+#define Copy_Cell(out,v) /* void [3] */ \
+    (Check_Cell_Transfer((out), (v)), USED(MAYBE_TRACK( \
+        Copy_Cell_Core_Untracked((out), (v), CELL_MASK_COPY))))
 
 
 //=//// CELL MOVEMENT //////////////////////////////////////////////////////=//
@@ -1261,16 +1282,23 @@ INLINE Cell* Move_Cell_Core_Untracked(Cell* out, Cell* c, Flags copy_mask)
     return out;
 }
 
-#define Move_Cell_Untracked(out, v) \
+#define Moved_Cell_Untracked(out, v) \
     c_cast(TransferredCellType((out), (v)), \
         Move_Cell_Core_Untracked((out), (v), CELL_MASK_COPY))
 
-#define Move_Cell_Core(out,v,copy_mask) \
+#define Moved_Cell_Core(out,v,copy_mask) \
     MAYBE_TRACK(Move_Cell_Core_Untracked( \
         (out), MAYBE_TRACK(v), (copy_mask)))  // may track input [1]
 
-#define Move_Cell(out,v) \
-    MAYBE_TRACK(Move_Cell_Untracked((out), MAYBE_TRACK(v)))  // [1]
+#define Move_Cell_Core(out,v,copy_mask) /* void, see Copy_Cell() */ \
+    USED(Moved_Cell_Core((out), (v), (copy_mask)))
+
+#define Moved_Cell(out,v) \
+    MAYBE_TRACK(Moved_Cell_Untracked((out), MAYBE_TRACK(v)))  // [1]
+
+#define Move_Cell(out,v) /* void, see Copy_Cell() */ \
+    (Check_Cell_Transfer((out), (v)), USED(MAYBE_TRACK( \
+        Move_Cell_Core_Untracked((out), MAYBE_TRACK(v), CELL_MASK_COPY))))
 
 
 //=//// CELL "BLITTING" (COMPLETE OVERWRITE) //////////////////////////////=//
@@ -1303,11 +1331,11 @@ INLINE Cell* Blit_Cell_Untracked(Cell* out, const Cell* c) {
    return Force_Blit_Cell_Untracked(out, c);
 }
 
-#define Blit_Cell(out,c) \
-    MAYBE_TRACK(Blit_Cell_Untracked(out, c))
+#define Blit_Cell(out,c) /* void, see Copy_Cell() */ \
+    USED(MAYBE_TRACK(Blit_Cell_Untracked((out), (c))))
 
-#define Force_Blit_Cell(out,c) \
-    MAYBE_TRACK(Force_Blit_Cell_Untracked(out, c))
+#define Force_Blit_Cell(out,c) /* void, see Copy_Cell() */ \
+    USED(MAYBE_TRACK(Force_Blit_Cell_Untracked((out), (c))))
 
 
 //=//// CELL CONST INHERITANCE ////////////////////////////////////////////=//
@@ -1322,8 +1350,11 @@ INLINE Value* Inherit_Const(Value* out, const Cell* influencer) {
     return out;
 }
 
-#define Trust_Const(value) \
-    (value)  // must do USED(Trust_Const(...)) if not passing to a function
+#define Trusted_Const(value) \
+    (value)  // passthru, for use in expressions (see Copied_Cell() [3])
+
+#define Trust_Const(value) /* void, for use as a statement */ \
+    USED(value)
 
 INLINE Stable* Constify(Stable* v) {
     Set_Cell_Flag(v, CONST);

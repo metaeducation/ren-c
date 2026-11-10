@@ -39,7 +39,7 @@
 //    be able to study to the cell to do the initialization?
 //
 
-INLINE Element* Copy_Cell_May_Bind_Untracked(
+INLINE Element* Copied_Cell_May_Bind_Untracked(
     Init(Element) out,
     const Element* v,
     Context* context
@@ -75,8 +75,11 @@ INLINE Element* Copy_Cell_May_Bind_Untracked(
 }
 
 
-#define Copy_Cell_May_Bind(dest,v,context) \
-    MAYBE_TRACK(Copy_Cell_May_Bind_Untracked((dest), (v), (context)))
+#define Copied_Cell_May_Bind(dest,v,context) \
+    MAYBE_TRACK(Copied_Cell_May_Bind_Untracked((dest), (v), (context)))
+
+#define Copy_Cell_May_Bind(dest,v,context) /* void, see Copy_Cell() */ \
+    USED(Copied_Cell_May_Bind((dest), (v), (context)))
 
 
 INLINE Element* Bind_Cell_If_Unbound(Element* v, Context* context) {

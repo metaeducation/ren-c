@@ -277,7 +277,7 @@ Result(bool) Push_Set_Block_Instructions_To_Stack_Throws(
 
     if (not Is_Fence(check)) {  // not "circled"
         circle_this = false;
-        scratch = Copy_Cell_May_Bind(SCRATCH, check, check_binding);
+        scratch = Copied_Cell_May_Bind(SCRATCH, check, check_binding);
         goto circle_detection_finished;
     }
 
@@ -298,7 +298,7 @@ Result(bool) Push_Set_Block_Instructions_To_Stack_Throws(
 
     Length len_at = Series_Len_At(check);
     if (len_at == 1) {
-        scratch = Copy_Cell_May_Bind(
+        scratch = Copied_Cell_May_Bind(
             SCRATCH,
             List_Item_At(check),
             check_binding

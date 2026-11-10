@@ -858,7 +858,7 @@ DECLARE_NATIVE(CASE)
   //    branch is checked by the switch() statement in CONTINUE_BRANCH() if
   //    it is to be run.
 
-    Element* branch = Copy_Cell_May_Bind(
+    Element* branch = Copied_Cell_May_Bind(
         SCRATCH, At_Level(SUBLEVEL), Level_Binding(SUBLEVEL)
     );
     Inherit_Const(branch, cases);  // branch needs to respect const [1]
@@ -996,7 +996,7 @@ DECLARE_NATIVE(SWITCH)
 
     predicate = opt ARG(PREDICATE);
     if (not predicate) {
-        predicate = Copy_Cell(LOCAL(PREDICATE), LIB(EQUAL_Q));  // default [1]
+        predicate = Copied_Cell(LOCAL(PREDICATE), LIB(EQUAL_Q));  // default [1]
         Deactivate_Action(predicate);
     }
 
@@ -1112,7 +1112,7 @@ DECLARE_NATIVE(SWITCH)
         at = At_Level(SUBLEVEL);
     }
 
-    Element* scratch = Copy_Cell_May_Bind(SCRATCH, at, Level_Binding(SUBLEVEL));
+    Element* scratch = Copied_Cell_May_Bind(SCRATCH, at, Level_Binding(SUBLEVEL));
     Inherit_Const(scratch, cases);  // need to inherit proxy const bit [3]
 
     STATE = ST_SWITCH_RUNNING_BRANCH;

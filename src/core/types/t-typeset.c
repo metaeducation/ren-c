@@ -339,7 +339,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
   //   that you get the errors earlier rather than at typecheck time.
 
     if (Any_Sequence(item)) {
-        Element* scratch = Copy_Cell(SCRATCH, item);
+        Element* scratch = Copied_Cell(SCRATCH, item);
         do {
             SingleHeart singleheart = opt Try_Get_Sequence_Singleheart(scratch);
             if (not singleheart)

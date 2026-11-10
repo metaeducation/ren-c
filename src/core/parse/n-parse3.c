@@ -626,7 +626,7 @@ static Result(REBIXO) Parse_One_Rule(
         const Element* item = Array_At(P_INPUT_ARRAY, pos);
 
         if (Is_Quoted(rule)) {  // fall through to direct match
-            rule = Unquote_Quoted_Cell(Copy_Cell(SPARE, rule));
+            rule = Unquote_Quoted_Cell(Copied_Cell(SPARE, rule));
         }
         else if (Is_Pinned_Form_Of(WORD, rule)) {
             DECLARE_ELEMENT (unpinned);
@@ -1072,7 +1072,7 @@ static Result(REBIXO) To_Thru_Non_Block_Rule(
         Flags find_flags = (P_FLAGS & AM_FIND_CASE);
         DECLARE_VALUE (temp);
         if (Is_Quoted(rule)) {  // make `'[foo bar]` match `[foo bar]`
-            Unquote_Quoted_Cell(Copy_Cell_May_Bind(temp, rule, P_RULE_BINDING));
+            Unquote_Quoted_Cell(Copied_Cell_May_Bind(temp, rule, P_RULE_BINDING));
         }
         else if (Is_Pinned_Form_Of(WORD, rule)) {
             require (
@@ -1191,7 +1191,7 @@ static Result(None) Handle_Seek_Rule_Dont_Update_Begin(
         );
         if (Is_Antiform(OUT))
             panic (Error_Bad_Antiform(OUT));
-        rule = Copy_Cell(SPARE, As_Element(OUT));
+        rule = Copied_Cell(SPARE, As_Element(OUT));
         Erase_Cell(OUT);
         t = Type_Of(rule);
     }
@@ -1566,7 +1566,7 @@ DECLARE_NATIVE(SUBPARSE)
                     goto handle_set;
                 }
 
-                set_or_copy_word = Copy_Cell_May_Bind(
+                set_or_copy_word = Copied_Cell_May_Bind(
                     LOCAL(LOOKBACK), P_RULE, P_RULE_BINDING
                 );
                 if (Is_Chain(set_or_copy_word)) {
@@ -1651,7 +1651,7 @@ DECLARE_NATIVE(SUBPARSE)
                 if (Is_Antiform(eval))
                     panic (Error_Bad_Antiform(eval));
 
-                rule = Copy_Cell(P_SAVE, As_Element(eval));
+                rule = Copied_Cell(P_SAVE, As_Element(eval));
 
                 goto reparse_rule; }
 
@@ -1705,7 +1705,7 @@ DECLARE_NATIVE(SUBPARSE)
                 else
                     panic ("PARSE3 ACCEPT only works with GROUP! and <here>");
 
-                Element* label_accept_frame = Copy_Plain_Cell(
+                Element* label_accept_frame = Copied_Plain_Cell(
                     SPARE, LIB(PARSE_ACCEPT)
                 );
                 Init_Thrown_With_Label(LEVEL, thrown_arg, label_accept_frame);
@@ -1720,7 +1720,7 @@ DECLARE_NATIVE(SUBPARSE)
                 DECLARE_VALUE (thrown_arg);
                 Init_Integer(thrown_arg, P_POS);
 
-                Element* label_break_frame = Copy_Plain_Cell(
+                Element* label_break_frame = Copied_Plain_Cell(
                     SPARE, LIB(PARSE_BREAK)
                 );
                 Init_Thrown_With_Label(LEVEL, thrown_arg, label_break_frame);
@@ -1730,7 +1730,7 @@ DECLARE_NATIVE(SUBPARSE)
                 //
                 // Similarly, this is a break/continue style "throw"
                 //
-                Element* label_reject_frame = Copy_Plain_Cell(
+                Element* label_reject_frame = Copied_Plain_Cell(
                     SPARE, LIB(PARSE_REJECT)
                 );
                 Init_Thrown_With_Label(LEVEL, LIB(NULL), label_reject_frame);
@@ -1835,7 +1835,7 @@ DECLARE_NATIVE(SUBPARSE)
         else if (Is_Antiform(lookup))
             panic (Error_Bad_Antiform(lookup));
         else
-            rule = Copy_Cell(P_SAVE, As_Element(lookup));
+            rule = Copied_Cell(P_SAVE, As_Element(lookup));
     }
     else if (Is_Path(rule)) {
         require (
@@ -1845,11 +1845,11 @@ DECLARE_NATIVE(SUBPARSE)
         if (not Is_Action(SPARE))
             panic ("PATH! in PARSE3 must be an ACTION!");
 
-        rule = Copy_Plain_Cell(P_SAVE, SPARE);
+        rule = Copied_Plain_Cell(P_SAVE, SPARE);
     }
     else if (Is_Set_Tuple(rule)) {
       handle_set:
-        set_or_copy_word = Copy_Cell_May_Bind(
+        set_or_copy_word = Copied_Cell_May_Bind(
             LOCAL(LOOKBACK), rule, P_RULE_BINDING
         );
         assume (
@@ -1998,7 +1998,7 @@ DECLARE_NATIVE(SUBPARSE)
                     panic (Error_Parse3_End());
 
                 if (not subrule) {  // capture only on iteration #1
-                    subrule = Copy_Cell(LOCAL(LOOKBACK), P_RULE);
+                    subrule = Copied_Cell(LOCAL(LOOKBACK), P_RULE);
                     FETCH_NEXT_RULE(L);
                 }
 
@@ -2524,7 +2524,7 @@ DECLARE_NATIVE(PARSE3)
   //
   //   https://rebol.metaeducation.com/t/parse-preserving-input-type/1084
 
-    scratch_original_input = Copy_Cell(SCRATCH, input);
+    scratch_original_input = Copied_Cell(SCRATCH, input);
 
     if (Any_Sequence(input)) {
         Blockify_Any_Sequence(input);

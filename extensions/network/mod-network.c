@@ -258,7 +258,7 @@ static Stable* Trap_Connect_Socket_Else_Close(
     // nullptr to get a synchronous connection.
     //
     Reb_Connect_Request *rebreq = rebAlloc(Reb_Connect_Request);
-    rebreq->port = Copy_Cell(Alloc_Value(), port);
+    rebreq->port = Copied_Cell(Alloc_Value(), port);
     rebreq->result = nullptr;
 
     int r = uv_tcp_connect(
@@ -572,7 +572,7 @@ Stable* Start_Listening_On_Socket(const Stable* port)
   // becomes important again, then a coherent strategy is needed for freeing
   // the API handle held in `sock->tcp.data`
 
-    Api(Stable*) persistent_port = Copy_Cell(Alloc_Value(), port);
+    Api(Stable*) persistent_port = Copied_Cell(Alloc_Value(), port);
     rebUnmanage(persistent_port);  // !!! leaks, review
     sock->tcp.data = persistent_port;
 
@@ -976,7 +976,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
             panic (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
 
         Reb_Read_Request *rebreq = rebAlloc(Reb_Read_Request);
-        rebreq->port = Copy_Cell(Alloc_Value(), port);
+        rebreq->port = Copied_Cell(Alloc_Value(), port);
         rebreq->actual = 0;
         rebreq->result = nullptr;
 
@@ -1040,7 +1040,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         // the same pointer as the rebreq (first struct member).
         //
         Reb_Write_Request *rebreq = rebAlloc(Reb_Write_Request);
-        rebreq->port = Copy_Cell(Alloc_Value(), port);
+        rebreq->port = Copied_Cell(Alloc_Value(), port);
         rebreq->result = nullptr;
 
         // Make a copy of the BLOB! to put in the request, so that you can
@@ -1371,7 +1371,7 @@ DECLARE_NATIVE(WAIT_P)  // See wrapping function WAIT in usermode code
     if (Get_Trampoline_Flag(HALT)) {
         Clear_Trampoline_Flag(HALT);
 
-        Element* label_halt_frame = Copy_Plain_Cell(SPARE, LIB(HALT));
+        Element* label_halt_frame = Copied_Plain_Cell(SPARE, LIB(HALT));
         Init_Thrown_With_Label(LEVEL, LIB(NULL), label_halt_frame);
         return BOUNCE_THROWN;
     }

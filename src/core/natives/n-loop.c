@@ -333,7 +333,7 @@ static Bounce Loop_Series_Common(
     // if they change `var` during the loop, it affects the iteration.  Hence
     // it must be checked for changing to another series, or non-series.
     //
-    Stable* var = Copy_Cell(Slot_Hack(slot), start);
+    Stable* var = Copied_Cell(Slot_Hack(slot), start);
     Index* state = &SERIES_INDEX_UNBOUNDED(var);
 
     // Run only once if start is equal to end...edge case.
@@ -710,7 +710,7 @@ DECLARE_NATIVE(FOR_SKIP)
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
 
-    Stable* spare = Copy_Cell(SPARE, series);
+    Stable* spare = Copied_Cell(SPARE, series);
 
     // Starting location when past end with negative skip:
     //
@@ -951,7 +951,7 @@ DECLARE_NATIVE(CYCLE)
 static void Morph_Quoted_To_Block(Element* data)
 {
     Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
-    Unquote_Quoted_Cell(Copy_Cell(Stub_Cell(a), data));
+    Unquote_Quoted_Cell(Copied_Cell(Stub_Cell(a), data));
     Init_Block(data, a);
 }
 
@@ -1199,7 +1199,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
         Heart heart = Heart_Of_Builtin_Fundamental(les->data);
 
         if (Any_List_Heart(heart)) {
-            Element* spare_element = Copy_Cell_May_Bind(
+            Element* spare_element = Copied_Cell_May_Bind(
                 SPARE,
                 Array_At(cast(Array*, les->flex), les->u.eser.index),
                 List_Binding(les->data)
@@ -1280,7 +1280,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                     return true;  // done
             } while (Is_Zombie(val));
 
-            Stable* spare_key = Copy_Cell(SPARE, key);
+            Stable* spare_key = Copied_Cell(SPARE, key);
             trap (
               Write_Loop_Slot_May_Unbind_Or_Decay(slot, spare_key)
             );
@@ -1294,7 +1294,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 // Want keys and values (`for-each 'key val map [...]`)
                 //
                 ++slot;
-                Stable* spare_val = Copy_Cell(SPARE, val);
+                Stable* spare_val = Copied_Cell(SPARE, val);
                 trap (
                   Write_Loop_Slot_May_Unbind_Or_Decay(slot, spare_val)
                 );

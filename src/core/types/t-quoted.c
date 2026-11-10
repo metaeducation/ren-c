@@ -213,7 +213,7 @@ DECLARE_NATIVE(QUASI)
         panic ("Use QUASI:PASS if QUASI argument is already a quasiform");
     }
 
-    Element* out = Copy_Cell(OUT, elem);
+    Element* out = Copied_Cell(OUT, elem);
 
     trap (  // use TRAP vs. PANIC, such that (try quasi ':foo:) is null
       Coerce_To_Quasiform(out)

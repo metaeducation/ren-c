@@ -664,7 +664,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         if (ret >= limit)
             return NULL_OUT;
 
-        Element* out = Copy_Cell_May_Bind(OUT, Array_At(arr, ret), binding);
+        Element* out = Copied_Cell_May_Bind(OUT, Array_At(arr, ret), binding);
         Inherit_Const(out, list);
         return BOUNCE_OUT; }
 
@@ -780,7 +780,7 @@ IMPLEMENT_GENERIC(CHANGE, Any_List)
         dups
     ));
 
-    Element* out = Copy_Cell(OUT, Element_ARG(SERIES));
+    Element* out = Copied_Cell(OUT, Element_ARG(SERIES));
     SERIES_INDEX_UNBOUNDED(out) = tail;
 
     return BOUNCE_OUT;
@@ -946,7 +946,7 @@ Result(Element*) Alias_Any_List_As(
 
         /* Tweak_Cell_Binding(temp) = Cell_Binding(list); */  // may be unfit
 
-        return Copy_Cell_May_Bind(out, temp, Cell_Binding(list));  // (?)
+        return Copied_Cell_May_Bind(out, temp, Cell_Binding(list));  // (?)
     }
 
     return_fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
@@ -1725,8 +1725,8 @@ DECLARE_NATIVE(GLOM)
     if (Is_Quoted(one) and Is_Quoted(two)) {  // both quoted, make block
         Source* a = Make_Source_Managed(2);
         Set_Flex_Len(a, 2);
-        Unquote_Quoted_Cell(Copy_Cell(Array_Head(a), one));
-        Unquote_Quoted_Cell(Copy_Cell(Array_At(a, 1), two));
+        Unquote_Quoted_Cell(Copied_Cell(Array_Head(a), one));
+        Unquote_Quoted_Cell(Copied_Cell(Array_At(a, 1), two));
         Init_Block(OUT, a);
         goto return_out;
     }
@@ -1739,7 +1739,7 @@ DECLARE_NATIVE(GLOM)
         require (
           Sink(Element) cell = Alloc_Tail_Array(a)
         );
-        Unquote_Quoted_Cell(Copy_Cell(cell, two));
+        Unquote_Quoted_Cell(Copied_Cell(cell, two));
         Copy_Cell(OUT, one);
         goto return_out;
     }
@@ -1798,7 +1798,7 @@ DECLARE_NATIVE(GLOM)
         dont(Alloc_Singular(STUB_MASK_MANAGED_SOURCE));  // would be locked
         Source* a = Make_Source_Managed(1);
         Set_Flex_Len(a, 1);
-        Element* item = Copy_Cell(Stub_Cell(a), As_Element(OUT));
+        Element* item = Copied_Cell(Stub_Cell(a), As_Element(OUT));
         Unquote_Quoted_Cell(item);
         Init_Block(OUT, a);
     }
@@ -1813,7 +1813,7 @@ DECLARE_NATIVE(GLOM)
     assert(Is_None(As_Stable(OUT)) or Is_Block(As_Stable(OUT)));
 
     if (not Is_Cell_Erased(SCRATCH)) {
-        Element* items1 = Copy_Cell(  // restore original for writeback
+        Element* items1 = Copied_Cell(  // restore original for writeback
             ARG(ITEMS1), As_Element(SCRATCH)
         );
 

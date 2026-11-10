@@ -712,7 +712,7 @@ INLINE Value* Native_Trash_Result_Untracked(
 //
 INLINE Value* Native_Copy_Result_Untracked(Level* L, const Value* v) {
     assert(not Is_Api_Value(v));  // too easy to not release()
-    return Copy_Cell_Untracked(Level_Out(L), v);
+    return Copied_Cell_Untracked(Level_Out(L), v);
 }
 
 

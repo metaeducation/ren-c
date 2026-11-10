@@ -1399,7 +1399,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             symbol = Canon_Symbol(dummy_sym);
             dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
 
-            Element* copy = Copy_Cell_May_Bind(slot, item, binding);
+            Element* copy = Copied_Cell_May_Bind(slot, item, binding);
             Force_Cell_Sigil(copy, SIGIL_META);  // make it $word
             Tweak_Cell_Lift_Byte(slot, TYPE_BEDROCK_ALIAS);
             assert(Is_Cell_A_Bedrock_Alias(slot));  // alias uses ^META [1]

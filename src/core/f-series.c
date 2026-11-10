@@ -49,7 +49,7 @@ IMPLEMENT_GENERIC(SKIP, Any_Series)
     }
 
     SERIES_INDEX_UNBOUNDED(v) = i;
-    return COPY_TO_OUT(Trust_Const(v));
+    return COPY_TO_OUT(Trusted_Const(v));
 }
 
 
@@ -94,7 +94,7 @@ IMPLEMENT_GENERIC(AT, Any_Series)
     }
 
     SERIES_INDEX_UNBOUNDED(v) = i;
-    return COPY_TO_OUT(Trust_Const(v));
+    return COPY_TO_OUT(Trusted_Const(v));
 }
 
 
@@ -252,7 +252,7 @@ IMPLEMENT_GENERIC(HEAD_OF, Any_Series)
 
     Copy_Cell(OUT, ser);
     SERIES_INDEX_UNBOUNDED(OUT) = 0;
-    USED(Trust_Const(OUT));
+    Trust_Const(OUT);
     return BOUNCE_OUT;
 }
 
@@ -265,7 +265,7 @@ IMPLEMENT_GENERIC(TAIL_OF, Any_Series)
 
     Copy_Cell(OUT, ser);
     SERIES_INDEX_UNBOUNDED(OUT) = Series_Len_Head(ser);
-    USED(Trust_Const(OUT));
+    Trust_Const(OUT);
     return BOUNCE_OUT;
 }
 

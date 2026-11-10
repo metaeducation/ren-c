@@ -390,7 +390,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         ) and (
             id == SYM_ADD
         )){
-            Element* out = Move_Cell(OUT, arg);
+            Element* out = Moved_Cell(OUT, arg);
             Move_Cell(arg, val);
             Move_Cell(val, out);
             return Old_Dispatch_Generic_Core(verb, val, level_);

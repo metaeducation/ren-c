@@ -86,7 +86,7 @@ DECLARE_NATIVE(BIND)
             require (
               Use* use = Alloc_Use_Inherits(Cell_Binding(v))
             );
-            Element* overbind = Copy_Cell_May_Bind(
+            Element* overbind = Copied_Cell_May_Bind(
                 Stub_Cell(use), at, Cell_Binding(spec)
             );
             Tweak_Cell_Type_Matching_Heart(overbind, HEART_WORD);
@@ -119,7 +119,7 @@ DECLARE_NATIVE(BIND)
         require (
           Use* use = Alloc_Use_Inherits(Cell_Binding(v))
         );
-        Element* overbind = Copy_Cell(Stub_Cell(use), spec);
+        Element* overbind = Copied_Cell(Stub_Cell(use), spec);
         Tweak_Cell_Type_Matching_Heart(overbind, HEART_WORD);
 
         Tweak_Cell_Binding(v, use);

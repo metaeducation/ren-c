@@ -1469,7 +1469,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Error)
             if (wslot) {
                 wval = Slot_Hack(wslot);
                 if (Is_Antiform(wval))
-                    item = Copy_Lifted_Cell(safe, wval);
+                    item = Copied_Lifted_Cell(safe, wval);
                 else
                     item = Ensure_Element(wval);
             }

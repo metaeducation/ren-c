@@ -749,7 +749,7 @@ DECLARE_NATIVE(COMBINATORIZE)
     Option(const Symbol*) label = Frame_Label_Deep(combinator);
     Option(VarList*) coupling = Frame_Coupling(combinator);
 
-    Stable* rule_start = Copy_Cell(LOCAL(RULE_START), ARG(RULES));
+    Stable* rule_start = Copied_Cell(LOCAL(RULE_START), ARG(RULES));
     if (Series_Index(rule_start) > 0)
         SERIES_INDEX_UNBOUNDED(rule_start) -= 1;
 

@@ -1275,7 +1275,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
   handle_pick: { /////////////////////////////////////////////////////////////
 
-    Cell* out_cell = Copy_Cell_Core(OUT, slot, CELL_MASK_COPY);
+    Cell* out_cell = Copied_Cell_Core(OUT, slot, CELL_MASK_COPY);
 
     if (Is_Bedrock(out_cell)) {  // return nonquoted/quasi
         Normalize_Cell(out_cell);

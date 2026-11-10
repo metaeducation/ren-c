@@ -424,7 +424,7 @@ DECLARE_NATIVE(JOIN)
 
         if (item_heart == HEART_GROUP) {
             SUBLEVEL->executor = &Skip_Me_Executor;
-            Element* scratch = Copy_Cell_May_Bind(
+            Element* scratch = Copied_Cell_May_Bind(
                 SCRATCH, item, Level_Binding(sub)
             );
             Tweak_Cell_Type_Matching_Heart(scratch, HEART_BLOCK);
@@ -617,7 +617,7 @@ DECLARE_NATIVE(JOIN)
 
     for (; at != tail; ++at) {
         bool mold = Get_Cell_Flag(Data_Stack_At(Stable, at), STACK_NOTE_MOLD);
-        Stable* v = Copy_Cell(SPARE, Data_Stack_At(Stable, at));
+        Stable* v = Copied_Cell(SPARE, Data_Stack_At(Stable, at));
 
         if (mold) {
             assert(NOT_MOLD_FLAG(mo, MOLD_FLAG_SPREAD));

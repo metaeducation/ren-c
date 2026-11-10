@@ -352,7 +352,7 @@ Result(Element*) Alias_Any_Sequence_As(
                 );
         }
 
-        Trust_Const(Copy_Cell(out, seq));
+        Trust_Const(Copied_Cell(out, seq));
         Tweak_Cell_Type_Matching_Heart(out, as);
         possibly(Get_Cell_Flag(out, LEADING_BLANK));
         return out;
@@ -406,10 +406,10 @@ Result(Element*) Alias_Any_Sequence_As(
                 Element* tweak;
                 if (Get_Cell_Flag(seq, LEADING_BLANK)) {
                     Init_Blank(Array_At(two, 0));
-                    tweak = Copy_Cell(Array_At(two, 1), seq);
+                    tweak = Copied_Cell(Array_At(two, 1), seq);
                 }
                 else {
-                    tweak = Copy_Cell(Array_At(two, 0), seq);
+                    tweak = Copied_Cell(Array_At(two, 0), seq);
                     Init_Blank(Array_At(two, 1));
                 }
                 Tweak_Cell_Type_Matching_Heart(tweak, unwrap mirror);
@@ -486,7 +486,7 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
     if (not ARG(PART) and trivial_copy)  // something like a/1/foo
         return COPY_TO_OUT(seq);
 
-    Stable* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
+    Stable* datatype = Copied_Cell(SPARE, Datatype_Of(seq));
 
     Value* part = LOCAL(PART);
     possibly(Is_Light_Null(part));
@@ -552,7 +552,7 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Sequence)
     Value* part = LOCAL(PART);
     possibly(Is_Light_Null(part));
 
-    Stable* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
+    Stable* datatype = Copied_Cell(SPARE, Datatype_Of(seq));
 
     return Delegate_Operation_With_Part(
         SYM_REVERSE, SYM_BLOCK_X,
@@ -620,7 +620,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Sequence)
     Value* part = LOCAL(PART);
     possibly(Is_Light_Null(part));
 
-    Stable* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
+    Stable* datatype = Copied_Cell(SPARE, Datatype_Of(seq));
 
     return Delegate_Operation_With_Part(
         SYM_SHUFFLE, SYM_BLOCK_X,

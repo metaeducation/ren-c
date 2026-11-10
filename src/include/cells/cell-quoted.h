@@ -443,20 +443,26 @@ INLINE Stable* Known_Stable_Unlift_Cell_Core(Stable* v) {
 #define Known_Stable_Unlift_Cell(v) \
     Known_Stable_Unlift_Cell_Core(Possibly_Antiform(v))
 
-INLINE Dual* Copy_Lifted_Cell_Untracked(Init(Dual) out, const Value* v)
+INLINE Dual* Copied_Lifted_Cell_Untracked(Init(Dual) out, const Value* v)
 {
     Copy_Cell_Core_Untracked(out, v, CELL_MASK_COPY);
     return Lift_Cell(raw_cast(Value*, out));
 }
 
-#define Copy_Lifted_Cell(out,v) \
-    MAYBE_TRACK(Copy_Lifted_Cell_Untracked((out), (v)))
+#define Copied_Lifted_Cell(out,v) \
+    MAYBE_TRACK(Copied_Lifted_Cell_Untracked((out), (v)))
 
-INLINE Dual* Copy_Plain_Cell_Untracked(Init(Dual) out, const Cell* cell) {
+#define Copy_Lifted_Cell(out,v) /* void, see Copy_Cell() */ \
+    USED(Copied_Lifted_Cell((out), (v)))
+
+INLINE Dual* Copied_Plain_Cell_Untracked(Init(Dual) out, const Cell* cell) {
     Copy_Cell_Core_Untracked(out, cell, CELL_MASK_COPY);
     Clear_Cell_Quotes_And_Quasi(out);
     return out;
 }
 
-#define Copy_Plain_Cell(out,v) \
-    MAYBE_TRACK(Copy_Plain_Cell_Untracked((out), (v)))
+#define Copied_Plain_Cell(out,v) \
+    MAYBE_TRACK(Copied_Plain_Cell_Untracked((out), (v)))
+
+#define Copy_Plain_Cell(out,v) /* void, see Copy_Cell() */ \
+    USED(Copied_Plain_Cell((out), (v)))

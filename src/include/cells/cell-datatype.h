@@ -269,7 +269,7 @@ INLINE Stable* Init_Extended_Datatype_Untracked(
     assert(Is_Stub_Patch(ext_heart));
     const Stable* datatype = cast(Stable*, Stub_Cell(ext_heart));
     assert(Is_Datatype(datatype));
-    return Copy_Cell(out, datatype);
+    return Copied_Cell(out, datatype);
 }
 
 #define Init_Extended_Datatype(out,ext_heart) \

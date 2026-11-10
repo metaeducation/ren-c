@@ -119,7 +119,7 @@ Bounce Adapter_Dispatcher(Level* const L)
         Level_Coupling(L)
     );
 
-    Element* spare = Copy_Cell(SPARE, prelude);
+    Element* spare = Copied_Cell(SPARE, prelude);
     Tweak_Cell_Binding(spare, use);  // must USE [1]
 
     return CONTINUE(spare);  // Note: we won't catch throws or errors

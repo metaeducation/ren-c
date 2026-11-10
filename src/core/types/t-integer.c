@@ -227,7 +227,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
             // Anything added to an integer is same as adding the integer:
             case SYM_ADD: {
                 // Swap parameter order:
-                Element* out = Move_Cell(OUT, val2);
+                Element* out = Moved_Cell(OUT, val2);
                 Move_Cell(val2, val);
                 Move_Cell(val, out);
                 return Old_Dispatch_Generic_Core(verb, val, level_); }

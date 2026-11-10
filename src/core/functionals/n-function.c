@@ -153,7 +153,7 @@ Bounce Func_Dispatcher(Level* const L)
     Inject_Methodization_If_Any(L);
 
     Context* binding = raw_cast(ParamList*, L->varlist);
-    Element* spare = Copy_Cell(SPARE, body);
+    Element* spare = Copied_Cell(SPARE, body);
     Tweak_Cell_Binding(spare, binding);
 
     STATE = ST_FUNC_BODY_EXECUTING;

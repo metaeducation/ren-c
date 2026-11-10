@@ -263,7 +263,7 @@ static Result(None) Push_Keys_And_Params_Core(
   // as a plain FENCE!, unless you use {{...}} or some other syntax.  Or,
   // maybe the divergence is okay in the wacky world of dialecting.
 
-    Element* spare = Copy_Cell_May_Bind(SPARE, v, Level_Binding(L));
+    Element* spare = Copied_Cell_May_Bind(SPARE, v, Level_Binding(L));
     trap (
       Push_Keys_And_Params_For_Fence(spare)
     );
@@ -299,7 +299,7 @@ static Result(None) Push_Keys_And_Params_Core(
 } handle_any_word_parameters_themselves: { ///////////////////////////////////
 
     bool quoted = false;  // single quote is "unbind" signal in spec
-    Element* spare = Copy_Cell(SPARE, v);
+    Element* spare = Copied_Cell(SPARE, v);
 
     v = spare;  // need to mutate if CHAIN! or quoted
 

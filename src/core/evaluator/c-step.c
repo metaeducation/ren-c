@@ -1690,7 +1690,7 @@ Bounce Stepper_Executor(Level* L)
   //    running infix with paths is `left ->- right/side`, which uses an infix
   //    WORD! to mediate the interaction.
 
-    Element* sub_current = Copy_Cell(Level_Scratch(SUBLEVEL), CURRENT);
+    Element* sub_current = Copied_Cell(Level_Scratch(SUBLEVEL), CURRENT);
     heeded (Bind_Cell_If_Unbound(sub_current, L_binding));
     heeded (Corrupt_Cell_If_Needful(Level_Spare(SUBLEVEL)));
 
@@ -1964,7 +1964,7 @@ Bounce Stepper_Executor(Level* L)
     if (Type_Of_Raw(CURRENT) > MAX_TYPE_QUOTED)
         crash (CURRENT);
 
-    Unquote_Quoted_Cell(Copy_Cell(OUT, CURRENT));
+    Unquote_Quoted_Cell(Copied_Cell(OUT, CURRENT));
 
     STATE = ST_STEPPER_NONZERO_STATE;  // can't leave STATE_0
     goto lookahead;

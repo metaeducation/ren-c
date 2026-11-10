@@ -263,7 +263,7 @@ Result(None) Init_Frame_From_Feed(
     );
 
     Stable* var = Stable_Slot_Hack(Varlist_Slot(exemplar, 2));
-    Unquote_Quoted_Cell(Copy_Cell(var, out));
+    Unquote_Quoted_Cell(Copied_Cell(var, out));
 
     // Should we save the WORD! from a variable access to use as the name of
     // the identity alias?

@@ -517,7 +517,7 @@ void RunPromise(void)
             // But what if it doesn't pay attention to it and release it?
             // It could cause leaks.
             //
-            Api(Value*) result = Copy_Cell(Alloc_Value(), Level_Out(TOP_LEVEL));
+            Api(Value*) result = Copied_Cell(Alloc_Value(), Level_Out(TOP_LEVEL));
             rebUnmanage(result);
 
             EM_ASM(
@@ -852,7 +852,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
         //
         Clear_Trampoline_Flag(HALT);
 
-        Element* label_halt_frame = Copy_Plain_Cell(SPARE, LIB(HALT));
+        Element* label_halt_frame = Copied_Plain_Cell(SPARE, LIB(HALT));
         Init_Thrown_With_Label(LEVEL, LIB(NULL), label_halt_frame);
         return BOUNCE_THROWN;
     }

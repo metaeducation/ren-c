@@ -584,7 +584,7 @@ static void Make_Native_In_Lib_By_Hand(Level* const L, SymId id)
 
     assert(Is_Cell_Erased(SPARE));
 
-    Element* spec = Copy_Cell_May_Bind(SPARE, At_Level(L), g_lib_context);
+    Element* spec = Copied_Cell_May_Bind(SPARE, At_Level(L), g_lib_context);
     Fetch_Next_In_Feed(L->feed);
 
     Dispatcher* dispatcher = f_cast(Dispatcher*, *g_native_cfunc_pos);

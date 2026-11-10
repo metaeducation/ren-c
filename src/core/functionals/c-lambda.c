@@ -133,7 +133,7 @@ Bounce Lambda_Dispatcher(Level* const L)
 
     Inject_Methodization_If_Any(L);
 
-    Element* spare_rebound = Copy_Cell(SPARE, block);
+    Element* spare_rebound = Copied_Cell(SPARE, block);
     Tweak_Cell_Binding(spare_rebound, L->varlist);
 
     Flags flags = (not LEVEL_FLAG_VANISHABLE_VOIDS_ONLY);  // allow vanish [1]

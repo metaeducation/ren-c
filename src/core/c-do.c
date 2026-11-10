@@ -78,7 +78,7 @@ Result(None) Prep_Action_Level(
         }
 
         Clear_Param_Shield_If_Tracking(arg);
-        Value* copied = Copy_Cell(arg, unwrap with);  // do not decay [1]
+        Value* copied = Copied_Cell(arg, unwrap with);  // do not decay [1]
 
         if (Parameter_Class(param) != PARAMCLASS_META) {
             require (
@@ -240,7 +240,7 @@ bool Pushed_Continuation(
         Push_Level(dummy);
 
         Clear_Cell_Sigil(
-          Copy_Cell_May_Bind(Level_Out(dummy), branch, binding)
+          Copied_Cell_May_Bind(Level_Out(dummy), branch, binding)
         );
         goto pushed_continuation; }  /* should be "just use out" */
 
@@ -323,7 +323,7 @@ bool Pushed_Continuation(
         );
         Push_Level(dummy);
 
-        Unquote_Quoted_Cell(Copy_Cell(Level_Out(dummy), branch));
+        Unquote_Quoted_Cell(Copied_Cell(Level_Out(dummy), branch));
         goto pushed_continuation;  /* should be "just use out" */
     }
 

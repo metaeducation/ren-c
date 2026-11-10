@@ -37,7 +37,7 @@ DECLARE_NATIVE(HALT)
 {
     INCLUDE_PARAMS_OF_HALT;
 
-    Element* label_halt_frame = Copy_Plain_Cell(SPARE, LIB(HALT));
+    Element* label_halt_frame = Copied_Plain_Cell(SPARE, LIB(HALT));
     Init_Thrown_With_Label(LEVEL, LIB(NULL), label_halt_frame);
     return BOUNCE_THROWN;
 }
