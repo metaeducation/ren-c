@@ -161,6 +161,13 @@ export console!: make object! [
                 return
             ]
 
+            if '~(~null~)~ = lift ^v [  ; call out heavy null, instructive
+                print unspaced [
+                    result _ --[\~(~null~)~\  ; antiform (pack!) "heavy null"]--
+                ]
+                return
+            ]
+
             if not decayable? ^v [
                 print "; undecayable pack"
                 v: unanti ^v
@@ -170,7 +177,7 @@ export console!: make object! [
                 return
             ]
 
-            let len: length of unanti ^v
+            let len: length of unanti ^v  ; !!! should length 1 render pack?
 
             v: decay ^v
 
