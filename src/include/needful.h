@@ -396,6 +396,10 @@ typedef enum {
         static To* Do_Conversion(From* f) { return (To*)(f); }
     };
 
+  #if defined(_MSC_VER)  /* aggregate, so no ctor: /setup#c4623 */
+    #pragma warning(push)
+    #pragma warning(disable: 4623)  /* "default ctor implicitly deleted" */
+  #endif
     template<class From>
     struct NocastHolder {
         From f;
@@ -405,6 +409,9 @@ typedef enum {
             return NocastConvert<To, From>::Do_Conversion(f);
         }
     };
+  #if defined(_MSC_VER)
+    #pragma warning(pop)
+  #endif
 
     template<class T>  /* `+` for lower precedence than `%` for Result(T)  */
     inline NocastHolder<T> operator+(NocastMaker, T v) { return { v }; }
