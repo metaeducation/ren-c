@@ -280,19 +280,6 @@ jobs:
         uuid-library: build/libr3-uuid.dylib
         interpreter-shell: /usr/local/bin/r3built --fragment {0}
 
-    # Note: HTTPS no longer works due to missing cipher suites, and due to
-    # the web build being a priority that work is not being pursued.
-    #
-    - name: HTTP Read Test (If This Works, A Lot Of Things Are Working)
-      shell: /usr/local/bin/r3built --fragment {0}  # README: Ren-C Code As Step
-      run: |
-        print "== Hello From R3 HTTP Read Test! =="
-        header: parse as text! read http://example.com [
-            thru '<h1> accept across to '</h1>
-        ]
-        assert [header = "Example Domain"]
-        print ["Succeeded:" header]
-
 
   #====# UPLOAD STEP #========================================================#
 

@@ -337,14 +337,6 @@ jobs:
         executable: ${{ env.R3TWO }}
 
 
-    # Note: HTTP no longer works due to missing cipher suites, and due to
-    # the web build being a priority that work is not being pursued.
-    #
-    - name: HTTP Read Test (If This Works, A Lot Of Things Are Working)
-      run: |
-        "$R3TWO" --do "either find read:string http://example.com -[<h1>Example Domain</h1>]- [0] [1]"
-
-
     - name: Fibonnacci Test (Build a New Native From String of C Code)
       run: |
         echo "Note: CONFIG_TCCDIR is ${CONFIG_TCCDIR}"

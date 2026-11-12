@@ -41,6 +41,7 @@ runs:
         "$R3_EXECUTABLE" make.r --help
         "$R3_EXECUTABLE" make.r --help all
 
+
     # Besides just testing success cases, it's important to make sure panics
     # actually report bad exit codes, or a lot of the GitHub Actions intended
     # for testing will be useless.
@@ -112,6 +113,21 @@ runs:
           echo "Expected Exit Status 3, But Got $status"
           exit 1
         fi
+
+
+    # Note: HTTPS no longer works due to missing cipher suites, and due to
+    # the web build being a priority that work is not being pursued.
+    #
+    - name: HTTP Read Test (If This Works, A Lot Of Things Are Working)
+      shell: ${{ inputs.interpreter-shell }}
+      run: |
+        print "== Hello From R3 HTTP Read Test! =="
+        header: parse as text! read http://example.com [
+            thru '<title> accept across to '</title>  ; changed from <h1>, 2026
+        ]
+        assert [header = "Example Domain"]
+        print ["Succeeded:" header]
+
 
     - name: Test UUID Extension Built As DLL
       if: inputs.uuid-library != ''
