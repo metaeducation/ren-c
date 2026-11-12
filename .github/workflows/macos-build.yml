@@ -274,9 +274,11 @@ jobs:
 
   #====# TESTING STEPS #======================================================#
 
-    - name: Quick Smoke Test (Print A Message And Quit)
-      run: |
-        "$R3BUILT" --do "print -[hi]-"
+    - uses: ./.github/actions/smoke-tests
+      with:
+        executable: ${{ env.R3BUILT }}
+        uuid-library: build/libr3-uuid.dylib
+        interpreter-shell: /usr/local/bin/r3built --fragment {0}
 
     # Note: HTTPS no longer works due to missing cipher suites, and due to
     # the web build being a priority that work is not being pursued.
@@ -290,17 +292,6 @@ jobs:
         ]
         assert [header = "Example Domain"]
         print ["Succeeded:" header]
-
-
-    - name: Test UUID Extension Built As DLL
-      shell: r3built --fragment {0}  # See README: Ren-C Code As Step
-      run: |
-        print "== Hello From R3 DLL Test! =="
-        mod-uuid: load-extension join what-dir %build/libr3-uuid.dylib
-        print "== UUID Extension Loaded =="
-        uuid: mod-uuid/generate
-        assert [16 = length of uuid]
-        print ["Succeeded:" uuid]
 
 
   #====# UPLOAD STEP #========================================================#

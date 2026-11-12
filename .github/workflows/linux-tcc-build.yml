@@ -332,9 +332,9 @@ jobs:
 
   #===# TESTING STEPS #=======================================================#
 
-    - name: Basic Smoke Test (Print A Message And Quit)
-      run: |
-        "$R3TWO" --do "print -[Hello, Bootstrapped World!]-"
+    - uses: ./.github/actions/smoke-tests
+      with:
+        executable: ${{ env.R3TWO }}
 
 
     # Note: HTTP no longer works due to missing cipher suites, and due to

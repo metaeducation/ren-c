@@ -272,62 +272,12 @@ jobs:
 
   #====# TESTING STEPS #======================================================#
 
-    - name: Basic Smoke Test (Print A Message And Quit)
-      run: |
-        "$R3BUILT" --do "print -[hi]-"
-
-
-    # Besides just testing success cases, it's important to make sure panics
-    # actually report bad exit codes, or a lot of the GitHub Actions intended
-    # for testing will be useless.
-    #
-    # Since GitHub Actions spawns the shell as `bash -e` this means any errors
-    # will terminate the step.  Use `set +e` to disable this mode...as trying
-    # to capture the exit code without raising an error is a nuisance.
-
-    - name: PANIC Test (from code on command line)
-      run: |
-        set +e  # so nonzero exit codes won't immediately terminate step
-        "$R3BUILT" --do "panic --[Error Message]--"
-        if [ $? -eq 1 ]; then
-          echo "PANIC Properly Gave Exit Status 1"
-        else
-          echo "Expected Exit Status 1, But Got $?"
-          exit 1
-        fi
-
-    - name: PANIC Test (from running a script)
-      run: |
-        set +e  # so nonzero exit codes won't immediately terminate step
-        "$R3BUILT" tests/misc/panic-script.r
-        if [ $? -eq 1 ]; then
-          echo "PANIC Properly Gave Exit Status 1"
-        else
-          echo "Expected Exit Status 1, But Got $?"
-          exit 1
-        fi
-
-    - name: QUIT Test (from code on command line)
-      run: |
-        set +e  # so nonzero exit codes won't immediately terminate step
-        "$R3BUILT" --do "quit 3"
-        if [ $? -eq 3 ]; then
-          echo "QUIT Properly Gave Exit Status 3"
-        else
-          echo "Expected Exit Status 3, But Got $?"
-          exit 1
-        fi
-
-    - name: QUIT Test (from running a script)
-      run: |
-        set +e  # so nonzero exit codes won't immediately terminate step
-        "$R3BUILT" tests/misc/quit-script.r
-        if [ $? -eq 3 ]; then
-          echo "QUIT Properly Gave Exit Status 3"
-        else
-          echo "Expected Exit Status 3, But Got $?"
-          exit 1
-        fi
+    - uses: ./.github/actions/smoke-tests
+      with:
+        executable: ${{ env.R3BUILT }}
+        test-exit-codes: 'true'
+        uuid-library: build/libr3-uuid.so
+        interpreter-shell: r3built --fragment {0}
 
 
     # We check to be sure the produced EXE reports the same time that the
@@ -401,17 +351,6 @@ jobs:
         ]
         assert [header = "Example Domain"]
         print ["Succeeded:" header]
-
-
-    - name: Test UUID Extension Built As DLL
-      shell: r3built --fragment {0}  # See README: Ren-C Code As Step
-      run: |
-        print "== Hello From R3 DLL Test! =="
-        mod-uuid: load-extension join what-dir %build/libr3-uuid.so
-        print "== UUID Extension Loaded =="
-        uuid: mod-uuid/generate
-        assert [16 = length of uuid]
-        print ["Succeeded:" uuid]
 
 
   #====# DEPLOY STEPS #=======================================================#

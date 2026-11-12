@@ -318,9 +318,9 @@ jobs:
         fi
 
 
-    - name: Basic Smoke Test (Print A Message And Quit)
-      run: |
-        "$R3BUILT" --do "print -[MinGW build is working!]-"
+    - uses: ./.github/actions/smoke-tests
+      with:
+        executable: ${{ env.R3BUILT }}
 
 
     - name: Show Build Date

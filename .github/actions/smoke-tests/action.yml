@@ -1,0 +1,127 @@
+name: Ren-C Interpreter Smoke Tests
+description: Run common smoke tests against a built Ren-C interpreter
+
+inputs:
+  executable:
+    description: Path to the built interpreter executable
+    required: true
+  test-exit-codes:
+    description: Also test panic and quit exit codes
+    required: false
+    default: 'false'
+  test-rebmake-help:
+    description: Also test Rebmake help output
+    required: false
+    default: 'false'
+  uuid-library:
+    description: Optional path to a UUID extension built as a shared library
+    required: false
+    default: ''
+  interpreter-shell:
+    description: Shell command that runs Ren-C fragments
+    required: false
+    default: r3built --fragment {0}
+
+runs:
+  using: composite
+  steps:
+    - name: Basic Smoke Test (Print A Message And Quit)
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
+      run: |
+        "$R3_EXECUTABLE" --do "print -[hi]-"
+
+    - name: Test Rebmake HELP functionality
+      if: inputs.test-rebmake-help == 'true'
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
+      run: |
+        "$R3_EXECUTABLE" make.r --help
+        "$R3_EXECUTABLE" make.r --help all
+
+    # Besides just testing success cases, it's important to make sure panics
+    # actually report bad exit codes, or a lot of the GitHub Actions intended
+    # for testing will be useless.
+    #
+    # Since GitHub Actions spawns the shell as `bash -e` this means any errors
+    # will terminate the step.  Use `set +e` to disable this mode...as trying
+    # to capture the exit code without raising an error is a nuisance.
+
+    - name: PANIC Test (from code on command line)
+      if: inputs.test-exit-codes == 'true'
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
+      run: |
+        set +e  # so nonzero exit codes won't immediately terminate step
+        "$R3_EXECUTABLE" --do "panic --[Error Message]--"
+        status=$?
+        if [ "$status" -eq 1 ]; then
+          echo "PANIC Properly Gave Exit Status 1"
+        else
+          echo "Expected Exit Status 1, But Got $status"
+          exit 1
+        fi
+
+    - name: PANIC Test (from running a script)
+      if: inputs.test-exit-codes == 'true'
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
+      run: |
+        set +e  # so nonzero exit codes won't immediately terminate step
+        "$R3_EXECUTABLE" tests/misc/panic-script.r
+        status=$?
+        if [ "$status" -eq 1 ]; then
+          echo "PANIC Properly Gave Exit Status 1"
+        else
+          echo "Expected Exit Status 1, But Got $status"
+          exit 1
+        fi
+
+    - name: QUIT Test (from code on command line)
+      if: inputs.test-exit-codes == 'true'
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
+      run: |
+        set +e  # so nonzero exit codes won't immediately terminate step
+        "$R3_EXECUTABLE" --do "quit 3"
+        status=$?
+        if [ "$status" -eq 3 ]; then
+          echo "QUIT Properly Gave Exit Status 3"
+        else
+          echo "Expected Exit Status 3, But Got $status"
+          exit 1
+        fi
+
+    - name: QUIT Test (from running a script)
+      if: inputs.test-exit-codes == 'true'
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
+      run: |
+        set +e  # so nonzero exit codes won't immediately terminate step
+        "$R3_EXECUTABLE" tests/misc/quit-script.r
+        status=$?
+        if [ "$status" -eq 3 ]; then
+          echo "QUIT Properly Gave Exit Status 3"
+        else
+          echo "Expected Exit Status 3, But Got $status"
+          exit 1
+        fi
+
+    - name: Test UUID Extension Built As DLL
+      if: inputs.uuid-library != ''
+      shell: ${{ inputs.interpreter-shell }}
+      env:
+        R3_UUID_LIBRARY: ${{ inputs.uuid-library }}
+      run: |
+        print "== Hello From R3 DLL Test! =="
+        mod-uuid: load-extension to file! get-env 'R3_UUID_LIBRARY
+        print "== UUID Extension Loaded =="
+        uuid: mod-uuid/generate
+        assert [16 = length of uuid]
+        print ["Succeeded:" uuid]
