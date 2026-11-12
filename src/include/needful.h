@@ -508,6 +508,7 @@ typedef enum {
 **
 ** SAFETY LEVEL
 **    - Hookable cast:            cast()       // safe default w/debug hooks
+**    - ...in generic macros:     generic_cast()  // cast() + allows upcasts
 **    - Unhooked/unchecked cast:  raw_cast()   // e.g. for fresh malloc()s
 **    - Raw cast of valid data:   fast_cast()  // to avoid hooks on hot paths
 **
@@ -537,6 +538,7 @@ typedef enum {
 #define needful_lenient_unhookable_cast(T,expr)     ((T)(expr))
 
 #define needful_cast /* (T,expr) */           needful_lenient_hookable_cast
+#define needful_generic_cast(T,expr)          ((T)(expr))
 #define needful_raw_cast /* (T,expr) */       needful_lenient_unhookable_cast
 
 #if defined(NEEDFUL_FAST_CAST_IS_SLOW)
@@ -913,9 +915,10 @@ NEEDFUL_NORETURN static inline void needful_dead_end_inline(void) {
     #define NEEDFUL_CAST_SHORTHANDS  NEEDFUL_DEFINE_ALL_SHORTHANDS
 #endif
 #if NEEDFUL_CAST_SHORTHANDS
-    #define cast /* (T,...) */      needful_cast
-    #define raw_cast /* (T,...) */  needful_raw_cast
-    #define fast_cast /* (T,...) */  needful_fast_cast
+    #define cast /* (T,...) */          needful_cast
+    #define generic_cast /* (T,...) */  needful_generic_cast
+    #define raw_cast /* (T,...) */      needful_raw_cast
+    #define fast_cast /* (T,...) */     needful_fast_cast
 
     #define c_cast /* (T,...) */    needful_c_cast
 

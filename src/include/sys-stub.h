@@ -208,6 +208,14 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 //
 // 1. Stub_Cell() is a critical function, and asserts can slow down the
 //    debug build significantly here.  Only do what's essential.
+//
+// 2. raw_cast() checks legality at compile time by consulting CastHook<>.
+//    In a non-template function that check happens right where the cast is
+//    written.  The CastHook specializations for Stub and Cell types aren't
+//    defined until %sys-core.h includes casts/*.hpp, after this file...so
+//    a raw_cast() here would use the unspecialized hook, and GCC rejects
+//    the later specialization ("partial specialization after instantiation").
+//    Non-template code this early has to use c_cast() or upcast().
 
 MUTABLE_IF_C(Value*, INLINE) Stub_Cell(CONST_IF_C(Stub*) stub)
 {
@@ -220,7 +228,7 @@ MUTABLE_IF_C(Value*, INLINE) Stub_Cell(CONST_IF_C(Stub*) stub)
 }
 
 INLINE Stub* Compact_Stub_From_Cell(const Cell* v) {
-    Stub* s = raw_cast(Stub*,  // DEBUG_CHECK_CASTS checks Array
+    Stub* s = c_cast(Stub*,  // not raw_cast() this early [2]
         cast(void*,
             cast(Byte*, m_cast(Cell*, v))
             - offsetof(Stub, content)

@@ -314,7 +314,7 @@ INLINE bool Is_Lifted_Unstable_Antiform(const Value* v) {  // costs more [3]
     #define Assert_Cell_Stable(v)  NOOP
 #else
     #define Assert_Cell_Stable(v) \
-        assert(Is_Cell_Stable(cast(Value*, (v))))
+        assert(Is_Cell_Stable(generic_cast(Value*, (v))))  // any Cell type
 #endif
 
 MUTABLE_IF_C(Result(Stable*), INLINE) Ensure_Stable(CONST_IF_C(Value*) v_) {
@@ -434,7 +434,7 @@ INLINE Result(Value*) Unlift_Cell_No_Decay_Core(Value* v) {
 
 INLINE Stable* Known_Stable_Unlift_Cell_Core(Stable* v) {
     assume (
-      Unlift_Cell_No_Decay(raw_cast(Value*, v))
+      Unlift_Cell_No_Decay(upcast(Value*, v))  // see sys-stub.h [2]
     );
     Assert_Cell_Stable(v);
     return v;

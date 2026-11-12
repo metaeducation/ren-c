@@ -335,7 +335,7 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
 
 INLINE Result(Stable*) Unliftify_Decayed(Stable* v) {
     trap (
-      Value *unlifted = Unlift_Cell_No_Decay(cast(Value*, v))
+      Value *unlifted = Unlift_Cell_No_Decay(upcast(Value*, v))
     );
     return Decay_If_Unstable(unlifted);
 }

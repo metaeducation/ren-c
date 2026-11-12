@@ -53,6 +53,7 @@
 //
 DECLARE_C_TYPE_LIST(g_convertible_to_cell,
     Pairing,  // same size as Stub, holds two Cells
+    Byte,  // raw memory
     char  // some memory blobs use char* for debuggers to read UTF-8 easier
 );
 
