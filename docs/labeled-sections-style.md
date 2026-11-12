@@ -88,7 +88,7 @@ DECLARE_NATIVE(ALSO)
       case ST_ALSO_RUNNING_BRANCH:
         goto discard_branch_result_in_out_and_return_input;
 
-      default: assert(false);
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -150,7 +150,3 @@ the reasoning stays next to the code.
 - **Note numbers are not checked.** A `[2]` in the code is only correct if
   the section's remarks still have a second item. Renumber the references
   when the remarks change.
-
-- **`default: assert(false);` is not a stop in a release build.** With
-  assertions compiled out, an unexpected state leaves the `switch` and runs
-  the first section.

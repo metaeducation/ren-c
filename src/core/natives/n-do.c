@@ -338,7 +338,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
       case ST_EVALUATE_SINGLE_STEPPING:
         goto single_step_result_in_subout;
 
-      default: assert(false);
+      default: dead_end;
     }
 
   initial_entry_list: {  /////////////////////////////////////////////////////
@@ -534,7 +534,8 @@ DECLARE_NATIVE(EVAL_FREE)
     switch (STATE) {
       case ST_EVAL_FREE_INITIAL_ENTRY: goto initial_entry;
       case ST_EVAL_FREE_EVALUATING: goto result_in_subout;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: { ///////////////////////////////////////////////////////////
@@ -631,7 +632,7 @@ DECLARE_NATIVE(APPLIQUE)
       case ST_APPLIQUE_RUNNING_DEF_BLOCK :
         goto definition_result_in_spare;
 
-      default: assert(false);
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -772,7 +773,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
         }
         goto unlabeled_step_result_in_subout;
 
-      default : assert(false);
+      default: dead_end;
     }
 
 } handle_next_item: {  ///////////////////////////////////////////////////////
@@ -1027,6 +1028,7 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
 
     switch (STATE) {
       case ST__S_S_INITIAL_ENTRY: goto initial_entry;
+
       default:
         assert(STATE >= ST_FRAME_FILLER_MIN and STATE <= ST_FRAME_FILLER_MAX);
         goto delegate_to_frame_filler;

@@ -724,26 +724,26 @@ Bounce JavaScript_Dispatcher(Level* const L)
     );
 
     switch (STATE) {
-      case ST_JS_NATIVE_INITIAL_ENTRY :
+      case ST_JS_NATIVE_INITIAL_ENTRY:
         goto initial_entry;
 
-      case ST_JS_NATIVE_RUNNING :
+      case ST_JS_NATIVE_RUNNING:
         panic (
             "JavaScript_Dispatcher reentry while running, shouldn't happen"
         );
 
-      case ST_JS_NATIVE_SUSPENDED :
+      case ST_JS_NATIVE_SUSPENDED:
         panic (
             "JavaScript_Dispatcher when suspended, needed resolve/reject"
         );
 
-      case ST_JS_NATIVE_RESOLVED :
+      case ST_JS_NATIVE_RESOLVED:
         goto handle_resolved;
 
-      case ST_JS_NATIVE_REJECTED :
+      case ST_JS_NATIVE_REJECTED:
         goto handle_rejected;
 
-      default : assert(false);
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////

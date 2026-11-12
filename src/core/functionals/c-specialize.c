@@ -423,6 +423,7 @@ DECLARE_NATIVE(SPECIALIZE)
     switch (STATE) {
       case ST_SPECIALIZE_INITIAL_ENTRY: goto initial_entry;
       case ST_SPECIALIZE_FINISHED_FILLING: goto finished_filling_frame;
+
       default:
         assert(STATE >= ST_FRAME_FILLER_MIN and STATE <= ST_FRAME_FILLER_MAX);
         goto fill_frame_using_common_code_with_apply;

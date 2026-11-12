@@ -307,6 +307,7 @@ DECLARE_NATIVE(CHECK_TO_OR_AS)
     switch (STATE) {
       case ST_CHECK_TO_OR_AS_INITIAL_ENTRY: goto initial_entry;
       case ST_CHECK_TO_OR_AS_CHECKING_FORWARD: goto forward_result_in_out;
+
       default: goto backward_result_in_spare;
     }
 

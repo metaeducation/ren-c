@@ -88,7 +88,8 @@ DECLARE_NATIVE(ENRECOVER)
     switch (STATE) {
       case ST_ENRECOVER_INITIAL_ENTRY: goto initial_entry;
       case ST_ENRECOVER_EVALUATING: goto eval_result_in_subout_or_thrown;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -169,6 +170,7 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
       case ST_ENRESCUE_INITIAL_ENTRY: goto initial_entry;
       case ST_ENRESCUE_EVAL_STEPPING: goto eval_result_in_subout;
       case ST_ENRESCUE_RUNNING_FRAME: goto eval_result_in_subout;
+
       default: assert(false);
     }
 

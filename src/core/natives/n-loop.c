@@ -872,7 +872,8 @@ DECLARE_NATIVE(CYCLE)
     switch (STATE) {
       case ST_CYCLE_INITIAL_ENTRY: goto initial_entry;
       case ST_CYCLE_EVALUATING_BODY: goto body_result_or_thrown_in_out;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -1447,7 +1448,7 @@ DECLARE_NATIVE(FOR_EACH)
       case ST_FOR_EACH_RUNNING_BODY:
         goto body_result_in_out_or_threw;
 
-      default: assert(false);
+      default: dead_end;
     }
 
 } next_iteration: {  /////////////////////////////////////////////////////////
@@ -1578,7 +1579,7 @@ DECLARE_NATIVE(EVERY)
       case ST_EVERY_RUNNING_BODY:
         goto body_result_in_spare;
 
-      default: assert(false);
+      default: dead_end;
     }
 
 } next_iteration: {
@@ -2170,7 +2171,7 @@ DECLARE_NATIVE(MAP)
       case ST_MAP_RUNNING_BODY:
         goto body_result_in_spare;
 
-      default: assert(false);
+      default: dead_end;
     }
 
 } next_iteration: {  /////////////////////////////////////////////////////////
@@ -2304,7 +2305,8 @@ DECLARE_NATIVE(REPEAT)
     switch (STATE) {
       case ST_REPEAT_INITIAL_ENTRY : goto initial_entry;
       case ST_REPEAT_EVALUATING_BODY : goto body_result_in_out;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -2402,13 +2404,10 @@ DECLARE_NATIVE(FOR)
     };
 
     switch (STATE) {
-      case ST_FOR_INITIAL_ENTRY :
-        goto initial_entry;
+      case ST_FOR_INITIAL_ENTRY: goto initial_entry;
+      case ST_FOR_RUNNING_BODY: goto body_result_in_out;
 
-      case ST_FOR_RUNNING_BODY :
-        goto body_result_in_out;
-
-      default : break;
+      default: goto initial_entry;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -2530,7 +2529,8 @@ DECLARE_NATIVE(INSIST)
     switch (STATE) {
       case ST_INSIST_INITIAL_ENTRY: goto initial_entry;
       case ST_INSIST_EVALUATING_BODY: goto body_result_in_out;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -2626,7 +2626,8 @@ DECLARE_NATIVE(WHILE)  // note: UNTIL shares this implementation
       case ST_WHILE_INITIAL_ENTRY: goto initial_entry;
       case ST_WHILE_EVALUATING_CONDITION: goto condition_result_in_spare;
       case ST_WHILE_EVALUATING_BODY: goto body_result_in_out_or_thrown;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////

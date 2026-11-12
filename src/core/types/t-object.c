@@ -1966,7 +1966,7 @@ DECLARE_NATIVE(CONSTRUCT)
       case ST_CONSTRUCT_EVAL_STEP: goto continue_processing_spec;
       case ST_CONSTRUCT_EVAL_SET_STEP:  goto eval_set_step_result_in_subout;
 
-      default: assert(false);
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////

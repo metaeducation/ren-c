@@ -253,7 +253,7 @@ DECLARE_NATIVE(JOIN)
 
         goto mold_step_result_in_subout;
 
-      default: assert(false);
+      default: dead_end;
     }
 
 } start_complex_join: { //////////////////////////////////////////////////////

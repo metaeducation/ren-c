@@ -126,7 +126,8 @@ Bounce Func_Dispatcher(Level* const L)
       case ST_FUNC_INITIAL_ENTRY: goto initial_entry;
       case ST_FUNC_BODY_EXECUTING: goto body_finished_without_returning;
       case ST_FUNC_RUNNING_RETURN_P: goto return_p_finished_without_returning;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -375,7 +376,8 @@ Bounce Make_Interpreted_Action(
 
     switch (STATE) {
       case ST_FUNC_INITIAL_ENTRY: goto initial_entry;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: { ///////////////////////////////////////////////////////////

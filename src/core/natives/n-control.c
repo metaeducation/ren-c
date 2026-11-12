@@ -188,7 +188,8 @@ Bounce Group_Branch_Executor(Level* const L)
         Copy_Cell(OUT, SUBOUT);
         Drop_Level(SUBLEVEL);
         return BOUNCE_OUT;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -460,7 +461,7 @@ DECLARE_NATIVE(ALSO)
       case ST_ALSO_RUNNING_BRANCH:
         goto discard_branch_result_in_out_and_return_input;
 
-      default: assert(false);
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -509,7 +510,8 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
       case ST_ANY_ALL_NONE_INITIAL_ENTRY: goto initial_entry;
       case ST_ANY_ALL_NONE_EVAL_STEP: goto eval_step_result_in_subout;
       case ST_ANY_ALL_NONE_PREDICATE: goto predicate_result_in_topout;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: { ///////////////////////////////////////////////////////////
@@ -771,7 +773,8 @@ DECLARE_NATIVE(CASE)
       case ST_CASE_CONDITION_EVAL_STEP: goto condition_result_in_subout;
       case ST_CASE_RUNNING_PREDICATE: goto predicate_result_in_topout;
       case ST_CASE_RUNNING_BRANCH: goto branch_result_in_topout;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -978,7 +981,7 @@ DECLARE_NATIVE(SWITCH)
         }
         goto next_switch_step;
 
-      default: assert(false);
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -1188,7 +1191,8 @@ DECLARE_NATIVE(DEFAULT)
       case ST_DEFAULT_INITIAL_ENTRY: goto initial_entry;
       case ST_DEFAULT_GETTING_TARGET: assert(false); break;  // !!! TBD [1]
       case ST_DEFAULT_EVALUATING_BRANCH: goto branch_result_in_out;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -1351,13 +1355,10 @@ DECLARE_NATIVE(CATCH_P)  // specialized to plain CATCH w/ NAME="THROW" in boot
     };
 
     switch (STATE) {
-      case ST_CATCH_INITIAL_ENTRY:
-        goto initial_entry;
+      case ST_CATCH_INITIAL_ENTRY: goto initial_entry;
+      case ST_CATCH_RUNNING_CODE: goto code_result_in_out;
 
-      case ST_CATCH_RUNNING_CODE:
-        goto code_result_in_out;
-
-      default: assert(false);
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////

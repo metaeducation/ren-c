@@ -345,8 +345,9 @@ Bounce Action_Executor(Level* L)
             goto typecheck_then_dispatch;
 
           case ST_ACTION_FULFILLING_INFIX_FROM_PRIOR_OUT:  // no evals during
-          default:
-            assert(false);
+            dead_end;
+
+          default: dead_end;
         }
     }
 

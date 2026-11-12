@@ -119,7 +119,8 @@ Bounce Lambda_Dispatcher(Level* const L)
       case ST_LAMBDA_INITIAL_ENTRY: goto initial_entry;
       case ST_LAMBDA_LAMBDA_EXECUTING: goto lambda_finished;
       case ST_LAMBDA_DIVERGER_EXECUTING: goto diverger_finished;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////

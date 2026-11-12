@@ -335,7 +335,7 @@ Bounce Composer_Executor(Level* const L)
       case ST_COMPOSER_RECURSING_DEEP:
         goto composer_finished_recursion;
 
-      default: assert(false);
+      default: dead_end;
     }
 
   handle_next_item: {  ///////////////////////////////////////////////////////
@@ -667,7 +667,7 @@ DECLARE_NATIVE(COMPOSE2)
       case ST_COMPOSE2_STRING_EVAL:
         goto string_eval_in_out;
 
-      default: assert(false);
+      default: dead_end;
     }
 
   initial_entry: { ///////////////////////////////////////////////////////////

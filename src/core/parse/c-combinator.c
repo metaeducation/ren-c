@@ -324,13 +324,10 @@ DECLARE_NATIVE(OPT_COMBINATOR)
     };
 
     switch (STATE) {
-      case ST_OPT_COMBINATOR_INITIAL_ENTRY :
-        goto initial_entry;
+      case ST_OPT_COMBINATOR_INITIAL_ENTRY: goto initial_entry;
+      case ST_OPT_COMBINATOR_RUNNING_PARSER: goto parser_result_in_out;
 
-      case ST_OPT_COMBINATOR_RUNNING_PARSER :
-        goto parser_result_in_out;
-
-      default : assert(false);
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -446,16 +443,16 @@ DECLARE_NATIVE(SOME_COMBINATOR)
     };
 
     switch (STATE) {
-      case ST_SOME_COMBINATOR_INITIAL_ENTRY :
+      case ST_SOME_COMBINATOR_INITIAL_ENTRY:
         goto initial_entry;
 
-      case ST_SOME_COMBINATOR_FIRST_PARSER_RUN :
+      case ST_SOME_COMBINATOR_FIRST_PARSER_RUN:
         goto first_parse_result_in_out;
 
-      case ST_SOME_COMBINATOR_LATER_PARSER_RUN :
+      case ST_SOME_COMBINATOR_LATER_PARSER_RUN:
         goto later_parse_result_in_spare;
 
-      default : assert(false);
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -528,13 +525,10 @@ DECLARE_NATIVE(FURTHER_COMBINATOR)
     };
 
     switch (STATE) {
-      case ST_FURTHER_COMBINATOR_INITIAL_ENTRY :
-        goto initial_entry;
+      case ST_FURTHER_COMBINATOR_INITIAL_ENTRY: goto initial_entry;
+      case ST_FURTHER_COMBINATOR_RUNNING_PARSER: goto parser_result_in_out;
 
-      case ST_FURTHER_COMBINATOR_RUNNING_PARSER :
-        goto parser_result_in_out;
-
-      default: assert(false);
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////

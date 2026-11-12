@@ -128,7 +128,8 @@ Bounce Cascader_Executor(Level* const L)
     switch (STATE) {
       case ST_CASCADER_INITIAL_ENTRY: goto initial_entry;
       case ST_CASCADER_RUNNING_SUBFUNCTION: goto run_next_in_pipeline;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////

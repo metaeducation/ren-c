@@ -2232,7 +2232,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         assert(TOP_LEVEL->prior = L);
         goto child_array_scanned;
 
-      default: assert(false);
+      default: dead_end;
     }
 
   initial_entry: { ///////////////////////////////////////////////////////////

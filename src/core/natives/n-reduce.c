@@ -166,7 +166,7 @@ DECLARE_NATIVE(REDUCE)
       case ST_REDUCE_RUNNING_PREDICATE:
         goto predicate_finished;
 
-      default: assert(false);
+      default: dead_end;
     }
 
   initial_entry_non_list: {  /////////////////////////////////////////////////
@@ -447,7 +447,8 @@ DECLARE_NATIVE(REDUCE_EACH)
       case ST_REDUCE_EACH_INITIAL_ENTRY: goto initial_entry;
       case ST_REDUCE_EACH_REDUCING_STEP: goto reduce_step_result_in_subout;
       case ST_REDUCE_EACH_RUNNING_BODY: goto body_result_in_topout;
-      default : assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////

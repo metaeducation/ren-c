@@ -531,7 +531,7 @@ Bounce Stepper_Executor(Level* L)
         break;
     #endif
 
-      default: assert(false);
+      default: dead_end;
     }
 
 } initial_entry: {

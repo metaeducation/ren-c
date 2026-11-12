@@ -82,7 +82,8 @@ Bounce Adapter_Dispatcher(Level* const L)
     switch (STATE) {
       case ST_ADAPTER_INITIAL_ENTRY: goto initial_entry;
       case ST_ADAPTER_RUNNING_PRELUDE: goto run_adaptee_in_same_frame;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////

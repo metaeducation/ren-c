@@ -133,7 +133,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
         Drop_Level(SUBLEVEL);
         goto post_process_output;
 
-      default : assert(false);
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////

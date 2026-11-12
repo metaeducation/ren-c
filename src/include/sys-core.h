@@ -214,6 +214,8 @@ typedef RebolHandleCleaner HandleCleaner;
 #define except   needful_catch_if_failed
 #define rescue   needful_extract_failure
 
+#define dead_end  needful_dead_end
+
 
 //=//// SOME EXTRA C THINGS ///////////////////////////////////////////////=//
 //

@@ -127,7 +127,8 @@ Bounce Inliner_Dispatcher(Level* const L)
     switch (STATE) {
       case ST_INLINER_INITIAL_ENTRY: goto initial_entry;
       case ST_INLINER_RUNNING_BODY: goto body_result_in_out;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////

@@ -418,7 +418,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
       case ST_MAKE_MAP_INITIAL_ENTRY: goto initial_entry;
       case ST_MAKE_MAP_EVAL_STEP_KEY: goto key_step_result_in_subout;
       case ST_MAKE_MAP_EVAL_STEP_VALUE: goto value_step_result_in_subout;
-      default: assert(false);
+
+      default: dead_end;
     }
 
   initial_entry: { ///////////////////////////////////////////////////////////

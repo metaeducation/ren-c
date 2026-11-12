@@ -246,8 +246,7 @@ DECLARE_NATIVE(TRANSCODE)
         Drop_Level(SUBLEVEL);
         return BOUNCE_OUT;
 
-      default:
-        assert(false);
+      default: dead_end;
     }
 
   scan_to_stack_maybe_failed: {  /////////////////////////////////////////////

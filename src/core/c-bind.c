@@ -510,8 +510,7 @@ DECLARE_NATIVE(LET)
       case ST_LET_EVAL_STEP:
         goto integrate_eval_bindings;
 
-      default:
-        assert (false);
+      default: dead_end;
     }
 
   initial_entry: {  ///////////////////////////////////////////////////////////

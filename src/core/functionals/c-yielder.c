@@ -152,8 +152,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
         goto body_finished_or_threw; }
 
-      default:
-        assert(false);
+      default: dead_end;
     }
 
   begin_body: {  /////////////////////////////////////////////////////////////
@@ -563,7 +562,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
       case ST_YIELD_SUSPENDED:  // see definition for why this state exists
         return BOUNCE_OUT;
 
-      default: assert(false);
+      default: dead_end;
     }
 
     Value* v = ARG(VALUE);
