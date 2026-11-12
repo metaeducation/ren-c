@@ -413,13 +413,13 @@ typedef enum {
     #pragma warning(pop)
   #endif
 
-    template<class T>  /* `+` for lower precedence than `%` for Result(T)  */
-    inline NocastHolder<T> operator+(NocastMaker, T v) { return { v }; }
+    template<class T>  /* `*` is lower precedence than Result(T) `->*` */
+    inline NocastHolder<T> operator*(NocastMaker, T v) { return { v }; }
 
     constexpr NocastMaker g_nocast_maker{};
   }
 
-    #define needful_nocast  needful::g_nocast_maker +
+    #define needful_nocast  needful::g_nocast_maker *
 #endif
 
 
