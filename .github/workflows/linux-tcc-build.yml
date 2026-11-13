@@ -49,7 +49,7 @@ jobs:
 
     # https://github.com/actions/virtual-environments#available-environments
     #
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04  # required for r3-linux-7f1fa5fd, GLIBC_2.38
 
     # See README: Build Matrix
     #
@@ -117,9 +117,9 @@ jobs:
         echo "But that executable won't run on GitHub for some reason"
         # "$r3make" --do "print {TESTING 1 2 3}"  # NOT WORKING, dunno why
         cd prebuilt
-        wget --quiet http://hostilefork.com/media/shared/r3bootstraps/r3-linux-x64-0600cdf4
-        chmod +x r3-linux-x64-0600cdf4
-        r3make=$(pwd)/r3-linux-x64-0600cdf4
+        wget --quiet http://hostilefork.com/media/shared/r3bootstraps/r3-linux-7f1fa5fd
+        chmod +x r3-linux-7f1fa5fd
+        r3make=$(pwd)/r3-linux-7f1fa5fd
         echo "So now R3MAKE is $r3make"
         echo "R3MAKE=$r3make" >> $GITHUB_ENV  # pass to next step
 
