@@ -283,6 +283,13 @@ jobs:
 
     steps:
 
+    # https://github.com/actions/checkout
+    #
+    # See README: Checkout Action
+    #
+    - uses: actions/checkout@v5  # See README: Trusted Actions
+
+
     - name: Download Built Executable
       uses: actions/download-artifact@v4
       with:
