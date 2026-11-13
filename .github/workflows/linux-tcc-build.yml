@@ -247,6 +247,15 @@ jobs:
   #
   #===========================================================================#
 
+    # We want to run the smoke tests on the executable, and it's easiest to
+    # have them in a known location consistent with the other workflows.
+    # So put them aside before deleting the rest of the repository's files.
+    #
+    - name: Save the Smoke Tests To A Location Off To the Side
+      run: |
+        cp -R .github/actions/smoke-tests "$RUNNER_TEMP/smoke-tests"
+
+
     - name: Delete Ren-C Source Cloned With Git (let Bootstrap EXE Fetch It)
       run: |
         export TOP_DIR=$(pwd)
@@ -337,9 +346,22 @@ jobs:
 
   #===# TESTING STEPS #=======================================================#
 
+    # Restore the action from the original checkout only after bootstrapping,
+    # so the tests match the workflow without helping the bootstrap build.
+    #
+    - name: Restore Smoke Tests After Bootstrapping
+      run: |
+        mkdir -p .github/actions
+        mv "$RUNNER_TEMP/smoke-tests" .github/actions/
+
+
     - uses: ./.github/actions/smoke-tests
       with:
         executable: ${{ env.R3TWO }}
+        test-exit-codes: 'true'
+        tests-directory: ren-c-master/tests
+        # uuid-library: ...  # not built as a shared library in this workflow
+        interpreter-shell: ${{ env.R3TWO }} --fragment {0}
 
 
     - name: Fibonnacci Test (Build a New Native From String of C Code)

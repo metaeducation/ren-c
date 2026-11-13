@@ -216,7 +216,8 @@ Use the local composite action to run the common interpreter launch check:
 
 The action can also test panic/quit exit codes and Rebmake help when those are
 relevant to a workflow.  Set `test-exit-codes: 'true'` or
-`test-rebmake-help: 'true'` to enable those tests.  Supplying `uuid-library`
+`test-rebmake-help: 'true'` to enable those tests.  Set `tests-directory` when
+the test scripts are outside the default `tests/` directory.  Supplying `uuid-library`
 runs the UUID extension check against that shared-library path; leave it out
 when the workflow does not build the UUID extension as a shared library.
 `interpreter-shell` selects the executable used to run that Ren-C test fragment
