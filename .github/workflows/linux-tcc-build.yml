@@ -151,6 +151,9 @@ jobs:
     # Unlike the APT-installed version, this will have C11 support for things
     # like <stdatomic.h>, as well as `_Noreturn` and `__builtin_unreachable()`
     #
+    # 1. A 2026 TinyC commit removed /usr/local/include and /usr/local/lib
+    #    from its defaults.
+    #
     - name: Build Newer TinyC (tcc) from "mob" Sources
       if: true  # if Debian ever updates tcc package, can use APT again
       run: |
@@ -164,6 +167,8 @@ jobs:
 
         echo "CONFIG_TCCDIR=/usr/local/lib/tcc/" >> $GITHUB_ENV
 
+        echo "LIBTCC_INCLUDE_DIR=/usr/local/include/" >> $GITHUB_ENV  # see [1]
+        echo "LIBTCC_LIB_DIR=/usr/local/lib/" >> $GITHUB_ENV  # see [1]
 
     # Show a little bit of sanity check information
     #
