@@ -79,7 +79,7 @@ native-assert: hijack assert/ verify/
     "Returns the time it takes to evaluate the block"
     block [block!]  ; callsite FENCE! evaluates to BLOCK!, wrapped
 ][
-    let results: reduce reduce [  ; resolve word lookups first, run fetched
+    let results: join block! reduce [  ; word lookups first, run fetched
         now:precise/
         elide/ (as group! block)
         now:precise/
