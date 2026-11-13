@@ -92,7 +92,7 @@ compile: proc [
 
     let b: settings
     until [tail? b] [
-        let key: b.1
+        let key: unbind b.1  ; could also use b.'1
         let var: get inside config (match word! key else [
             panic ["COMPILE:SETTINGS parameter" key "is not supported"]
         ])
