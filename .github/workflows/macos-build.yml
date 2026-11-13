@@ -278,7 +278,6 @@ jobs:
       with:
         executable: ${{ env.R3BUILT }}
         uuid-library: build/libr3-uuid.dylib
-        interpreter-shell: /usr/local/bin/r3built --fragment {0}
 
 
   #====# UPLOAD STEP #========================================================#

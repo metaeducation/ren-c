@@ -361,7 +361,6 @@ jobs:
         test-exit-codes: 'true'
         tests-directory: ren-c-master/tests
         # uuid-library: ...  # not built as a shared library in this workflow
-        interpreter-shell: ${{ env.R3TWO }} --fragment {0}
 
 
     - name: Fibonnacci Test (Build a New Native From String of C Code)

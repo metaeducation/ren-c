@@ -328,33 +328,4 @@ jobs:
     - uses: ./.github/actions/smoke-tests
       with:
         executable: ${{ env.R3BUILT }}
-
-
-    - name: Show Build Date
-      run: |
-        "$R3BUILT" --do "print [-[Build info:]- system.build]"
-
-
-    - name: Show Version/Platform Information
-      run: |
-        "$R3BUILT" --do "print [-[Version:]- @system.version]"
-
-
-    - name: Test Basic Arithmetic
-      run: |
-        "$R3BUILT" --do "print [-[Math test:]- 2 + 2]"
-
-
-    - name: Test String Operations
-      run: |
-        "$R3BUILT" --do "print [-[String test:]- uppercase -[hello world]-]"
-
-
-    - name: Test Basic Control Structures
-      run: |
-        "$R3BUILT" --do "repeat 3 [print -[counting to three...]-]"
-
-
-    - name: Test Clean Exit
-      run: |
-        "$R3BUILT" --do "print -[All tests passed!]- quit 0"
+        test-http: 'false'

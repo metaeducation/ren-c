@@ -17,14 +17,14 @@ inputs:
     description: Also test Rebmake help output
     required: false
     default: 'false'
+  test-http:
+    description: Test HTTP access when Network and DNS are enabled
+    required: false
+    default: 'true'
   uuid-library:
     description: Optional path to a UUID extension built as a shared library
     required: false
     default: ''
-  interpreter-shell:
-    description: Shell command that runs Ren-C fragments
-    required: false
-    default: r3built --fragment {0}
 
 runs:
   using: composite
@@ -35,6 +35,41 @@ runs:
         R3_EXECUTABLE: ${{ inputs.executable }}
       run: |
         "$R3_EXECUTABLE" --do "print -[hi]-"
+
+    - name: Show Build Date
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
+      run: |
+        "$R3_EXECUTABLE" --do "print [-[Build info:]- system.build]"
+
+    - name: Show Version/Platform Information
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
+      run: |
+        "$R3_EXECUTABLE" --do "print [-[Version:]- @system.version]"
+
+    - name: Test Basic Arithmetic
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
+      run: |
+        "$R3_EXECUTABLE" --do "print [-[Math test:]- 2 + 2]"
+
+    - name: Test String Operations
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
+      run: |
+        "$R3_EXECUTABLE" --do "print [-[String test:]- uppercase -[hello world]-]"
+
+    - name: Test Basic Control Structures
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
+      run: |
+        "$R3_EXECUTABLE" --do "repeat 3 [print -[counting to three...]-]"
 
     - name: Test Rebmake HELP functionality
       if: inputs.test-rebmake-help == 'true'
@@ -133,25 +168,42 @@ runs:
     # the web build being a priority that work is not being pursued.
     #
     - name: HTTP Read Test (If This Works, A Lot Of Things Are Working)
-      shell: ${{ inputs.interpreter-shell }}
+      if: inputs.test-http == 'true'
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
       run: |
+        "$R3_EXECUTABLE" --do "$(cat <<'REBOL'
         print "== Hello From R3 HTTP Read Test! =="
         header: parse as text! read http://example.com [
             thru '<title> accept across to '</title>  ; changed from <h1>, 2026
         ]
         assert [header = "Example Domain"]
         print ["Succeeded:" header]
+        REBOL
+        )"
 
 
     - name: Test UUID Extension Built As DLL
       if: inputs.uuid-library != ''
-      shell: ${{ inputs.interpreter-shell }}
+      shell: bash
       env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
         R3_UUID_LIBRARY: ${{ inputs.uuid-library }}
       run: |
+        "$R3_EXECUTABLE" --do "$(cat <<'REBOL'
         print "== Hello From R3 DLL Test! =="
         mod-uuid: load-extension to file! get-env 'R3_UUID_LIBRARY
         print "== UUID Extension Loaded =="
         uuid: mod-uuid/generate
         assert [16 = length of uuid]
         print ["Succeeded:" uuid]
+        REBOL
+        )"
+
+    - name: Test Clean Exit
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
+      run: |
+        "$R3_EXECUTABLE" --do "print -[All tests passed!]- quit 0"

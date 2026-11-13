@@ -208,7 +208,7 @@ any shell program you want to use to that location.
 
 ## Shared Interpreter Smoke Tests
 
-Use the local composite action to run the common interpreter launch check:
+Use the local composite action to run common interpreter smoke tests:
 
     - uses: ./.github/actions/smoke-tests
       with:
@@ -220,8 +220,8 @@ relevant to a workflow.  Set `test-exit-codes: 'true'` or
 the test scripts are outside the default `tests/` directory.  Supplying `uuid-library`
 runs the UUID extension check against that shared-library path; leave it out
 when the workflow does not build the UUID extension as a shared library.
-`interpreter-shell` selects the executable used to run that Ren-C test fragment
-when the UUID check is enabled.
+HTTP is tested by default; set `test-http: 'false'` when Network and DNS are
+not built.  All tests use the executable provided to the action.
 
 
 ## Checkout Action

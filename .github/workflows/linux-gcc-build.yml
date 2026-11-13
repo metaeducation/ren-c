@@ -277,7 +277,6 @@ jobs:
         executable: ${{ env.R3BUILT }}
         test-exit-codes: 'true'
         uuid-library: build/libr3-uuid.so
-        interpreter-shell: r3built --fragment {0}
 
 
     # We check to be sure the produced EXE reports the same time that the

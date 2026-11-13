@@ -289,7 +289,6 @@ jobs:
         test-exit-codes: 'true'
         test-rebmake-help: 'true'
         uuid-library: build/r3-uuid.dll
-        interpreter-shell: r3built --fragment {0}
 
 
   #====# DEPLOY STEPS #=======================================================#
