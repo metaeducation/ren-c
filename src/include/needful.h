@@ -46,6 +46,9 @@
 **   Fallible(T)   An Option(T) you can't drop on the floor.  Discharge it
 **                 with `return_if_none`, `abort_if_none`, etc.: say which.
 **
+**   Status(T)     A zero-means-okay return code.  Must be looked at, and
+**                 has no truth value: say `is_okay(...)`, not `if (rc)`.
+**
 **   Result(T)     Error + return value, like Rust's Result<T,E>, in plain C.
 **                 `return_if_failed` propagates; `catch_if_failed` scopes a
 **                 catch variable (and works with `else`).
@@ -255,6 +258,49 @@ typedef enum {
 
 #define needful_tolerate_none(_expr_) \
     NEEDFUL_USED(needful_is_none(_expr_))
+
+
+/****[[ Status(T): ZERO MEANS OKAY, AND THE CODE MUST BE LOOKED AT ]]**********
+**
+** Docs: https://needful.metaeducation.com/status
+**
+** For the convention of returning 0 on success and some other code if not.
+** It must be used, like a Fallible(T).  But zero is the *good* state here
+** and the bad one there, so the two don't mix: no `none`, and its own words.
+**
+**     Status(int) Flush(Buffer* b) { if (b->broken) return E_IO; return okay; }
+**
+**     return_if_not_okay (int, Flush(b));  // returns Flush's code if not 0
+**
+** Checked builds give it no truth value: `if (Flush(b))` reads as "if it
+** worked" but means "if it didn't", so it's an error.  Say is_okay(...).
+** status_code(...) gets the raw code, e.g. for a switch().
+*/
+
+#define NeedfulStatus(T)     NEEDFUL_MUSTUSE T  /* return position only */
+#define NeedfulStatusVar(T)  T  /* locals, parameters, members, typedefs */
+
+#define needful_okay  needful_nocast_0  /* unique type if C++ enhanced */
+
+#define needful_is_okay(_expr_)      ((_expr_) == 0)
+#define needful_status_code(_expr_)  (_expr_)
+
+#define needful_return_if_not_okay(T,_expr_) /* T: the code's type */ \
+    do { NeedfulStatusVar(T) _needful_status_ = (_expr_); \
+        if (! needful_is_okay(_needful_status_)) { return _needful_status_; } \
+    } while (0)
+
+#define needful_abort_if_not_okay(_expr_) \
+    do { if (! needful_is_okay(_expr_)) { NEEDFUL_ABORT(); } } while (0)
+
+#define needful_assert_okay(_expr_) do { /* _expr_ runs even under NDEBUG */ \
+    int _needful_was_okay_ = needful_is_okay(_expr_) ? 1 : 0; \
+    NEEDFUL_ASSERT(_needful_was_okay_); \
+    NEEDFUL_UNUSED(_needful_was_okay_); \
+} while (0)
+
+#define needful_tolerate_not_okay(_expr_) \
+    NEEDFUL_USED(needful_is_okay(_expr_))
 
 
 /****[[ Result(T): MULTIPLEXED ERROR AND RETURN RESULT ]]*********************
@@ -979,6 +1025,22 @@ NEEDFUL_NORETURN static inline void needful_dead_end_inline(void) {
     #define tolerate_none /* (expr) */      needful_tolerate_none
 #endif
 
+#if !defined(NEEDFUL_STATUS_SHORTHANDS)
+    #define NEEDFUL_STATUS_SHORTHANDS  NEEDFUL_DEFINE_ALL_SHORTHANDS
+#endif
+#if NEEDFUL_STATUS_SHORTHANDS
+    #define Status /* (T) */                    NeedfulStatus
+    #define StatusVar /* (T) */                 NeedfulStatusVar
+    #define okay                                needful_okay
+
+    #define is_okay /* (expr) */                needful_is_okay
+    #define status_code /* (expr) */            needful_status_code
+    #define return_if_not_okay /* (T,expr) */   needful_return_if_not_okay
+    #define abort_if_not_okay /* (expr) */      needful_abort_if_not_okay
+    #define assert_okay /* (expr) */            needful_assert_okay
+    #define tolerate_not_okay /* (expr) */      needful_tolerate_not_okay
+#endif
+
 #if !defined(NEEDFUL_CONTRA_SHORTHANDS)
     #define NEEDFUL_CONTRA_SHORTHANDS  NEEDFUL_DEFINE_ALL_SHORTHANDS
 #endif
@@ -1114,6 +1176,9 @@ NEEDFUL_NORETURN static inline void needful_dead_end_inline(void) {
 #if !defined(NEEDFUL_OPTION_USES_WRAPPER)
   #define NEEDFUL_OPTION_USES_WRAPPER  NEEDFUL_CPP_ENHANCED
 #endif
+#if !defined(NEEDFUL_STATUS_USES_WRAPPER)
+  #define NEEDFUL_STATUS_USES_WRAPPER  NEEDFUL_CPP_ENHANCED
+#endif
 #if !defined(NEEDFUL_RESULT_USES_WRAPPER)
   #define NEEDFUL_RESULT_USES_WRAPPER  NEEDFUL_CPP_ENHANCED
 #endif
@@ -1138,6 +1203,9 @@ NEEDFUL_NORETURN static inline void needful_dead_end_inline(void) {
     #endif
     #if NEEDFUL_OPTION_USES_WRAPPER
         #error "NEEDFUL_OPTION_USES_WRAPPER requires NEEDFUL_CPP_ENHANCED"
+    #endif
+    #if NEEDFUL_STATUS_USES_WRAPPER
+        #error "NEEDFUL_STATUS_USES_WRAPPER requires NEEDFUL_CPP_ENHANCED"
     #endif
     #if NEEDFUL_RESULT_USES_WRAPPER
         #error "NEEDFUL_RESULT_USES_WRAPPER requires NEEDFUL_CPP_ENHANCED"
