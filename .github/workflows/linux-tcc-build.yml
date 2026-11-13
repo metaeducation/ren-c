@@ -358,7 +358,6 @@ jobs:
     - uses: ./.github/actions/smoke-tests
       with:
         executable: ${{ env.R3TWO }}
-        test-exit-codes: 'true'
         tests-directory: ren-c-master/tests
         # uuid-library: ...  # not built as a shared library in this workflow
 

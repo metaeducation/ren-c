@@ -8,7 +8,7 @@ inputs:
   test-exit-codes:
     description: Also test panic and quit exit codes
     required: false
-    default: 'false'
+    default: 'true'
   tests-directory:
     description: Path to the tests directory
     required: false
@@ -16,7 +16,7 @@ inputs:
   test-rebmake-help:
     description: Also test Rebmake help output
     required: false
-    default: 'false'
+    default: 'true'
   test-http:
     description: Test HTTP access when Network and DNS are enabled
     required: false

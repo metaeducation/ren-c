@@ -275,7 +275,6 @@ jobs:
     - uses: ./.github/actions/smoke-tests
       with:
         executable: ${{ env.R3BUILT }}
-        test-exit-codes: 'true'
         uuid-library: build/libr3-uuid.so
 
 
