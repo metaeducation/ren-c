@@ -83,7 +83,7 @@ jobs:
        include:
 
          - os-id: 0.3.40  # 64-bit Target (built on this 64-bit platform)
-           config-file: mingw-x64.r
+           config-file: mingw-x64-c++.r
            standard: c++17
            debug: none
            optimize: 2
@@ -275,7 +275,7 @@ jobs:
 
     strategy:
       matrix:
-        config-file: [mingw-x64.r, mingw-x86.r]
+        config-file: [mingw-x64-c++.r, mingw-x86.r]
 
     defaults:
       run:
