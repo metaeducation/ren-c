@@ -33,6 +33,13 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Show Version via --version Command Line Option
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
+      run: |
+        "$R3_EXECUTABLE" --version
+
     - name: Basic Smoke Test (Print A Message And Quit)
       shell: bash
       env:
@@ -40,19 +47,19 @@ runs:
       run: |
         "$R3_EXECUTABLE" --do "print -[hi]-"
 
+    - name: Show Version/Platform Information From SYSTEM Object
+      shell: bash
+      env:
+        R3_EXECUTABLE: ${{ inputs.executable }}
+      run: |
+        "$R3_EXECUTABLE" --do "print [-[Version:]- @system.version]"
+
     - name: Show Build Date
       shell: bash
       env:
         R3_EXECUTABLE: ${{ inputs.executable }}
       run: |
         "$R3_EXECUTABLE" --do "print [-[Build info:]- system.build]"
-
-    - name: Show Version/Platform Information
-      shell: bash
-      env:
-        R3_EXECUTABLE: ${{ inputs.executable }}
-      run: |
-        "$R3_EXECUTABLE" --do "print [-[Version:]- @system.version]"
 
     - name: Test Basic Arithmetic
       shell: bash

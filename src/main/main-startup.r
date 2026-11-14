@@ -568,7 +568,7 @@ main-startup: nonfinal function [  ; overwrites self when finished
         )
     |
         ["-v" | "-V" | "--version"] (
-            boot-print ["Rebol 3" system.version]  ; version tuple
+            boot-print ["Rebol 3" @system.version]  ; version tuple
             quit-when-done: default ['yes]
         )
     |
