@@ -187,11 +187,19 @@ jobs:
     # GCC can build 32-bit targets on a 64-bit host, but it needs multilib
     # (otherwise fatal error: bits/c++config.h: No such file or directory)
     #
+    # The `apt-get update` is required, not optional.  multilib pulls in
+    # libc6-dev-i386 and friends, which must be the *exact* version of the
+    # image's glibc.  When Ubuntu ships a glibc update, the old .debs are
+    # removed from the mirrors--but the runner image's package index still
+    # names them until the image is rebuilt, so the install 404s:
+    #
+    #   E: Failed to fetch .../libc6-dev-i386_2.35-0ubuntu3.15_amd64.deb  404
+    #
     - name: Get Multilib If Cross-Compiling
       if: env.OS_ID == '0.4.4'
       run: |
-        sudo apt install gcc-multilib
-        sudo apt install g++-multilib
+        sudo apt-get update
+        sudo apt-get install -y gcc-multilib g++-multilib
 
 
     # The ODBC executable is built with debug included, to make the workflow

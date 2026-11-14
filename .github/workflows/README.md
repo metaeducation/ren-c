@@ -428,9 +428,14 @@ package index first.  Consider skipping it unless:
 
 * You need the latest package version
 * A package install fails due to missing dependencies
+* The package is pinned to the exact version of something in the image
+  (e.g. `gcc-multilib` needs `libc6-dev-i386` matching the image's glibc)
 
 Most Ubuntu runners are updated weekly, so their package indexes are relatively
-fresh.
+fresh.  But "relatively" isn't enough when a security update lands mid-week:
+the mirrors delete the superseded `.deb`s right away, and an install from the
+image's stale index fails with `404 Not Found`.  If you see that, the fix is
+`sudo apt-get update` before the install, not a retry.
 
 
 ## Use Concurrency to Cancel Outdated Runs
