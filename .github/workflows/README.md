@@ -214,14 +214,17 @@ Use the local composite action to run common interpreter smoke tests:
       with:
         executable: ${{ env.R3BUILT }}
 
-The action can also test panic/quit exit codes and Rebmake help when those are
-relevant to a workflow.  Set `test-exit-codes: 'true'` or
-`test-rebmake-help: 'true'` to enable those tests.  Set `tests-directory` when
-the test scripts are outside the default `tests/` directory.  Supplying `uuid-library`
-runs the UUID extension check against that shared-library path; leave it out
-when the workflow does not build the UUID extension as a shared library.
-HTTP is tested by default; set `test-http: 'false'` when Network and DNS are
-not built.  All tests use the executable provided to the action.
+The action tests panic/quit exit codes and Rebmake help by default.  Set
+`test-exit-codes: 'false'` or `test-rebmake-help: 'false'` to disable those
+tests.  Set `tests-directory` when the test scripts are outside the default
+`tests/` directory.  Supplying `uuid-library` runs the UUID extension check
+against that shared-library path; leave it out when the workflow does not
+build the UUID extension as a shared library.
+
+Set `has-filesystem: 'false'` when Filesystem is not built; this skips Rebmake
+help and file-based exit-code tests but retains the command-line exit tests.
+Set `has-network: 'false'` when Network or DNS is not built to skip the HTTP
+test.  All tests use the executable provided to the action.
 
 
 ## Checkout Action

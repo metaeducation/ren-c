@@ -328,4 +328,5 @@ jobs:
     - uses: ./.github/actions/smoke-tests
       with:
         executable: ${{ env.R3BUILT }}
-        test-http: 'false'
+        has-filesystem: 'false'
+        has-network: 'false'

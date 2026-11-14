@@ -17,8 +17,12 @@ inputs:
     description: Also test Rebmake help output
     required: false
     default: 'true'
-  test-http:
-    description: Test HTTP access when Network and DNS are enabled
+  has-filesystem:
+    description: Filesystem extension is enabled for file-based tests
+    required: false
+    default: 'true'
+  has-network:
+    description: Network and DNS extensions are enabled for the HTTP test
     required: false
     default: 'true'
   uuid-library:
@@ -72,7 +76,7 @@ runs:
         "$R3_EXECUTABLE" --do "repeat 3 [print -[counting to three...]-]"
 
     - name: Test Rebmake HELP functionality
-      if: inputs.test-rebmake-help == 'true'
+      if: inputs.has-filesystem == 'true' && inputs.test-rebmake-help == 'true'
       shell: bash
       env:
         R3_EXECUTABLE: ${{ inputs.executable }}
@@ -106,7 +110,7 @@ runs:
         fi
 
     - name: PANIC Test (from running a script)
-      if: inputs.test-exit-codes == 'true'
+      if: inputs.has-filesystem == 'true' && inputs.test-exit-codes == 'true'
       shell: bash
       env:
         R3_EXECUTABLE: ${{ inputs.executable }}
@@ -143,7 +147,7 @@ runs:
         fi
 
     - name: QUIT Test (from running a script)
-      if: inputs.test-exit-codes == 'true'
+      if: inputs.has-filesystem == 'true' && inputs.test-exit-codes == 'true'
       shell: bash
       env:
         R3_EXECUTABLE: ${{ inputs.executable }}
@@ -168,7 +172,7 @@ runs:
     # the web build being a priority that work is not being pursued.
     #
     - name: HTTP Read Test (If This Works, A Lot Of Things Are Working)
-      if: inputs.test-http == 'true'
+      if: inputs.has-network == 'true'
       shell: bash
       env:
         R3_EXECUTABLE: ${{ inputs.executable }}
