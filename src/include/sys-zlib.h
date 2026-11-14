@@ -732,7 +732,7 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #  define OS_CODE  10
 #endif
 
-// !!! The patch for defined __HAIKU__ was added for Ren-C, but would be lost
+// !!! The patch for defined __HAIKU__ was added for Revolt, but would be lost
 // if %make-zlib.r were executed again to extract from the main sources.
 // The change should be submitted to zlib if it's important.
 //

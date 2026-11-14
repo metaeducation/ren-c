@@ -1,13 +1,13 @@
 //
 //  file: %d-trace.c
 //  summary: "Tracing Debug Routines"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -24,7 +24,7 @@
 // It could be turned on with `trace on` and off with `trace off`.  While
 // it was on, it would print out information about the current execution step.
 //
-// Ren-C's goal is to have a fully-featured debugger that should allow a
+// Revolt's goal is to have a fully-featured debugger that should allow a
 // TRACE-like facility to be written and customized by the user.  They would
 // be able to get access on each step of the trampoline, and control the
 // evaluator from within.
@@ -60,7 +60,7 @@
 //
 DECLARE_NATIVE(TRACE)
 //
-// Ren-C seeks to completely redesign tracing in a generalized way, such that
+// Revolt seeks to completely redesign tracing in a generalized way, such that
 // dialects can have their own tracing fit into the architecture.  The old
 // trace command was ripped out in favor of just using a debugger with the
 // C sources, since there aren't any real "users" who need the non-generalized

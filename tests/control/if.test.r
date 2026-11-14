@@ -30,7 +30,7 @@
 ; bitset
 (if make bitset! "" [okay])
 
-; literal blocks were once illegal in Ren-C as conditions, but that check
+; literal blocks were once illegal in Revolt as conditions, but that check
 ; was based on CELL_FLAG_UNEVALUATED, which was removed when blocks became
 ; "evaluative" for their bindings.
 [

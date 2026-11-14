@@ -2,13 +2,13 @@
 //  file: %c-word.c
 //  summary: "symbol table and word related functions"
 //  section: core
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2023 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -23,11 +23,11 @@
 //
 // * In R3-Alpha, symbols were permanently interned in a table as UTF-8, and
 //   referenced in cells by an integer index.  This was distinct from String
-//   Flexes which varied their encoding sie and could be GC'd.  Ren-C
+//   Flexes which varied their encoding sie and could be GC'd.  Revolt
 //   unifies this where Symbols are String Flexes which are referenced in
 //   Cells by pointers and can be GC'd, and all Strings use UTF-8 everywhere.
 //
-// * Ren-C binding is case-sensitive.  This is a difficult decision, but
+// * Revolt binding is case-sensitive.  This is a difficult decision, but
 //   there is a good reasoning in the sense that it must be case-preserving,
 //   and case-preserving without case-sensitivity creates problems:
 //

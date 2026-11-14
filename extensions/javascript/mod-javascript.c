@@ -2,12 +2,12 @@
 //  file: %mod-javascript.c
 //  summary: "Support for calling Javascript from Rebol in Emscripten build"
 //  section: extension
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2018-2022 Ren-C Open Source Contributors
+// Copyright 2018-2022 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -75,7 +75,7 @@
 
 //=//// DEBUG_JAVASCRIPT_EXTENSION TOOLS //////////////////////////////////=//
 //
-// Ren-C has very aggressive RUNTIME_CHECKS, and turning them all on can
+// Revolt has very aggressive RUNTIME_CHECKS, and turning them all on can
 // result in a prohibitive emscripten build: not just in size and speed of
 // the build products, but the compilation can wind up taking a long time--or
 // not succeeding at all.  This has been getting better, and it's possible
@@ -591,7 +591,7 @@ EXTERN_C void API_rebIdle_internal(void)  // NO user JS code on stack!
 
 
 // Initially this was rebSignalResolveNative() and not rebResolveNative()
-// The reason was that the empterpreter build had the Ren-C interpreter
+// The reason was that the empterpreter build had the Revolt interpreter
 // suspended, and there was no way to build a Stable* to pass through to it.
 // So the result was stored as a function in a table to generate the value.
 // Now it pokes the result directly into the frame's output slot.
@@ -696,7 +696,7 @@ EXTERN_C void API_rebRejectNative_internal(
 // 2. We don't know exactly what JS event is going to trigger and cause a
 //    resolve() to happen.  It could be a timer, it could be a fetch(), it
 //    could be anything.  Whether you're using a cooperative stackless yield
-//    from Ren-C or emscripten's (fattening, slower) Asyncify capability, you
+//    from Revolt or emscripten's (fattening, slower) Asyncify capability, you
 //    pretty much have to use polling.
 //
 //    (Note: This may make pthreads sound appealing to get pthread_wait(), but

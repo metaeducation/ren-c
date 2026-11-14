@@ -1,13 +1,13 @@
 //
 //  file: %reb-defs.h
 //  summary: "Miscellaneous structures and definitions"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2018 Ren-C Open Source Contributors
+// Copyright 2012-2018 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -75,7 +75,7 @@ typedef uintptr_t Flags;
 // machines, and a possible loss of performance for forcing a platform to use
 // a specific size int (instead of deferring to C's generic `int`).
 //
-// Hence Ren-C switches to using indexes that are provided by <stdint.h>
+// Hence Revolt switches to using indexes that are provided by <stdint.h>
 // that are deemed by the compiler to be the fastest representation for 32-bit
 // integers...even if that might be larger.
 //
@@ -131,7 +131,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
 // the optional trick relies on making 0 the optional state...and 0 is a valid
 // in-band value.
 //
-// So instead Ren-C uses Optional(Length*) instead...with nullptr serving as
+// So instead Revolt uses Optional(Length*) instead...with nullptr serving as
 // the special "no limit" state.  Debug builds then check that you don't
 // accidentally use the limit value when it is null (see Optional's `unwrap`)
 //
@@ -273,7 +273,7 @@ typedef intptr_t StackIndex;  // 0 for empty stack ([0] entry poison)
 
 //=//// STRING MODES //////////////////////////////////////////////////////=//
 //
-// Ren-C is prescriptive about disallowing 0 bytes in strings to more safely
+// Revolt is prescriptive about disallowing 0 bytes in strings to more safely
 // use the rebSpell() API, which only returns a pointer and must interoperate
 // with C.  It enforces the use of BLOB! if you want to embed 0 bytes (and
 // using the rebBytes() API, which always returns a size.)

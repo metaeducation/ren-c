@@ -1,13 +1,13 @@
 //
 //  file: %cell-logic.h
 //  summary: "LOGIC! Datatype Header"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2026 Ren-C Open Source Contributors
+// Copyright 2012-2026 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -25,7 +25,7 @@
 // a representation for logic literals.  R3-Alpha used #[true] and #[false]
 // but often molded them as looking like the words true and false anyway.
 //
-// Ren-C's answer is a concept known as "Flexible Logic".  The concept is
+// Revolt's answer is a concept known as "Flexible Logic".  The concept is
 // that WORD!s are used to represent boolean states like TRUE, FALSE, YES, NO
 // ON, OFF, etc.  When tested by something like an IF, those will all trigger
 // the branch to be taken--so it is expected that you use an appropriate

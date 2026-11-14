@@ -2,13 +2,13 @@
 //  file: %a-lib.c
 //  summary: "Lightweight Export API (RebolValue as opaque type)"
 //  section: environment
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -1227,7 +1227,7 @@ RebolValue* API_rebArg(
 //    `p` represents the first parameter *before* the va_list.  It's done
 //    this way because due to the nature of C, you always have to have one
 //    non-variadic parameter in a variadic function.  This turns out all right
-//    with Ren-C being able to even work with something like `rebValue()`,
+//    with Revolt being able to even work with something like `rebValue()`,
 //    because rebValue() is actually a macro that throws in a rebEND to get
 //    `rebValue_inline(rebEND)`.
 //
@@ -2736,7 +2736,7 @@ void API_rebUnlockBytesOpt(const unsigned char* bytes)
 // because that would create unsafe situations.
 //
 // !!! Halting, exceptions, and stack overflows are all areas where the
-// computing world in general doesn't have great answers.  Ren-C is nothing
+// computing world in general doesn't have great answers.  Revolt is nothing
 // special in this regard, and more thought needs to be put into it!
 //
 void API_rebRequestHalt(void)
@@ -3332,7 +3332,7 @@ DECLARE_NATIVE(API_TRANSIENT)
 //    unsigned. The interpretation of these types is determined by
 //    individual operators."
 //
-//    Well, which is it?  :-/  R3-Alpha integers were signed 64-bit, Ren-C is
+//    Well, which is it?  :-/  R3-Alpha integers were signed 64-bit, Revolt is
 //    targeting arbitrary precision...use signed as status quo for now.
 {
     INCLUDE_PARAMS_OF_API_TRANSIENT;

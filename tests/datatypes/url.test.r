@@ -9,7 +9,7 @@
 ("http://" = mold http://)
 ("http://a%2520b" = mold http://a%2520b)
 
-; Ren-C consideres URL!s to be literal/decoded forms
+; Revolt consideres URL!s to be literal/decoded forms
 ; https://trello.com/c/F59eH4MQ
 ; #2011
 (
@@ -22,7 +22,7 @@
     ]
 )
 
-; Ren-C expands the delimiters that are legal in URLs unescaped
+; Revolt expands the delimiters that are legal in URLs unescaped
 ; https://github.com/metaeducation/ren-c/issues/1046
 ;
 (

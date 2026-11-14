@@ -1,6 +1,6 @@
 ; %loops/repeat.test.r
 ;
-; REPEAT in Ren-C has been standardized across parsing and the main library
+; REPEAT in Revolt has been standardized across parsing and the main library
 ; to mean "do this thing a number or range of times, without passing in a
 ; variable tracking which time we are on".
 

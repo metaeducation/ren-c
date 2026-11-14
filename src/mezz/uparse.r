@@ -611,7 +611,7 @@ default-combinators: make map! [
     ; the reader it is not unconditional, e.g. you can say something like
     ; `[accept integer! | ...]`).
     ;
-    ; RETURN was removed for a time in Ren-C due to concerns about how it
+    ; RETURN was removed for a time in Revolt due to concerns about how it
     ; could lead to abruptly ending a parse before all the matching was
     ; complete.  Now UPARSE can return ANY-STABLE? (or PACK?) and the only
     ; reason you'd ever use ACCEPT would be specifically for the abrupt exit,
@@ -1240,7 +1240,7 @@ default-combinators: make map! [
 
     === SET-WORD! and SET-TUPLE! COMBINATOR ===
 
-    ; The concept behind Ren-C's SET-WORD! in PARSE is that parse combinators
+    ; The concept behind Revolt's SET-WORD! in PARSE is that parse combinators
     ; don't just update the parse input position, but they also return values.
     ; If these appear to the right of a set-word, then the set word will be
     ; assigned on a match.
@@ -1823,7 +1823,7 @@ default-combinators: make map! [
     === DATATYPE! COMBINATORS ===
 
     ; Traditionally you could only use a datatype with ANY-LIST? types,
-    ; but since Ren-C uses UTF-8 Everywhere it makes it practical to merge in
+    ; but since Revolt uses UTF-8 Everywhere it makes it practical to merge in
     ; transcoding:
     ;
     ;     >> parse "-[Neat!]- 1020" [t: text! i: integer!]
@@ -2112,7 +2112,7 @@ default-combinators: make map! [
     ; than it was already, so the isolation of DO code to GROUP!s seemed like
     ; it was a good idea, but maybe allowing calling zero-arity functions.
     ;
-    ; With Ren-C it's easier to try these ideas out.  So the concept is that
+    ; With Revolt it's easier to try these ideas out.  So the concept is that
     ; you can make a PATH! that starts with / and that will be run as a normal
     ; action but whose arguments are fulfilled via PARSE.
     ;

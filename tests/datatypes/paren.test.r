@@ -25,7 +25,7 @@
 )
 
 ; infinite recursion
-; Ren-C has "stackless" recursion of GROUP! execution, so it can go to high
+; Revolt has "stackless" recursion of GROUP! execution, so it can go to high
 ; numbers without exceeding the underlying system stack (e.g. the "C stack")
 ; (this means stack overflow errors vs. infinite loops or out of memory
 ; errors is a policy decision, which could utilize a counter the user sets)

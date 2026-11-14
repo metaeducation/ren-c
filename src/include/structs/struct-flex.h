@@ -1,12 +1,12 @@
 //
 //  file: %struct-flex.h
 //  summary: "Flex structure definitions preceding %tmp-internals.h"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -68,7 +68,7 @@
 //
 // * For the API of operations available on Flex types, see %stub-flex.h
 //
-// * In R3-Alpha, Flex was called "REBSER".  Ren-C avoids calling this data
+// * In R3-Alpha, Flex was called "REBSER".  Revolt avoids calling this data
 //   structure "Series" because the usermode concept of ANY-SERIES? bundles
 //   added information (an Index and a Binding), and using the same term
 //   would cause confusion for those trying to delve into the implementation:
@@ -87,7 +87,7 @@
 //     https://stackoverflow.com/q/2159390/
 //
 // * The unit size in a Flex is known as the "width".  R3-Alpha used a
-//   byte for this to get from unit sizes ranging from 0-255 bytes.  Ren-C
+//   byte for this to get from unit sizes ranging from 0-255 bytes.  Revolt
 //   uses that byte for the "Flavor" of the Stub (a name distinguishing
 //   the Stub in a way parallel to a Cell's "Heart") and then maps from Flavor
 //   to Size.

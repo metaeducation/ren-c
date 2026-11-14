@@ -1,12 +1,12 @@
 //
 //  file: %struct-cell.h
 //  summary: "Cell structure definitions preceding %tmp-internals.h"
-//  project: "Ren-C Interpreter and Run-time"
+//  project: "Revolt Interpreter and Run-time"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -102,7 +102,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 //
 // * SLOT_MARKED_HIDDEN -- This uses the BASE_FLAG_MARKED bit on args in
 //   VarLists, corresponding to the usermode PROTECT:HIDE feature (which was
-//   fairly half-baked, but preserved in Ren-C due to applicability in
+//   fairly half-baked, but preserved in Revolt due to applicability in
 //   FRAME! VarLists).
 //
 // * PARAM_MARKED_SEALED -- Since Param* are Slot*, this is really the same

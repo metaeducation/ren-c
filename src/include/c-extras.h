@@ -15,7 +15,7 @@
 
 //=//// STDINT.H AND STDBOOL.H ////////////////////////////////////////////=//
 //
-// Ren-C assumes the availability of <stdint.h> and <stdbool.h>
+// Revolt assumes the availability of <stdint.h> and <stdbool.h>
 //
 // If for some reason the only barrier to compiling the codebase is lack of
 // these definitions, there are shims on the Internet that implement them
@@ -49,7 +49,7 @@
 
 //=//// CPLUSPLUS_11 PREPROCESSOR DEFINE //////////////////////////////////=//
 //
-// Because the goal of Ren-C is generally to be buildable as C, the C++ build
+// Because the goal of Revolt is generally to be buildable as C, the C++ build
 // is mostly for static analysis and debug checks.  (But also exceptions with
 // try/catch, on platforms where setjmp()/longjmp() are not viable.)
 //
@@ -153,7 +153,7 @@
 //
 // R3-Alpha had few inline functions, but mostly used macros--in unsafe ways
 // (repeating arguments, risking double evaluations, lacking typechecking.)
-// Ren-C reworked the code to use inline functions fairly liberally, even
+// Revolt reworked the code to use inline functions fairly liberally, even
 // putting fairly large functions in header files to give the compiler the
 // opportunity to not need to push or pop registers to make a call.
 //
@@ -189,14 +189,14 @@
 // That leaves "null" free to mean Rebol's ~null~ antiform in comments.
 //
 #if NEEDFUL_NO_NULLPTR_SHIM && !defined(__cplusplus) && !NEEDFUL_C23_NULLPTR
-    #error "Ren-C needs needful.h's nullptr shim (NEEDFUL_NO_NULLPTR_SHIM)"
+    #error "Revolt needs needful.h's nullptr shim (NEEDFUL_NO_NULLPTR_SHIM)"
 #endif
 
 
 //=//// ISO646 ALTERNATE TOKENS FOR BOOLEAN OPERATIONS ////////////////////=//
 //
 // It is much more readable to see `and` and `or` instead of `&&` and `||`
-// when reading expressions.  Ren-C embraces the ISO646 standard:
+// when reading expressions.  Revolt embraces the ISO646 standard:
 //
 // https://en.wikipedia.org/wiki/C_alternative_tokens
 //
@@ -250,7 +250,7 @@
 //
 // https://stackoverflow.com/a/27939238/211160
 //
-// When built as C++, Ren-C must tell the compiler that functions/variables
+// When built as C++, Revolt must tell the compiler that functions/variables
 // it exports to the outside world should *not* use C++ name mangling, so that
 // they can be used sensibly from C.  But the instructions to tell it that
 // are not legal in C.  This conditional macro avoids needing to put #ifdefs
@@ -538,7 +538,7 @@
 //
 // !!! This is a very wacky idea that was struck from Needful for the time
 // being due to its weirdness and possibility to be used incorrectly.  But
-// it is used in Ren-C.
+// it is used in Revolt.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -613,7 +613,7 @@
 ** --------------------------------------------------------------------------
 **
 ** This is a fun trick that brings a little bit of the ATTEMPT and UNTIL loop
-** functionality from Ren-C into C.
+** functionality from Revolt into C.
 **
 ** The `attempt` macro is a loop that runs its body just once, and then
 ** evaluates the `then` or `else` clause (if present):

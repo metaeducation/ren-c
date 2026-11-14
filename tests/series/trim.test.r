@@ -78,7 +78,7 @@
     ("a 1 ab2 ac3" = trim:lines copy mstr)
     ("a1ab2ac3" = trim:all copy mstr)
 
-    ; Note: Ren-C semantics of TRIM:WITH do not presume you mean spaces are
+    ; Note: Revolt semantics of TRIM:WITH do not presume you mean spaces are
     ; also included.  So if your :WITH is "ab" then the line itself has to
     ; start with "ab" not "  ab"
     ;

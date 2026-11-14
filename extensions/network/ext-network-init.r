@@ -9,7 +9,7 @@ Rebol [
 ; The polymorphic WAIT function was once part of the "event" module.  But
 ; the R3-Alpha event loop was underthought and required cross-platform work
 ; better done by libuv (in a standard C, cross-platform, documented and
-; tested way).  So Ren-C on Linux, Windows, OS X, Haiku etc. are all based
+; tested way).  So Revolt on Linux, Windows, OS X, Haiku etc. are all based
 ; on libuv I/O for files and networking.
 ;
 ; Due to the switch to synchronous I/O, the only things you really WAIT on

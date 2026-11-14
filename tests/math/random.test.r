@@ -1,6 +1,6 @@
 ; functions/math/random.r
 ;
-; Historical Rebol had a very overloaded RANDOM function.  Ren-C breaks it out
+; Historical Rebol had a very overloaded RANDOM function.  Revolt breaks it out
 ; into several different functions:
 ;
 ;     RANDOM:SEED => RANDOMIZE

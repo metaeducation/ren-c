@@ -1,12 +1,12 @@
 //
 //  file: %stub-symbol.h
 //  summary: "Definitions for Symbols and Symbol IDs"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2023 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// In Ren-C, words hold a Symbol Flex (Strand Flex subtype).  They may be GC'd
+// In Revolt, words hold a Symbol Flex (Strand Flex subtype).  They may be GC'd
 // (unless they are in the %words.r list, in which case their canon forms are
 // protected in order to do SYM_XXX switch statements in the C source, etc.)
 //
@@ -33,7 +33,7 @@
 // statements.  A canon Symbol is used to identify everything else.
 //
 // R3-Alpha's concept was that all words got persistent integer values, which
-// prevented garbage collection.  Ren-C only gives built-in words integer
+// prevented garbage collection.  Revolt only gives built-in words integer
 // values--or SymIds--while others must be compared by pointers to their
 // name or canon-name pointers.  A non-built-in symbol will return SYM_0 as
 // its symbol ID, allowing it to fall through to defaults in case statements.

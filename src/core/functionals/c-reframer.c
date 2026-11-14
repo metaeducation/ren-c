@@ -2,12 +2,12 @@
 //  file: %c-reframer.c
 //  summary: "Function that can transform arbitrary callsite functions"
 //  section: datatypes
-//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  project: "Revolt Language Interpreter and Run-time Environment"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2021 Ren-C Open Source Contributors
+// Copyright 2021 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //

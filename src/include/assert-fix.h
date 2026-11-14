@@ -1,12 +1,12 @@
 //
 //  file: %assert-fix.h
 //  summary: "An alternative to what you get from #include <assert.h>"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2023 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //

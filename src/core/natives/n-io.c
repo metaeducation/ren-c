@@ -2,13 +2,13 @@
 //  file: %n-io.c
 //  summary: "native functions for input and output"
 //  section: natives
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -391,7 +391,7 @@ REBLEN Milliseconds_From_Value(const Stable* v) {
 //
 DECLARE_NATIVE(BASIC_READ)
 //
-// !!! The filesystem support in Ren-C is based on libuv, and if you try and
+// !!! The filesystem support in Revolt is based on libuv, and if you try and
 // build the Posix implementation of libuv on WASI a lot is missing.  It's not
 // clear that libuv will ever try to provide a specific WASI target--instead
 // WASI appears to be targeting a lower common denominator of basic C stdio.

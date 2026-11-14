@@ -3,9 +3,9 @@ Rebol [
     file: %make.r
     rights: --[
         Rebol 3 Language Interpreter and Run-time Environment
-        "Ren-C" branch @ https://github.com/metaeducation/ren-c
+        "Revolt" branch @ https://github.com/metaeducation/ren-c
 
-        Copyright 2012-2019 Ren-C Open Source Contributors
+        Copyright 2012-2019 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     description: --[
@@ -15,7 +15,7 @@ Rebol [
         This code is not representative of modern practices, because it has
         to run in a very old bootstrap executable.  It is also very much a
         hodgepodge just to keep things running.  It's the absolute wrong place
-        to be looking for exemplary Ren-C code.
+        to be looking for exemplary Revolt code.
     ]--
 ]
 
@@ -36,7 +36,7 @@ rebmake: import <tools/rebmake.r>
 
 ; NOTE NEW BEHAVIOR IN REN-C, DIFFERENT FROM HISTORICAL REBOL:
 ;
-; When you run a Ren-C script from the command line, the `current-path` is the
+; When you run a Revolt script from the command line, the `current-path` is the
 ; directory where the user was when the script launched.
 ;
 ; We default to building in a subdirectory called %build/ if they launch from
@@ -652,7 +652,7 @@ gen-obj: func [
                 ;   'enum'
                 ;   xxx is uninitialized.  Always initialize a member...
                 ;
-                ; Ren-C is C, so C++-specific warnings when building as C++
+                ; Revolt is C, so C++-specific warnings when building as C++
                 ; are not relevant.
                 ;
                 <msc:/wd26812>
@@ -700,7 +700,7 @@ gen-obj: func [
     ;
     append flags spread opt F
 
-    ; Ren-C uses labels stylistically to denote sections of code which may
+    ; Revolt uses labels stylistically to denote sections of code which may
     ; or may not be jumped to.  This is purposeful, and deemed to be more
     ; important than being warned when a goto label is unused.  It's a
     ; sacrifice in rigor, but makes things elegant.
@@ -905,7 +905,7 @@ for-each 'entry read extension-dir [
     let config
     if has ext 'options [
         ensure block! ext.options
-        config: null  ; default for locals in modern Ren-C
+        config: null  ; default for locals in modern Revolt
         parse3:match ext.options [
             opt some [
                 word! block! opt text! config: group!
@@ -1478,7 +1478,7 @@ pthread: make rebmake.ext-dynamic-class [
 ; to add those obj folders.  So if the `%generic/host-xxx.c` is listed,
 ; this will make sure `%objs/generic/` is in there.
 ;
-; Historical Rebol had a completely flat file structure.  Ren-C introduced
+; Historical Rebol had a completely flat file structure.  Revolt introduced
 ; hierarchy due to needing to organize more files, and also to allow for a
 ; place to put individual README.md for a group of related files and explain
 ; why those files are together.

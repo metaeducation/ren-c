@@ -2,13 +2,13 @@
 //  file: %t-string.c
 //  summary: "string related datatypes"
 //  section: datatypes
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -604,7 +604,7 @@ void Mold_Text_Flex_At(Molder* mo, const Strand* s, Index index) {
 //
 // http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
 //
-// Ren-C is working with a different model, where URL! is generic to custom
+// Revolt is working with a different model, where URL! is generic to custom
 // schemes which may or may not follow the RFC for Internet URLs.  It also
 // wishes to preserve round-trip copy-and-paste from URL bars in browsers
 // to source and back.  Encoding concerns are handled elsewhere.
@@ -674,7 +674,7 @@ static void Mold_Tag(Molder* mo, const Cell* v)
 
 
 // 1. The R3-Alpha forming logic was that every string type besides TAG!
-//    would form with no delimiters, e.g. `form #foo` is just foo.  Ren-C
+//    would form with no delimiters, e.g. `form #foo` is just foo.  Revolt
 //    removes the exception for tags, and more of the system treats tag
 //    as a normal string.  You have to quote it in FIND to get it to
 //    use the molded semantics, for instance:

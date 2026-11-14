@@ -4,7 +4,7 @@ Rebol [
     name: Source-Tools
     rights: --[
         Copyright 2015 Brett Handley
-        Copyright 2015-2021 Ren-C Open Source Contributors
+        Copyright 2015-2021 Revolt Open Source Contributors
     ]--
     license: --[
         Licensed under the Apache License, Version 2.0

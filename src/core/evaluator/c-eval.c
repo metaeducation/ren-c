@@ -1,12 +1,12 @@
 //
 //  file: %c-eval.c
 //  summary: "Evaluator Executor for Stepping Array Thru to the End"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2022-2026 Ren-C Open Source Contributors
+// Copyright 2022-2026 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //

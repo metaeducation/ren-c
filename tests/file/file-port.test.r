@@ -2,7 +2,7 @@
 ;
 ; There was basically no testing of the R3-Alpha file port, and so in
 ; addition to its various nebulous semantics, it was extremely buggy.
-; As a first attack to improve matters, Ren-C is putting aside most of
+; As a first attack to improve matters, Revolt is putting aside most of
 ; the semantic questions just to get what was somewhat defined to be
 ; working robustly.  This is helped by being able to build on top of
 ; a single API cross-platform: libuv.

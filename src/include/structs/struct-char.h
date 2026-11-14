@@ -1,12 +1,12 @@
 //
 //  file: %struct-char.h
 //  summary: "Utf8 structure definitions preceding %tmp-internals.h"
-//  project: "Ren-C Interpreter and Run-time"
+//  project: "Revolt Interpreter and Run-time"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //
@@ -18,7 +18,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Ren-C exchanges UTF-8 data with the outside world via "char*".  But within
+// Revolt exchanges UTF-8 data with the outside world via "char*".  But within
 // the core, Byte* is used for not-yet-validated bytes that are to be
 // scanned as UTF-8, since it's less error-prone to do math on unsigned bytes.
 //

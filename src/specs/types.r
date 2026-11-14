@@ -4,7 +4,7 @@ Rebol [
 
     rights: --[
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2025 Ren-C Open Source Contributors
+        Copyright 2012-2025 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
 
@@ -53,13 +53,13 @@ Rebol [
 
       * Historical Redbol has TYPESET! as a datatype which is a bitset with
         a bit for each of 64 datatypes, that fits in a cell payload.  This
-        approach was too limited for Ren-C, so it uses type constraint
+        approach was too limited for Revolt, so it uses type constraint
         functions.  But bitsets are still employed in the implementation of
         built-in type constraints, and the term "typeset" now refers to
         these implementation bits.
 
       * Historical Rebol had INTERNAL! and IMMEDIATE! "typesets".  Important
-        to have a parallel in Ren-C type constraints?
+        to have a parallel in Revolt type constraints?
     ]--
 ]
 

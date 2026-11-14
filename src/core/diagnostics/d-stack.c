@@ -1,6 +1,6 @@
 //
 // Rebol 3 Language Interpreter and Run-time Environment
-// "Ren-C" branch @ https://github.com/metaeducation/ren-c
+// "Revolt" branch @ https://github.com/metaeducation/ren-c
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -9,7 +9,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2015-2017 Ren-C Open Source Contributors
+// Copyright 2015-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information

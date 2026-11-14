@@ -1,7 +1,7 @@
 ; %parse-tag-here.test.r
 ;
 ; As alternatives to using SET-WORD! to set the parse position and GET-WORD!
-; to get the parse position, Ren-C has <here> and the SEEK keyword.  <HERE>
+; to get the parse position, Revolt has <here> and the SEEK keyword.  <HERE>
 ; follows Topaz precedent as the new means of capturing positions
 ; (e.g. POS: <HERE>).  But it is useful for other purposes, when a rule is
 ; needed for capturing the current position.

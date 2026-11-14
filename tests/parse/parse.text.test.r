@@ -23,7 +23,7 @@
 ("abc" = parse "abc" ["abc"])
 ("abc" = parse "abc" ["abc" <end>])
 
-; Ren-C does not mandate that rules make progress, so matching empty strings
+; Revolt does not mandate that rules make progress, so matching empty strings
 ; works, as it does in Red.
 [
     ("ab" = parse "ab" [to [""] "ab"])

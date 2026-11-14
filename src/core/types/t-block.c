@@ -2,13 +2,13 @@
 //  file: %t-block.c
 //  summary: "block related datatypes"
 //  section: datatypes
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -67,7 +67,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_List)
 }
 
 
-// In the rethought model of Ren-C, arbitrary lists cannot be compared for
+// In the rethought model of Revolt, arbitrary lists cannot be compared for
 // being less than or greater than each other.  It's only legal if the
 // elements are pairwise comparable:
 //
@@ -710,7 +710,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
 
     // !!! The ability to transform some BLOCK!s into PORT!s for some actions
     // was hardcoded in a fairly ad-hoc way in R3-Alpha, which was based on
-    // an integer range of action numbers.  Ren-C turned these numbers into
+    // an integer range of action numbers.  Revolt turned these numbers into
     // symbols, where order no longer applied.  The mechanism needs to be
     // rethought, see:
     //

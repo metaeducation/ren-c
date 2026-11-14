@@ -43,7 +43,7 @@
 ;     == #[none!]  ; Rebol2's `foreach x [] [<n/a>]`, Red is #[unset]
 ;
 ; Addressing these problems rigorously is basically impossible in Rebol2 and
-; Red.  But Ren-C has painstakingly developed rules and mechanisms to empower
+; Red.  But Revolt has painstakingly developed rules and mechanisms to empower
 ; preserving these loop properties (as well as more sophisticated ones).  The
 ; methods apply to situations much more complex than FOR-BOTH, but it was a
 ; valuable example to focus on while putting the pieces in place.
@@ -96,7 +96,7 @@
   ; ==== TESTS =====
 
   ; If you're the sort to throw softballs, this would be the only case you
-  ; would write.  (Perhaps good enough for some Redbols, but not Ren-C!)
+  ; would write.  (Perhaps good enough for some Redbols, but not Revolt!)
 
     ([1 2 3 4] = collect [
         assert [40 = for-both 'x [1 2] [3 4] [keep x, x * 10]]
@@ -160,7 +160,7 @@
 
   ; The contract of returning VOID! is preserved when no loop bodies run, as
   ; both FOR-EACH in the ALL have their contributions erased and effectively
-  ; leave behind an `all []`.  Ren-C's working definition (motivated by this
+  ; leave behind an `all []`.  Revolt's working definition (motivated by this
   ; kind of example) is that should produce a VOID! as well.
 
     (void? for-both 'x [] [] [panic "Body Never Runs"])

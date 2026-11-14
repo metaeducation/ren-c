@@ -1,13 +1,13 @@
 //
 //  file: %c-path.h
 //  summary: "Core Path Dispatching and Chaining"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -118,7 +118,7 @@ DECLARE_NATIVE(PICK)
 // R3-Alpha had PD_Xxx() functions which were hooks for "Path Dispatch", which
 // was distinct from the code that ran the PICK action.
 //
-// Ren-C rethought this to build tuple dispatch on top of PICK and POKE.
+// Revolt rethought this to build tuple dispatch on top of PICK and POKE.
 // So `foo.(expr)` and `pick foo (expr)` will always give the same answer.
 // There is one function called TWEAK* that performs a superset of PICK/POKE
 // for one step's-worth of tuple.

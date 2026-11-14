@@ -2,13 +2,13 @@
 //  file: %n-strings.c
 //  summary: "native functions for strings"
 //  section: natives
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -985,7 +985,7 @@ DECLARE_NATIVE(ENHEX)
 //
 DECLARE_NATIVE(DEHEX)
 //
-// 1. Ren-C is committed to having string types not contain the 0 codepoint,
+// 1. Revolt is committed to having string types not contain the 0 codepoint,
 //    but it's explicitly legal for percent encoding to allow %00 in URLs.
 //    Sounds dangerous, but we can support that by returning a BLOB!.  The
 //    code was written to use the mold buffer, however, and would have to
@@ -1516,7 +1516,7 @@ DECLARE_NATIVE(INVALID_UTF8_Q)
 //
 // https://github.com/rebol/rebol-issues/issues/638
 //
-// Ren-C reinstated full validation, as it only causes a hit when a non-ASCII
+// Revolt reinstated full validation, as it only causes a hit when a non-ASCII
 // sequence is read (which is relatively rare in Rebol).  However, it is
 // helpful to have a function that will locate invalid byte sequences if one
 // is going to try doing something like substituting a character at the

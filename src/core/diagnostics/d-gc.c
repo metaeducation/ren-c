@@ -2,13 +2,13 @@
 //  file: %d-gc.c
 //  summary: "Debug-Build Checks for the Garbage Collector"
 //  section: debug
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2019 Ren-C Open Source Contributors
+// Copyright 2012-2019 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -22,7 +22,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The R3-Alpha GC had to do switch() on the kind of cell to know how to
-// handle it.  Ren-C makes bits in the value cell itself dictate what needs
+// handle it.  Revolt makes bits in the value cell itself dictate what needs
 // to be done...which is faster, but it doesn't get the benefit of checking
 // additional invariants that the switch() branches were doing.
 //

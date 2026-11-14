@@ -1,12 +1,12 @@
 //
 //  file: %cell-sequence.h
 //  summary: "Common Definitions for Immutable Interstitially-Delimited Lists"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -187,7 +187,7 @@ INLINE Result(None) Check_Sequence_Element(
 
 //=//// Leading-SPACE SEQUENCE OPTIMIZATION ///////////////////////////////=//
 //
-// Ren-C has no REFINEMENT! datatype, so `:foo` is a CHAIN!, which generalizes
+// Revolt has no REFINEMENT! datatype, so `:foo` is a CHAIN!, which generalizes
 // to where `:foo:bar` is a CHAIN! as well.
 //
 // In order to make this not cost more than a "REFINEMENT!" word type did in

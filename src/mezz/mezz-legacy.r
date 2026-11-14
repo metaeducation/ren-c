@@ -3,7 +3,7 @@ Rebol [
     title: "REBOL 3 Mezzanine: Legacy compatibility"
     homepage: https://trello.com/b/l385BE7a/porting-guide
     rights: --[
-        Copyright 2012-2018 Ren-C Open Source Contributors
+        Copyright 2012-2018 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[
@@ -39,7 +39,7 @@ rejoin: ~<REJOIN replaced by UNSPACED + JOIN https://forum.rebol.info/t/248>~
 ;
 ; Note: Historically OBJECT was essentially a synonym for CONTEXT with the
 ; ability to tolerate a spec of `[a:]` by transforming it to `[a: none].
-; Ren-C hasn't decided yet, but will likely support `construct [a: b: c:]`
+; Revolt hasn't decided yet, but will likely support `construct [a: b: c:]`
 ;
 context: specialize make/ [type: object!]
 

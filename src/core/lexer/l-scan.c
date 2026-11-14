@@ -2,13 +2,13 @@
 //  file: %l-scan.c
 //  summary: "Lexical analyzer for UTF-8 source to Rebol Array translation"
 //  section: lexical
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -42,7 +42,7 @@
 // But for "performance reasons", they moved toward something much more like
 // the R3-Alpha scanner from which this scanner inherits.  :-(
 //
-// For expedience, Ren-C has been resigned to hacking on this scanner to add
+// For expedience, Revolt has been resigned to hacking on this scanner to add
 // the many features that have been needed.  But the ultimate goal has always
 // been to redo it in terms of a clear and declarative dialect that is used
 // to generate efficient code.  It's a mess for now, but hopefully at some
@@ -637,7 +637,7 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 // 2. The '\0' codepoint is not legal in ANY-STRING!.  Among the many reasons
 //    to disallow it is that APIs like rebSpell() for getting string data
 //    return only a pointer--not a pointer and a size, so clients must assume
-//    that '\0' is the termination.  With UTF-8 everywhere, Ren-C has made it
+//    that '\0' is the termination.  With UTF-8 everywhere, Revolt has made it
 //    as easy as possible to work with BLOB! using string-based routines
 //    like FIND, etc., so use BLOB! if you need UTF-8 with '\0' in it.
 //
@@ -1467,7 +1467,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
           case LEX_DELIMIT_RETURN:
           delimit_return: {
             //
-            // !!! Ren-C is attempting to rationalize and standardize Rebol
+            // !!! Revolt is attempting to rationalize and standardize Rebol
             // on line feeds only.  If for some reason we wanted a tolerant
             // mode, that tolerance would go here.  Note that this code does
             // not cover the case of CR that are embedded in multi-line
@@ -3164,7 +3164,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
 }} construct_scan_to_stack_finished: {  //////////////////////////////////////
 
-  // !!! At one time, Ren-C merged "construction syntax" with MAKE, so that
+  // !!! At one time, Revolt merged "construction syntax" with MAKE, so that
   // `&[xxx! [...]]` matched `make xxx! [...]`.
   //
   // But the whole R3-Alpha concept was flawed, as round-tripping structures

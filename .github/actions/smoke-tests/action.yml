@@ -1,5 +1,5 @@
-name: Ren-C Interpreter Smoke Tests
-description: Run common smoke tests against a built Ren-C interpreter
+name: Revolt Interpreter Smoke Tests
+description: Run common smoke tests against a built Revolt interpreter
 
 inputs:
   executable:

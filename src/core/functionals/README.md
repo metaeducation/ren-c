@@ -14,7 +14,7 @@ CLOSURE).  Rebol2 also had ROUTINE! for FFI, and new instances could be made.
 
 [2]: https://github.com/rebol/rebol/blob/25033f897b2bd466068d7663563cd3ff64740b94/src/core/t-function.c#L127
 
-Ren-C rethinks this idea to have one executable ACTION! type, which gets its
+Revolt rethinks this idea to have one executable ACTION! type, which gets its
 implementation from a "Dispatcher" C function.  As in R3-Alpha, there is an
 array which serves as the identity of an action, while also holding an ordered
 list of its parameters (a "paramlist").  But a second array is linked to from
@@ -28,7 +28,7 @@ This provides a pattern for adding new function categories easily to the core,
 or in extensions--without creating a new "Rebol type" in the process.  See the
 `Make_Dispatch_Details()` routine for how this is applied.
 
-Of particular interest to Ren-C is creating actions that are slight variants
+Of particular interest to Revolt is creating actions that are slight variants
 of other actions, without having to repeat their interface.  These variants
 are also designed to be efficient by reusing the same stack frame, avoiding
 proxying parameters to a new call.  Specializations, chains, and enclosures

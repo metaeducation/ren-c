@@ -3,7 +3,7 @@
 #
 #=============================================================================#
 #
-# GitHub Workflow for using TCC to build Ren-C with the TCC extension, and then
+# GitHub Workflow for using TCC to build Revolt with the TCC extension, and then
 # use that executable to bootstrap.  A demonstration of this ability was first
 # made in July 2019, video here:
 #
@@ -136,7 +136,7 @@ jobs:
     # https://github.com/metaeducation/ren-c/blob/master/extensions/tcc/README.md
     #
     # 1. !!! NOTE: the tcc package in Ubuntu 22.04 is version 0.9.27, which
-    #    lacks C11 support for <stdatomic.h> needed by libuv to build Ren-C
+    #    lacks C11 support for <stdatomic.h> needed by libuv to build Revolt
     #    with filesystem support.  So we have to get a more recent version and
     #    build it ourselves.
     #
@@ -238,7 +238,7 @@ jobs:
   #
   # Here we want to pull of the trick of using the single produced exe to
   # download the .ZIP file from GitHub (using the network layer, HTTP, and TLS
-  # cryptography all implemented in Ren-C)...and then unzip it using the
+  # cryptography all implemented in Revolt)...and then unzip it using the
   # usermode .ZIP code, and then build it.
   #
   # To help reinforce the validity of the stunt, we remove anything that could
@@ -256,7 +256,7 @@ jobs:
         cp -R .github/actions/smoke-tests "$RUNNER_TEMP/smoke-tests"
 
 
-    - name: Delete Ren-C Source Cloned With Git (let Bootstrap EXE Fetch It)
+    - name: Delete Revolt Source Cloned With Git (let Bootstrap EXE Fetch It)
       run: |
         export TOP_DIR=$(pwd)
         mv build/r3 ../r3-with-tcc

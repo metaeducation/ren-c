@@ -1,6 +1,6 @@
 ; %frame.test.r
 ;
-; The FRAME! type is foundational to the mechanics of Ren-C vs. historical
+; The FRAME! type is foundational to the mechanics of Revolt vs. historical
 ; Rebol.  While its underlying storage is similar to an OBJECT!, it has a
 ; more complex mechanic based on being able to be seen through multiple
 ; different "Lenses" based on which phase of a function composition it has

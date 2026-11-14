@@ -1,12 +1,12 @@
 //
 //  file: %sys-protect.h
 //  summary: "System Const and Protection Functions"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2018-2024 Ren-C Open Source Contributors
+// Copyright 2018-2024 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -19,7 +19,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// R3-Alpha introduced the idea of "protected" series and variables.  Ren-C
+// R3-Alpha introduced the idea of "protected" series and variables.  Revolt
 // introduces a new form of read-only-ness that is not a bit on Flexes, but
 // rather bits on Cell instances.  This means that a value can be a read-only
 // view of a series that is otherwise mutable.
@@ -28,7 +28,7 @@
 //
 // * Checking for read access was a half-baked feature in R3-Alpha, as heeding
 //   the protection bit had to be done by hand by any code doing mutations.
-//   Many places in the code forgot the check.  Ren-C uses `const Flex*`
+//   Many places in the code forgot the check.  Revolt uses `const Flex*`
 //   to default to immutable access, and using functions that mutate cells
 //   requires you to consciously use a routine that checks the Flex at
 //   runtime before it will give you back a plain `Flex*` from which you can

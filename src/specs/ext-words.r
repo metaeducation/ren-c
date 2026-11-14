@@ -1,9 +1,9 @@
 Rebol [
-    system: "Ren-C Language Interpreter and Run-time Environment"
+    system: "Revolt Language Interpreter and Run-time Environment"
     title: "Extension words that have IDs, but strings aren't in core EXE"
     file: %ext-words.r
     rights: --[
-        Copyright 2025 Ren-C Open Source Contributors
+        Copyright 2025 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[

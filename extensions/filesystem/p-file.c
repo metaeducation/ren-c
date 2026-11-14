@@ -2,13 +2,13 @@
 //  file: %p-file.c
 //  summary: "file port interface"
 //  section: ports
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=/////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2021 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -34,7 +34,7 @@
 //     rebol2>> port: skip port 10  ; you wouldn't need to write this
 //     rebol2>> skip port 10        ; because this would be the same
 //
-// Ren-C has radically simplified R3-Alpha's implementation by standardizing on
+// Revolt has radically simplified R3-Alpha's implementation by standardizing on
 // libuv.  There are still a tremendous number of unanswered questions about
 // the semantics of FILE! ports...which ties into big questions about exactly
 // "What is a PORT!":

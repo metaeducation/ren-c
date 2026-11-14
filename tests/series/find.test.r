@@ -16,7 +16,7 @@
 (equal? [x] find:part [x] 'x 1)
 (equal? [x] find-reverse tail of [x] 'x)
 
-; Historically Rebol FIND:MATCH implied :TAIL.  This was frowned upon in Ren-C,
+; Historically Rebol FIND:MATCH implied :TAIL.  This was frowned upon in Revolt,
 ; and ultimately changed by Red, which seems like pretty good evidence that
 ; it's the sort of thing that clearly is better changed:
 ;

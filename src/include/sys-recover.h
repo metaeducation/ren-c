@@ -1,13 +1,13 @@
 //
 //  file: %sys-recover.h
 //  summary: "Abstraction of setjmp/longjmp and C++ throw/catch"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -79,7 +79,7 @@
 
 
 // R3-Alpha set up a separate `jmp_buf` at each point in the stack that wanted
-// to be able catch failures.  With stackless Ren-C, only one jmp_buf is needed
+// to be able catch failures.  With stackless Revolt, only one jmp_buf is needed
 // per instance of the Trampoline on the stack.  (The codebase ideally does
 // not invoke more than one trampoline to implement its native code, but if
 // it is to call out to C code that wishes to use synchronous forms of API

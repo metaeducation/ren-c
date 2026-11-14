@@ -1,13 +1,13 @@
 //
 //  file: %stub-array.h
 //  summary: "Definitions for the Array Flex subclass"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2022 Ren-C Open Source Contributors
+// Copyright 2012-2022 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -38,7 +38,7 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 //  * In R3-Alpha, there was a full-sized cell at the end of every array that
-//    would hold an END signal--much like a string terminator.  Ren-C does not
+//    would hold an END signal--much like a string terminator.  Revolt does not
 //    terminate Arrays but relies on the known length, in order to save on
 //    space.  This also avoids the cost of keeping the terminator up to date
 //    as the Array grows or resizes.

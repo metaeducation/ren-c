@@ -1,13 +1,13 @@
 //
 //  file: %c-signal.c
 //  summary: "Evaluator Interrupt Signal Handling"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -95,7 +95,7 @@ void Reconcile_Ticks(void)
 // every step.  If it was, then it would always call this routine--regardless
 // of the eval_countdown.
 //
-// While a broader review of how signals would work in Ren-C is pending, it
+// While a broader review of how signals would work in Revolt is pending, it
 // seems best to avoid checking two things each step.  So only eval_countdown
 // is checked, and places that set eval_signals set eval_countdown it to 1.
 // Then if the eval_signals are not cleared by the end of this routine,

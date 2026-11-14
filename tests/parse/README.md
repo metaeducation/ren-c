@@ -16,13 +16,13 @@ The header for that file said:
     ]
 
 BSD-3 Code May Be Included or extended as Apache 2.0 License, which the
-Ren-C tests are still licensed as (though the interpreter and many supporting
+Revolt tests are still licensed as (though the interpreter and many supporting
 files are now LGPL 3.0)
 
   http://www.apache.org/legal/resolved.html#category-a
 
 (Though Apache 2.0 licenses do not permit taking code to BSD-3, permission is
-granted for any of the Ren-C PARSE tests to be taken back as BSD-3 by the
+granted for any of the Revolt PARSE tests to be taken back as BSD-3 by the
 Red project if they wish.)
 
 
@@ -32,7 +32,7 @@ PARSE3 Refers to the native code for R3-Alpha's PARSE, derived from what was
 in R3-Alpha.  The code was very "organic" and had evolved over time...with a
 complex set of flags and states.  It was not extensible; the keywords were
 baked in and interacted in specific ways that were difficult to modify.  As
-Ren-C was developed it was pushed toward being more rigorous code in some
+Revolt was developed it was pushed toward being more rigorous code in some
 ways--at least in regards to memory safety and GC.  But the lack of a solid
 "architecture" limited the ability to make clean extensions for it.
 
@@ -43,7 +43,7 @@ using a different set of combinators.  Those combinators can be chosen for
 new features, or just to get compatibility with Rebol2/R3-Alpha/Red parse.
 As it matures, more of it will be written as native code.  It is MUCH more
 flexible and extensible than PARSE3, and is ultimately what will take the
-name PARSE in Ren-C.
+name PARSE in Revolt.
 
 See the Redbol module for PARSE2, which is an emulation of Rebol2/Red parse
 conventions implemented using UPARSE's mechanics for extensibility.

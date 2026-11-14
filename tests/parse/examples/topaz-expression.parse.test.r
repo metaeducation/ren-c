@@ -16,9 +16,9 @@
 ; * Topaz's OBJECT returned a Red MAP! and not an OBJECT!, for some reason
 ;   (appears that map/key for missing key was NONE! vs. panic for object)
 ;
-; * Ren-C uses TUPLE! for field selection of objects, not PATH!
+; * Revolt uses TUPLE! for field selection of objects, not PATH!
 ;
-; * Auto-gathering FUNCTION removed from Ren-C as a concept (spurious locals
+; * Auto-gathering FUNCTION removed from Revolt as a concept (spurious locals
 ;   created too easily when SET-WORD! can mean anything in dialects)
 ;
 ; * FUNC must use a RETURN statement to return a value, otherwise a not-set

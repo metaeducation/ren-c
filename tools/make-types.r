@@ -4,7 +4,7 @@ Rebol [
     file: %make-types.r  ; used by EMIT-HEADER to indicate emitting script
     rights: --[
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2025 Ren-C Open Source Contributors
+        Copyright 2012-2025 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[
@@ -272,7 +272,7 @@ e-types/emit [--[
     /*
      * SINGLE TYPE CHECK MACROS, e.g. Is_Block() or Is_Tag()
      *
-     * Modern Ren-C carves out special values of the TYPE_BYTE for unlifted
+     * Modern Revolt carves out special values of the TYPE_BYTE for unlifted
      * values--trading off some abilities to have higher quoting levels to
      * get a very fast answer to Type_Of().  To make that answer particularly
      * fast, it doesn't canonize the quoted states to a single state...you
@@ -587,7 +587,7 @@ for-each 't datatype-objects [
 
 === "FILL SPACE UNTIL QUASIFORM (64)" ===
 
-; These are fundamental types that are reserved for future use.  (Modern Ren-C
+; These are fundamental types that are reserved for future use.  (Modern Revolt
 ; gets away with fewer types, because things like SET-WORD! aren't fundamental
 ; because that's a CHAIN! containing a WORD!, and also extension types are
 ; available so long as you're willing to give up a pointer per cell for it.)

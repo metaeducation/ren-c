@@ -2,13 +2,13 @@
 //  file: %t-object.c
 //  summary: "object datatype"
 //  section: datatypes
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -1947,7 +1947,7 @@ DECLARE_NATIVE(CONSTRUCT)
 //    This would yield `a` and `b` set to 1, while `+` and `2` would be
 //    ignored, `d` will be the word `a` (where it is bound to the `a`
 //    of the object being synthesized) and `e` would be left as it was.
-//    Ren-C doesn't allow any discarding...a SET-WORD! must be followed
+//    Revolt doesn't allow any discarding...a SET-WORD! must be followed
 //    either by another SET-WORD! or a single array element followed by
 //    another SET-WORD!, the end of the array, or a BLANK!.
 {

@@ -1,12 +1,12 @@
 //
 //  file: %sys-generic.h
 //  summary: "Definitions for Generic Function Dispatch"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2015 Ren-C Open Source Contributors
+// Copyright 2015 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -19,7 +19,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Ren-C has a new concept of generic dispatch using sparse tables which are
+// Revolt has a new concept of generic dispatch using sparse tables which are
 // scanned during the build process to find IMPLEMENT_GENERIC(name, typeset)
 // instances.
 //

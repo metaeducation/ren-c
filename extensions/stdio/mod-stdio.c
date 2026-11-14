@@ -2,13 +2,13 @@
 //  file: %mod-stdio.c
 //  summary: "Standard Input And Output Ports"
 //  section: ports
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -244,9 +244,9 @@ DECLARE_NATIVE(READ_LINE)
 // 4. There is no standard getline() function in C.  But we'd want to use our
 //    own memory management since we're constructing a TEXT! anyway.
 //
-// 5. READ-LINE is textual, and enforces the rules of Ren-C TEXT!.  So there
+// 5. READ-LINE is textual, and enforces the rules of Revolt TEXT!.  So there
 //    should be no CR.  It may be that the :RAW mode permits reading CR, but
-//    it also may be that READ-STDIN should be used for BLOB! instead.  Ren-C
+//    it also may be that READ-STDIN should be used for BLOB! instead.  Revolt
 //    wants to stamp CR out of all the files it can.
 {
     INCLUDE_PARAMS_OF_READ_LINE;
@@ -355,7 +355,7 @@ DECLARE_NATIVE(READ_LINE)
   #if RUNTIME_CHECKS
     rebElide(
         "ensure text!", line,
-        "assert [not find", line, "CR]"  // Ren-C text rule [5]
+        "assert [not find", line, "CR]"  // Revolt text rule [5]
     );
     if (not raw)
         rebElide("assert [not find", line, "LF]");

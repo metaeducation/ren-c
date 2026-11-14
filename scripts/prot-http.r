@@ -3,7 +3,7 @@ Rebol [
     title: "REBOL 3 HTTP protocol scheme"
     rights: --[
         Copyright 2012 Gabriele Santilli, Richard Smolak, and REBOL Technologies
-        Copyright 2012-2021 Ren-C Open Source Contributors
+        Copyright 2012-2021 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[

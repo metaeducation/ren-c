@@ -261,7 +261,7 @@
 (not equal? 'a 'A)
 ; symmetry
 (equal? equal? 'a 'A equal? 'A 'a)
-; binding not checked by STRICT-EQUAL? in Ren-C (only casing and type)
+; binding not checked by STRICT-EQUAL? in Revolt (only casing and type)
 (equal? 'a use [a] ['a])
 ; symmetry
 (equal? equal? 'a use [a] ['a] equal? use [a] ['a] 'a)

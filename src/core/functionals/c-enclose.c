@@ -2,12 +2,12 @@
 //  file: %c-enclose.c
 //  summary: "Mechanism for making a function that wraps another's execution"
 //  section: datatypes
-//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  project: "Revolt Language Interpreter and Run-time Environment"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2017-2023 Ren-C Open Source Contributors
+// Copyright 2017-2023 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //

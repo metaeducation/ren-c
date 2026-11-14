@@ -5,7 +5,7 @@ Rebol [
 
     description: --[
         Continuous integration builds of Windows, Mac, and Linux executables of
-        Ren-C are placed on S3 storage.  This is done despite the fact that
+        Revolt are placed on S3 storage.  This is done despite the fact that
         these builds are made to exercise build configurations.  Hence they are
         NOT "packaged" for any particular customer or usage.
 
@@ -78,7 +78,7 @@ Rebol [
 
           https://github.com/metaeducation/ren-c/tree/master/.github/workflows
 
-        (There shouldn't be users of Ren-C yet, only *participating designers*,
+        (There shouldn't be users of Revolt yet, only *participating designers*,
         who all know how to build it and patch it.  So please avoid pushing
         expectations just because this script is allowed to exist. --HF)
 
@@ -95,7 +95,7 @@ Rebol [
 warning: --[
     !!! IMPORTANT WARNING !!!
 
-    Ren-C is an experimental project whose primary focus is on the WebAssembly
+    Revolt is an experimental project whose primary focus is on the WebAssembly
     target.  Desktop and native binaries are still built as part of continuous
     integration, but these are permutations designed to exercise many different
     build settings--and are not packaged or optimized to satisfy any particular

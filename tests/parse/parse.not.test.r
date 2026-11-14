@@ -2,7 +2,7 @@
 ;
 ; Historically NOT was actually "NOT AHEAD".
 ;
-; Ren-C rethinks this to make NOT a "combinator modifier" that is able to
+; Revolt rethinks this to make NOT a "combinator modifier" that is able to
 ; negate the beahavior of some combinators, to make them more useful.  e.g.
 ; when parsing a block, a NOT combinator of a single element can be taken
 ; to mean you want to match a single item that is not the one given:

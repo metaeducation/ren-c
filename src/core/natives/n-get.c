@@ -2,13 +2,13 @@
 //  file: %n-get.c
 //  summary: "Native functions to GET (Paths, Chains, Tuples, Words...)"
 //  section: natives
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -21,7 +21,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Getting and Setting in Ren-C are far more nuanced than the "lookup word to
+// Getting and Setting in Revolt are far more nuanced than the "lookup word to
 // direct Cell value" technique of historical Redbol.  Things like OBJECT!
 // store "dual states", allowing for things like FRAME! to represent a
 // "getter" or "setter" for a field.  It's important for all code that does

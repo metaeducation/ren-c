@@ -1,12 +1,12 @@
 //
 //  file: %c-trampoline.c
 //  summary: "Central Interpreter Loop for 'Stackless' Evaluation"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2022-2024 Ren-C Open Source Contributors
+// Copyright 2022-2024 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //
@@ -23,7 +23,7 @@
 // sub-expressions aren't evaluated with direct recursions of a C evaluator
 // function, but using C's `return` to "bounce back" to a single loop,
 // which invokes returned continuations.  Hence, there are no nested function
-// calls and the C machine stack won't grow just because Ren-C stacks grow:
+// calls and the C machine stack won't grow just because Revolt stacks grow:
 //
 // https://en.wikipedia.org/wiki/Trampoline_(computing)#High-level_programming
 //

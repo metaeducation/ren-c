@@ -37,7 +37,7 @@ Rebol [
     return molded
 ]
 
-; 1. Script compression was a weird feature that is not a priority in Ren-C,
+; 1. Script compression was a weird feature that is not a priority in Revolt,
 ;    but keeping things working well enough to run the tests helps expose
 ;    thinking points.
 ;

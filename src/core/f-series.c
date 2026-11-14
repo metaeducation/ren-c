@@ -2,13 +2,13 @@
 //  file: %f-series.c
 //  summary: "common series handling functions"
 //  section: functional
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -324,7 +324,7 @@ IMPLEMENT_GENERIC(UNIQUE, Any_Series)  // single-arity set operation
 
 
 // The policy for what to do with (intersect '[a b c] '{b c d}) isn't set in
-// stone yet.  R3-Alpha and Red prohibit anything but BLOCK!, while Ren-C
+// stone yet.  R3-Alpha and Red prohibit anything but BLOCK!, while Revolt
 // has historically made the result the same type as the first argument.
 //
 Option(Error*) Trap_Resolve_Dual_Hearts(

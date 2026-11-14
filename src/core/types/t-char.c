@@ -2,13 +2,13 @@
 //  file: %t-char.c
 //  summary: "character datatype"
 //  section: datatypes
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -102,7 +102,7 @@ const uint_fast8_t g_first_byte_mark_utf8[7] = {
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// 1. Note that Ren-C disallows internal zero bytes in ANY-STRING?, so that
+// 1. Note that Revolt disallows internal zero bytes in ANY-STRING?, so that
 //    a single pointer can be given to C for the data in APIs like rebText(),
 //    with no length...and not have this be misleading or cause bugs.  Same
 //    for getting back a single pointer from rebSpell() for the data and
@@ -115,7 +115,7 @@ const uint_fast8_t g_first_byte_mark_utf8[7] = {
 //
 //    ...which meant that various illegal input patterns would be tolerated,
 //    so long as they didn't cause crashes.  You would just not have the
-//    input validated, and get garbage characters out.  The Ren-C philosophy
+//    input validated, and get garbage characters out.  The Revolt philosophy
 //    is that since this check only applies to non-ASCII, it is worth it to
 //    do the validation.  And it only applies when scanning strings...once
 //    they are loaded into Strand* we use Back_Scan_Utf8_Char_Unchecked().
@@ -166,7 +166,7 @@ Result(Codepoint) Back_Scan_Utf8_Char(  // no NUL or substitution chars [1]
     if (c >= UNI_SUR_HIGH_START and c <= UNI_SUR_LOW_END)
         return_fail (Cell_Error(g_error_no_utf8_surrogates));  // cached [3]
 
-    if (c == 0)  // string types disallow internal 0 bytes in Ren-C [1]
+    if (c == 0)  // string types disallow internal 0 bytes in Revolt [1]
         return_fail (Cell_Error(g_error_illegal_zero_byte));  // cached [3]
 
     if (size)
@@ -436,7 +436,7 @@ DECLARE_NATIVE(NUL_Q)
 }
 
 
-// !!! At one time, it was allowed to do things like add #"A" to #"A".  Ren-C
+// !!! At one time, it was allowed to do things like add #"A" to #"A".  Revolt
 // limits math operations on character to only work with numeric types (and
 // will probably limit it to INTEGER! only).
 //

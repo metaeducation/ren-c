@@ -1,12 +1,12 @@
 //
 //  file: %cell-list.h
 //  summary: "BLOCK!, GROUP!, FENCE! and their antiforms (Array in payload)"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2026 Ren-C Open Source Contributors
+// Copyright 2012-2026 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -126,7 +126,7 @@ INLINE const Element* List_Item_At(const Cell* cell) {
 
 
 // !!! R3-Alpha introduced concepts of immutable series with PROTECT, but
-// did not consider the protected status to apply to binding.  Ren-C added
+// did not consider the protected status to apply to binding.  Revolt added
 // more notions of immutability (const, holds, locking/freezing) and enforces
 // it at compile-time...which caught many bugs.  But being able to bind
 // "immutable" data was mechanically required by R3-Alpha for efficiency...so

@@ -1,5 +1,5 @@
 ; CLASSIC ASSERT
-; Ren-C's version is invisible, like a COMMENT
+; Revolt's version is invisible, like a COMMENT
 
 (
     null? e: sys.util/recover [assert [1 = 1]]

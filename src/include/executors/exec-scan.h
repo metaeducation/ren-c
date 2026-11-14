@@ -1,12 +1,12 @@
 //
 //  file: %exec-scan.h
 //  summary: "Flags and Level State for Scanner_Executor()"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //

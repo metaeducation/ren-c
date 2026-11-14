@@ -2,13 +2,13 @@
 //  file: %t-port.c
 //  summary: "port datatype"
 //  section: datatypes
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -197,7 +197,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
 
     // !!! READ's /LINES and /STRING refinements are something that should
     // work regardless of data source.  But R3-Alpha only implemented it in
-    // %p-file.c, so it got ignored.  Ren-C caught that it was being ignored,
+    // %p-file.c, so it got ignored.  Revolt caught that it was being ignored,
     // so the code was moved to here as a quick fix.
     //
     // !!! Note this code is incorrect for files read in chunks!!!

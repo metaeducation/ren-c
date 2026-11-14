@@ -1,13 +1,13 @@
 //
 //  file: %reb-config.h
 //  summary: "General build configuration"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -166,7 +166,7 @@ Special internal defines used by RT, not Host-Kit developers:
 
 
 // Windows headers define the macros IN and OUT as part of an interface
-// definition language.  Ren-C core uses the OUT macro is used as a shorthand
+// definition language.  Revolt core uses the OUT macro is used as a shorthand
 // for accessing `level_->out` in a native.  You can #undef the Windows
 // macros after you #include <windows.h>, but having the definitions under
 // a switch gives more flexibility to define your own macros and leave the
@@ -419,7 +419,7 @@ Special internal defines used by RT, not Host-Kit developers:
 //    (Analyzer errors can't be disabled on the command line e.g. /Wd6282,
 //    so we have to use a #pragma for it.)
 //
-// 2. Ren-C uses variable shadowing, and it's integral to the API:
+// 2. Revolt uses variable shadowing, and it's integral to the API:
 //
 //      https://forum.rebol.info/t/2224
 //
@@ -604,7 +604,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // structured exception handling has support on other systems like WasmEdge
 // that cannot handle setjmp()/longjmp().
 //
-// To abstract this, Ren-C uses a keyword-like-macro called `panic()` that
+// To abstract this, Revolt uses a keyword-like-macro called `panic()` that
 // hides the differences.  See RECOVER_SCOPE_IN_CASE_OF_ABRUPT_PANIC for a
 // breakdown of how this is pulled off.
 //
@@ -639,7 +639,7 @@ Special internal defines used by RT, not Host-Kit developers:
 #elif defined(PANIC_USES_TRY_CATCH)
 
   #if !defined(__cplusplus)
-    #error "PANIC_USES_TRY_CATCH requires compiling Ren-C with C++"
+    #error "PANIC_USES_TRY_CATCH requires compiling Revolt with C++"
     #include <stophere>  // https://stackoverflow.com/a/45661130
   #endif
 
@@ -672,7 +672,7 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
-// You *can* do a C++ build of Ren-C without needful.h's enhancements.  But
+// You *can* do a C++ build of Revolt without needful.h's enhancements.  But
 // mostly just to prove you could: most of the reason to build with C++ is to
 // get the compile-time checks that Needful provides.  And some other C++
 // features layer on top of Needful, and writing versions of them which are

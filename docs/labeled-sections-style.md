@@ -1,6 +1,6 @@
-# Labeled Sections: How Ren-C's C Functions Are Laid Out
+# Labeled Sections: How Revolt's C Functions Are Laid Out
 
-Many functions in the Ren-C core are written as a series of named, braced
+Many functions in the Revolt core are written as a series of named, braced
 sections. At the time of writing the style appears in 61 source files and
 accounts for more than 800 section headers. This page describes the
 convention and the reasons for it.
@@ -119,7 +119,7 @@ does not exist in the next. This has three consequences.
 - *The code compiles as C++.* C allows a `goto` to jump over a declaration
   that has an initializer; C++ does not. Because every section's variables
   end at its closing brace, no jump between sections can cross a live
-  initialization. Ren-C is built as C++ for checking, and this style is what
+  initialization. Revolt is built as C++ for checking, and this style is what
   lets it use `goto` freely there.
 
 - *The compiler enforces the stackless discipline.* When a native returns to

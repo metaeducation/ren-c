@@ -1,12 +1,12 @@
 //
 //  file: %exec-eval.h
 //  summary: "Flags and State for Evaluator_Executor() and Stepper_Executor()"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2022 Ren-C Open Source Contributors
+// Copyright 2012-2022 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //
@@ -131,7 +131,7 @@
 
 typedef struct EvaluatorExecutorStateStruct {
 
-  // Invisibility is a critical feature in Ren-C:
+  // Invisibility is a critical feature in Revolt:
   //
   //     >> 1 + 2 elide print "Invisibility is central to many things"
   //     Invisibility is central to many things

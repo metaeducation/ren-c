@@ -7,7 +7,7 @@ Rebol [
 
     rights: --[
         Copyright 2017 Atronix Engineering
-        Copyright 2017-2025 Ren-C Open Source Contributors
+        Copyright 2017-2025 Revolt Open Source Contributors
     ]--
 
     license: --[
@@ -36,7 +36,7 @@ Rebol [
         This code is not representative of modern practices, because it has
         to run in a very old bootstrap executable.  It is also very much a
         hodgepodge just to keep things running.  While efforts have been made
-        so the bootstrap executable "emulates" the look of modern Ren-C, it's
+        so the bootstrap executable "emulates" the look of modern Revolt, it's
         there are many compromises.  So generally speaking, don't look here
         for exemplary code.
     ]--

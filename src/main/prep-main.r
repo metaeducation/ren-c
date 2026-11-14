@@ -3,7 +3,7 @@ Rebol [
     title: "Create C .inc file with const data of r3.exe startup code"
     file: %prep-main.r
     rights: --[
-        Copyright 2012-2021 Ren-C Open Source Contributors
+        Copyright 2012-2021 Revolt Open Source Contributors
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
     ]--

@@ -2,13 +2,13 @@
 //  file: %mod-network.c
 //  summary: "network port interface"
 //  section: ports
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=/////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2021 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -24,7 +24,7 @@
 // This is a TCP networking interface, evolved from the R3-Alpha PORT! code.
 // It has been rewritten in terms of libuv as a platform abstraction layer.
 // Although libuv has the implementation capability to do non-blocking and
-// parallel network operations, the goal in Ren-C is to push the language
+// parallel network operations, the goal in Revolt is to push the language
 // toward allowing people to express their code in a synchronous fashion and
 // have the asynchronous behavior accomplished by more "modern" means...taking
 // inspiration from Go's goroutines and async/await:
@@ -991,7 +991,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
             // !!! R3-Alpha didn't have a working READ:PART for networking; it
             // would just accrue data as each chunk came in.  The inability
             // to limit the read length meant it was difficult to implement
-            // network protocols.  Ren-C has R3-Alpha's behavior if no :PART
+            // network protocols.  Revolt has R3-Alpha's behavior if no :PART
             // is specified.
             //
             rebreq->length = UNLIMITED;  // -1, e.g. "read as much as you can"

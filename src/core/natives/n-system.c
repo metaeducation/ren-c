@@ -2,13 +2,13 @@
 //  file: %n-system.c
 //  summary: "native functions for system operations"
 //  section: natives
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -209,7 +209,7 @@ DECLARE_NATIVE(CHECK)  // !!! Review the necessity of this (hasn't been used)
 //
 // This forces an integrity check to run on a series.  In R3-Alpha there was
 // no checked build, so this was a simple validity check and it returned an
-// error on not passing.  But Ren-C is designed to have a build with
+// error on not passing.  But Revolt is designed to have a build with
 // checks that aren't designed to fail gracefully.  So this just runs that
 // assert rather than replicating code here that can "tolerate" a bad series.
 {

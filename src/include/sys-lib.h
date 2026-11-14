@@ -1,12 +1,12 @@
 //
 //  file: %sys-lib.h
 //  summary: "Fast Access for Premade Symbols in the LIB Module"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2022-2025 Ren-C Open Source Contributors
+// Copyright 2022-2025 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //

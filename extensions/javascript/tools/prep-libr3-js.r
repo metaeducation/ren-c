@@ -52,8 +52,8 @@ e-cwrap: make-emitter "JavaScript C Wrapper functions" (
 ;
 ; https://github.com/emscripten-core/emscripten/blob/incoming/src/preamble.js
 ;
-; Years later, Ren-C runs "stacklessly" and can suspend itself--meaning it
-; no longer needs Asyncify to do yields.  But while the Ren-C core is able
+; Years later, Revolt runs "stacklessly" and can suspend itself--meaning it
+; no longer needs Asyncify to do yields.  But while the Revolt core is able
 ; to do its own yields, it may become interesting to compile in library code
 ; from other sources that does not have that ability.  So code that was put
 ; together to make the Asyncify approach work is not being thrown out in a
@@ -978,7 +978,7 @@ write (join prep-dir %include/libr3.exports.json) json-collect [
 ; <review> ; IN LIGHT OF ASYNCIFY
 ; Beyond speed, an API marked in the blacklist has the special ability of
 ; still being run while in the yielding state (a feature added to Emscripten
-; due to a Ren-C request):
+; due to a Revolt request):
 ;
 ; https://stackoverflow.com/q/51204703/
 ;

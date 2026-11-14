@@ -5,7 +5,7 @@ The C language has standard time functions:
 https://en.cppreference.com/w/c/chrono
 
 However, Rebol chose to abstract time as something beyond the standard, into
-the "Host Kit".  In Ren-C, the host kit is being phased out, so it means
+the "Host Kit".  In Revolt, the host kit is being phased out, so it means
 getting the time becomes part of an extension.
 
 This is not necessarily a bad thing.  In the JavaScript build, the C time

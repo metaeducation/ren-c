@@ -1,12 +1,12 @@
 //
 //  file: %cell-quoted.h
 //  summary: "Definitions for QUOTED! Cells"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2018-2025 Ren-C Open Source Contributors
+// Copyright 2018-2025 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -51,7 +51,7 @@
 //     >> append [a b c] antiform
 //     ** PANIC: ...
 //
-// Antiforms are new in Ren-C, and central to how the design solves historical
+// Antiforms are new in Revolt, and central to how the design solves historical
 // problems in Rebol languages.
 //
 

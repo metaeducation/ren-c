@@ -1,12 +1,12 @@
 //
 //  file: %struct-array.h
 //  summary: "Array structure definitions preceding %tmp-internals.h"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -111,7 +111,7 @@
 // per value to track the property.  Yet since newlines are conceptually
 // "between" values, that's one bit too few to represent all possibilities.
 //
-// Ren-C carries a bit for indicating when there's a newline intended at the
+// Revolt carries a bit for indicating when there's a newline intended at the
 // tail of an array.
 //
 #define SOURCE_FLAG_NEWLINE_AT_TAIL \

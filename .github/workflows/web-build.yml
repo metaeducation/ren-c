@@ -3,7 +3,7 @@
 #
 #=============================================================================#
 #
-# GitHub Workflow for building the Wasm version of Ren-C.  It *builds* all pull
+# GitHub Workflow for building the Wasm version of Revolt.  It *builds* all pull
 # requests to master, but only *deploys* commits that are actually merged in.
 #
 # Deployments will become "live" in the Web REPL demonstration directly from
@@ -312,7 +312,7 @@ jobs:
     #
     # The ren-c-action is able to deploy a web browser and use the commit of
     # a non-greenlit hash.  It does this via a local Firefox, which it talks
-    # to through Python equipped with the "Marionette" protocol.  (Ren-C can't
+    # to through Python equipped with the "Marionette" protocol.  (Revolt can't
     # be used at time of writing, because it lacks websockets...which are
     # needed to remote-control Firefox).
 

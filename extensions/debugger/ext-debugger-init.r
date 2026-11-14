@@ -8,7 +8,7 @@ Rebol [
     license: "Apache 2.0"
 
     description: --[
-        The goal of the debugger in Ren-C is to be mostly usermode code, and
+        The goal of the debugger in Revolt is to be mostly usermode code, and
         to rely on leveraging exposure of the FRAME! datatype.  One of the
         concepts involved in that is that things like mappings of integers
         to frames is all part of the userspace code's responsibility.

@@ -2,13 +2,13 @@
 //  file: %n-make.c
 //  summary: "Creation-oriented natives (MAKE, TO, COPY)"
 //  section: natives
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -92,7 +92,7 @@ Bounce Copy_Quoter_Executor(Level* level_)
 //
 DECLARE_NATIVE(COPY)
 //
-// 1. R3-Alpha and Red limit COPY to series, object, or function.  Ren-C had
+// 1. R3-Alpha and Red limit COPY to series, object, or function.  Revolt had
 //    the idea that COPY should be able to copy any value, but the merits of
 //    that being meaningful are actually questionable.  The old dispatch
 //    model had many types doing trivial cell copies and failing if you

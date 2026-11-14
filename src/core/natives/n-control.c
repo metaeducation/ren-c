@@ -2,12 +2,12 @@
 //  file: %n-control.c
 //  summary: "native functions for control flow"
 //  section: natives
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -646,7 +646,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
   //    empty OR-ing is falsey.
   //
   //    There are reasonable intuitive arguments for that--*if* those are
-  //    your only two choices.  Because Ren-C has the option of VOID, it's
+  //    your only two choices.  Because Revolt has the option of VOID, it's
   //    better to signal to the caller that nothing happened.  Other choices
   //    can be forced with e.g. (all [... null]) or (any [... okay])
   //

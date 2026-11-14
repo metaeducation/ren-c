@@ -2,12 +2,12 @@
 //  file: %t-quoted.c
 //  summary: "QUOTED? datatype that acts as container for unquoted elements"
 //  section: datatypes
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2018-2023 Ren-C Open Source Contributors
+// Copyright 2018-2023 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -25,7 +25,7 @@
 // was that the literalness would be removed, leaving a WORD! or PATH! behind,
 // making it suitable for comparisons (e.g. `word = 'foo`)
 //
-// Ren-C has a generic quoting, as a container which can be arbitrarily
+// Revolt has a generic quoting, as a container which can be arbitrarily
 // deep in escaping.  This faciliated a more succinct way to QUOTE, as well as
 // new features.  THE takes the place of the former literalizing operator:
 //

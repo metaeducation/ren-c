@@ -2,12 +2,12 @@
 //  file: %c-specialize.c
 //  summary: "Routines for Creating Function Variations with Fixed Parameters"
 //  section: datatypes
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2015-2020 Ren-C Open Source Contributors
+// Copyright 2015-2020 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.

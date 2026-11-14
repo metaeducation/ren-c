@@ -2,13 +2,13 @@
 //  file: %d-dump.c
 //  summary: "various debug output functions"
 //  section: debug
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -23,7 +23,7 @@
 //
 // Most of these low-level debug routines were leftovers from R3-Alpha, which
 // had no RUNTIME_CHECKS build (and was perhaps frequently debugged without an
-// IDE debugger).  After the open source release, Ren-C's reliance is on a
+// IDE debugger).  After the open source release, Revolt's reliance is on a
 // more heavily checked build...so these routines were not used.
 //
 // They're being brought up to date to be included in the checked build only

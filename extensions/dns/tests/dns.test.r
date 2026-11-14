@@ -13,7 +13,7 @@
     "rebol.com" = read join dns:// address
 })
 
-; Reading dns:// has been standardized in Ren-C to try and get the real
+; Reading dns:// has been standardized in Revolt to try and get the real
 ; IP address of the system.  On Windows this is as easy as passing null to
 ; gethostbyname().  On Linux it fabricates a connection to Google's 8.8.8.8
 ; DNS and asks what its side of that connection is.

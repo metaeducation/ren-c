@@ -1,12 +1,12 @@
 //
 //  file: %c-action.c
 //  summary: "Central Action Executor"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -432,7 +432,7 @@ Bounce Action_Executor(Level* L)
         // The second CHAIN! pushes :C to the top of stack, with :B below
         //
         // While historically Rebol paths for invoking functions could only
-        // use refinements for optional parameters, Ren-C leverages the same
+        // use refinements for optional parameters, Revolt leverages the same
         // two-pass mechanism to implement the reordering of non-optional
         // parameters at the callsite.
 

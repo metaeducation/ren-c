@@ -3,7 +3,7 @@
 #
 #============================================================================#
 #
-# GitHub Workflow for building the Wasi version of Ren-C.  This is for use in
+# GitHub Workflow for building the Wasi version of Revolt.  This is for use in
 # non-Browser, non-NodeJs hosts (e.g. Wasmtime, WasmEdge, Wasmer).  So rather
 # than being built with Emscripten, it is built using "Wasi-Sdk" (because the
 # STANDALONE_WEBASSEMBLY support in Emscripten is somewhat minimal).
@@ -262,7 +262,7 @@ jobs:
 
   #====# INSTALL REN-C #=====================================================#
 
-    # Useful to have a Ren-C on hand to validate tests with.
+    # Useful to have a Revolt on hand to validate tests with.
     #
     - name: Download and Cache the Interpreter
       uses: metaeducation/ren-c-action@release

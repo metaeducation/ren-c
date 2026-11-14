@@ -2,13 +2,13 @@
 //  file: %n-series.c
 //  summary: "native functions for series"
 //  section: natives
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -23,7 +23,7 @@
 //
 // A. INSERT, APPEND, and CHANGE were "frame-compatible generics" in R3-Alpha.
 //    They did not have independent native entry points (they were just cases
-//    in per-type switch statements), but in Ren-C they actually have their
+//    in per-type switch statements), but in Revolt they actually have their
 //    own entry points where common work can be done that apply to all types.
 //    This is taken advantage of by having them do things like the ARG(PART)
 //    processing in common, and then dispatching to CHANGE as the generic
@@ -78,7 +78,7 @@ static bool Part_Limit_Append_Insert(Option(Stable*) part_arg) {
 // depend on the size of the value being used to change with.
 //
 // The traditional way of making that guess wasn't done at a high level, but
-// rather was baked into the lower-level service routines.  Ren-C avoids the
+// rather was baked into the lower-level service routines.  Revolt avoids the
 // lower-level guessing and instead provides a more limited high-level guess
 // that lets the :PART be fully specified at the native level.
 //

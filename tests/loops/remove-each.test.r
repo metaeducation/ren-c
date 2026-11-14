@@ -1,6 +1,6 @@
 ; %loops/remove-each.test.r
 ;
-; Ren-C's REMOVE-EACH is a multi-return routine which gives you the updated
+; Revolt's REMOVE-EACH is a multi-return routine which gives you the updated
 ; series as the main result, and the count as a secondary return.  This
 ; nicely resolves a historically contentious issue of which it should return.
 ;

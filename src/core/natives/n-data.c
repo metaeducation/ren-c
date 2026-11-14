@@ -2,13 +2,13 @@
 //  file: %n-data.c
 //  summary: "native functions for data and context"
 //  section: natives
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -951,7 +951,7 @@ DECLARE_NATIVE(PROXY_EXPORTS)
 // doing the importing.  Some of the most convoluted code dealt with managing
 // the large growing indexes of modules as items were added.
 //
-// Ren-C's "Sea of Words" model means MODULE! leverages the existing hash table
+// Revolt's "Sea of Words" model means MODULE! leverages the existing hash table
 // for global symbols.  The binding tables and complex mechanics are thus not
 // necessary for that purpose.  So at time of writing, PROXY-EXPORTS has been
 // pared back as what remains of "RESOLVE", and only works on MODULE!.

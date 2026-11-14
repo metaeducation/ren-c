@@ -1,24 +1,24 @@
-![Ren-C Logo][100]
+![Revolt Logo][100]
 
-# Ren-C
+# R E V [o] L T
 
-[**Ren-C**][1] is a *deeply* redesigned [LGPL 3.0-licensed][2] derivative of
-the [Rebol 3][3] [codebase][4].  It explores solutions to some of the Rebol
-language's longstanding open questions, adding fundamental new evaluation
-abilities and API embeddings.
+[**Revolt**][1] (formerly codenamed "Ren-C") is a *deeply* redesigned
+[LGPL 3.0-licensed][2] derivative of the [Rebol 3][3] codebase.  It explores
+solutions to some of the Rebol language's [longstanding open questions][4],
+adding fundamental new lexical forms, evaluation abilities, and API embeddings.
 
-[1]: https://github.com/metaeducation/ren-c
+[1]: https://github.com/metaeducation/revolt
 [2]: https://www.gnu.org/licenses/lgpl-3.0.html
 [3]: https://en.wikipedia.org/wiki/Rebol
-[4]: https://github.com/rebol/rebol
+[4]: https://revolt.metaeducation.com/forum/t/what-to-know-before-betting/2736
 
-While Rebol 3 built for many platforms, Ren-C extends those to everything from
+While Rebol 3 built for many platforms, Revolt extends those to everything from
 [OpenBSD to HaikuOS and WebAssembly][5].  But the experimental nature of the
 project and limited resources mean there isn't support for packaging and
 distribution of native binaries.  So the table stakes for participating is
 building your own native interpreter (see instructions below)
 
-[5]: https://github.com/metaeducation/ren-c/blob/master/tools/platforms.r
+[5]: https://github.com/metaeducation/revolt/blob/master/tools/platforms.r
 
 The current sole focus for deploying a *prebuilt* experience to users is via
 WebAssembly in the web browser.  See the [demo of the Web Console][6]
@@ -34,7 +34,7 @@ user @Oldes, and may interest some people who don't want to run on the web.)*
 
 ## API
 
-One major enabling feature of Ren-C is that it has a "user-friendly" API for
+One major enabling feature of Revolt is that it has a "user-friendly" API for
 C and JavaScript, which uses novel tricks to compose code as mixtures of
 strings and spliced Rebol values:
 
@@ -50,12 +50,6 @@ entitled ["Abusing UTF-8 For Fun and Profit"][8]
 
 [8]: https://www.youtube.com/watch?v=6nsKTpArTCE
 
-Beyond the API and Web Build, improvements to the language itself *range in
-the hundreds*.  They are ever-evolving but are tracked periodically on the
-[Trello board][9] and posts on the forum.
-
-[9]: https://trello.com/b/l385BE7a/rebol3-porting-guide-ren-c-branch
-
 
 ## Community
 
@@ -63,31 +57,19 @@ The best way to get acquainted with all that is going on would be to
 [**Join The Forum!**][10]  Feel free to post in the [Introductions Category][11]
 and ask anything you would like.
 
-[10]: https://rebol.metaeducation.com/
-[11]: https://rebol.metaeducation.com/c/introductions
+[9]: https://revolt.metaeducation.com/forum/
+[10]: https://revolt.metaeducation.com/forum/c/introductions
 
 It's also possible to contact the developers via [the GitHub Issues][12].
-*(Ren-C inherited Rebol's thousands-strong issue database, so there's a
+*(Revolt inherited Rebol's thousands-strong issue database, so there's a
 lifetime's worth of design points to think about!)*
 
-[12]: https://github.com/metaeducation/rebol-issues/issues
-
-
-## Name
-
-The "Ren-C" name comes from the idea that it is a C implementation of the
-"REadable Notation" (a name given to Rebol's file format).  The codebase is
-able to compile as ANSI C99, despite using a wide spectrum of static analysis
-enhancements that apply if built as C++.
-
-Long term, it is not intended to be the name of a language.  It's simply a
-core that could be packaged and configured by other "branded" distributions,
-such as Rebol itself.
+[11]: https://github.com/metaeducation/rebol-issues/issues
 
 
 ## Language Dependencies: C99 (or higher), C++11 (or higher)
 
-The baseline for building the Ren-C interpreter itself is C99.  The features
+The baseline for building the Revolt interpreter itself is C99.  The features
 it uses that were not defined in C89 are:
 
     * __VA_ARGS__ variadic macros,
@@ -96,15 +78,23 @@ it uses that were not defined in C89 are:
     * declaring variables in the conditions of for loops
 
 (Many C89-era compilers could do these things before they were standards, so
-there's a possibility that Ren-C can be built by pre-C99 systems.)
+there's a possibility that Revolt can be built by pre-C99 systems.)
 
 While the interpreter sources need C99, the API can be used by C89 client
 code.  The calls will be slightly uglier, due to the lack of variadic macros
 to take care of some of the boilerplate.  But it should work.
 
 If you use C++11 to build the sources, then this adds many extremely useful
-compile-time checks.  Anyone developing and submitting patches to the system
-should make sure their changes will compile with C++.
+compile-time checks, thanks to [a static analysis tool called "Needful"][12].
+This library is at the core of what makes it possible to code a program as
+deep as Revolt in ANSI C99.
+
+[12]: https://needful.metaeducation.com
+
+If you submit patches to the system, then the continuous integration will run
+checks based on compiling against Needful.  So if you plan on doing a lot
+of development, you should review how to put the `needful-enhanced/` directory
+into your build tree to run those checks locally.
 
 (C++98 support was included for a while, but it lacks <type_traits> and
 other features which are required to make the C++ build of any real use
@@ -115,7 +105,7 @@ if you don't have a C++11 compiler you should just use C99.)
 ## Building
 
 The system does not require GNU Make, CMake, or any other make tools.  It only
-needs a copy of a Ren-C executable to build itself.  To do a full build, it
+needs a copy of a Revolt executable to build itself.  To do a full build, it
 can just invoke a C compiler using [the CALL facility][13], with the
 appropriate command lines.
 
@@ -127,7 +117,7 @@ in the %configs/ directory.  When the build process is run, you should be in
 the directory where you want the build products to go (e.g. %build/).  Here
 is a sample of how to compile under Linux:
 
-    # You need a Ren-C-based Rebol to use in the make process
+    # You need a Revolt-based Rebol to use in the make process
     # See %tools/bootstrap-shim.r regarding what versions are usable
     # Currently there are usable executables in %/prebuilt ...
     # ...but that's not a permanent solution!
@@ -151,13 +141,13 @@ from tables and scans of the source code.  If you're not familiar with the
 source and what kinds of changes require rebuilding which parts, you should
 probably do full builds.
 
-As a design goal, compiling Ren-C requires [very little beyond ANSI C89][14].
+As a design goal, compiling Revolt requires [very little beyond ANSI C89][14].
 Attempts to rein in compiler dependencies have been a large amount of work,
 and it still supports a [number of older platforms][15].  However, if it is
 compiled with a C++ compiler then there is significantly more static analysis
 at build time, to catch errors.
 
-[14]: https://rebol.metaeducation.com/t/on-building-ren-c-with-c-compilers/1343
+[14]: https://revolt.metaeducation.com/forum/t/on-building-with-c-compilers/1343
 [15]: https://github.com/metaeducation/ren-c/blob/master/make/tools/platforms.r
 
 *(Note: The build process is [far more complicated than it should be][16], but
@@ -166,25 +156,25 @@ strongly desirable if community member(s) could get involved to help
 streamline and document it!  Since it's now *all* written in Rebol, that
 should be more possible--and maybe even a little "fun" (?))*
 
-[16]: https://rebol.metaeducation.com/t/new-build-executables-new-build-strategy/1432
+[16]: https://rebol.metaeducation.com/t/new-build-executable-strategy/1432
 
 
 ## License
 
 When Rebol was open-sourced in 2012, it was [licensed as Apache 2.0][17].
-Despite the Ren-C team's belief in [Free Software Foundation's principles][18],
+Despite the Revolt team's belief in [Free Software Foundation's principles][18],
 contributions were made as Apache 2.0 up until 2020, to make it easier for
 code to be taken back to the Rebol GitHub or other branches.
 
 [17]: http://www.rebol.com/cgi-bin/blog.r?view=0519
 [18]: https://www.gnu.org/philosophy/shouldbefree.en.html
 
-Due to limited cases of such any take over an eight-year span, the Ren-C
+Due to limited cases of such any take over an eight-year span, the Revolt
 license was [changed to the Apache-2-compatible LGPL 3][18].
 
-[19]: https://rebol.metaeducation.com/t/ren-c-license-changed-to-lgpl-3-0/1342
+[19]: https://revolt.metaeducation.com/forum/t/license-changed-to-lgpl-3-0/1342
 
-The current way to explore the new features of Ren-C is using the `r3`
+The current way to explore the new features of Revolt is using the `r3`
 console.  It is *significantly* enhanced from the open-sourced R3-Alpha...with
 much of its behavior coming from [userspace Rebol code][20] (as opposed to
 hardcoded C).  In addition to multi-line editing and UTF-8 support, it

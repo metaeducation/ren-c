@@ -2,12 +2,12 @@
 //  file: %mod-debugger.c
 //  summary: "Native Functions for debugging"
 //  section: extension
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2015-2019 Ren-C Open Source Contributors
+// Copyright 2015-2019 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// One goal of Ren-C's debugger is to have as much of it possible written in
+// One goal of Revolt's debugger is to have as much of it possible written in
 // usermode Rebol code, and be easy to hack on and automate.
 //
 // This file contains interactive debugging support for breaking and

@@ -36,7 +36,7 @@
 ;
 ; https://gitter.im/red/help?at=6139358f99b7d97528fc7152
 ;
-; Ren-C got an error, which turns out to be Z_BUF_ERROR (-5).  Research
+; Revolt got an error, which turns out to be Z_BUF_ERROR (-5).  Research
 ; suggests this is the correct response and that both Red and zlib-flate are
 ; incorrect in handling the corrupt file.  The tool `pigz` returns:
 ;

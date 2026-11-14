@@ -2,12 +2,12 @@
 //  file: %struct-details.h
 //  summary: "Dispatcher Details definitions preceding %tmp-internals.h"
 //  section: core
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2020 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -21,7 +21,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// As in historical Rebol, Ren-C has several different kinds of functions...
+// As in historical Rebol, Revolt has several different kinds of functions...
 // each of which have a different implementation path in the system.
 //
 // Each action has an associated C function that runs when it is invoked, and

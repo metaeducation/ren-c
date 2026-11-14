@@ -6,7 +6,7 @@
 R3-Alpha had a limited tracing facility with `TRACE ON`.  However it had no
 capability for stepwise debugging or breakpoints.
 
-Ren-C is attempting to implement a debugger as an extension, where much of
+Revolt is attempting to implement a debugger as an extension, where much of
 the code is written in usermode and is scriptable.  This is rather complex
 because Rebol has a single-threaded model, and it means the debugger
 implementation itself has to be careful to avoid interacting with the stack
@@ -15,7 +15,7 @@ is trying to debug.)
 
 ### FRAME!
 
-One advancement in Ren-C that empowers the creation of debug features is the
+One advancement in Revolt that empowers the creation of debug features is the
 FRAME! datatype.  This is a class of object whose keys are the arguments and
 locals of an ACTION!...and an instance is generated on each function call.
 

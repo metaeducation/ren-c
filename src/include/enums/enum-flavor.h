@@ -1,12 +1,12 @@
 //
 //  file: %enum-flavor.h
 //  summary: "Stub Subclass Type Enumeration"
-//  project: "Ren-C Interpreter and Run-time"
+//  project: "Revolt Interpreter and Run-time"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2023 Ren-C Open Source Contributors
+// Copyright 2023 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //

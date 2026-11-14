@@ -2,12 +2,12 @@
 //  file: %c-does.c
 //  summary: "Expedient generator for 0-argument function specializations"
 //  section: datatypes
-//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  project: "Revolt Language Interpreter and Run-time Environment"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2018-2023 Ren-C Open Source Contributors
+// Copyright 2018-2023 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -23,7 +23,7 @@
 // an empty spec block as a convenience.  It was thus in most other respects
 // like a FUNC... e.g. it would catch throws of a RETURN signal.
 //
-// In Ren-C, DOES with a BLOCK! instead acts as a LAMBDA with an empty spec.
+// In Revolt, DOES with a BLOCK! instead acts as a LAMBDA with an empty spec.
 // So RETURN will be inherited from the context and act as is.
 //
 // An experiment was added to push DOES a bit further.  Not only does it take

@@ -3,10 +3,10 @@ Rebol [
     title: "Command line processing and startup code called by %main.c"
     file: %main-startup.r
     type: module
-    name: Ren-C-Startup
+    name: Revolt-Startup
     rights: --[
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2019 Ren-C Open Source Contributors
+        Copyright 2012-2019 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[
@@ -76,10 +76,10 @@ Rebol [
 boot-banner: [
     *
     -
-    "REBOL 3.0 (Ren-C branch)"
+    "REBOL 3.0 (Revolt branch)"
     -
     = Copyright: "2012 REBOL Technologies"
-    = Copyright: "2012-2021 Ren-C Open Source Contributors"
+    = Copyright: "2012-2021 Revolt Open Source Contributors"
     = "" "Licensed Under LGPL 3.0, see LICENSE."
     = Website:  "http://github.com/metaeducation/ren-c"
     -

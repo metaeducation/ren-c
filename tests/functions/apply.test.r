@@ -1,6 +1,6 @@
 ; %apply.test.r
 ;
-; Ren-C's APPLY is a hybrid of positional and non-positional application.
+; Revolt's APPLY is a hybrid of positional and non-positional application.
 
 (-1 = apply negate/ [1])
 ([a b c d e] = apply append/ [[a b c] spread [d e]])

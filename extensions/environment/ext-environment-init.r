@@ -17,7 +17,7 @@ export env: environment
 
 ; COMPATIBILITY FUNCTIONS
 ;
-; Historical Rebol didn't have space for an ENVIRONMENT! datatype.  Ren-C
+; Historical Rebol didn't have space for an ENVIRONMENT! datatype.  Revolt
 ; does, but create some compatibility functions while that's tested out.
 
 export /get-env: impure func [

@@ -27,7 +27,7 @@ Rebol [
     notes: --[
       * The feature roadmap of Wasi has been moving along in coverage, but it
         is not sufficient to supply the needed threading and network primitives
-        required by libuv (which Ren-C's Filesystem and Networking extensions
+        required by libuv (which Revolt's Filesystem and Networking extensions
         are set up to use).  A less-featured file or networking layer would
         likely work, but it's probably better to wait.
 

@@ -2,13 +2,13 @@
 //  file: %t-typeset.c
 //  summary: "typeset datatype"
 //  section: datatypes
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -369,7 +369,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
   // We check WORD! last (which can also be a WORD! that was produced by
   // unsinglehearting sequences).
   //
-  // Ren-C disallows unbounds, and validates what the word looks up to at the
+  // Revolt disallows unbounds, and validates what the word looks up to at the
   // time of creation.  If it didn't, then optimizations could not be
   // calculated at creation-time.
   //

@@ -2,13 +2,13 @@
 //  file: %n-math.c
 //  summary: "native functions for math"
 //  section: natives
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -868,12 +868,12 @@ DECLARE_NATIVE(VACANCY_Q)
 //
 //=/////////////////////////////////////////////////////////////////////////=//
 //
-// The way things work in Ren-C are similar to Ord and Eq in Haskell, or how
+// The way things work in Revolt are similar to Ord and Eq in Haskell, or how
 // C++ standard library sorts solely in terms of operator< and operator==.
 //
 // So GREATER? is defined as just NOT LESSER? and NOT EQUAL?.
 //
-// LESSER? is more limited in Ren-C than in R3-Alpha or Red.  You can only
+// LESSER? is more limited in Revolt than in R3-Alpha or Red.  You can only
 // compare like types, and you can only compare blocks that are element-wise
 // comparable.
 //

@@ -29,7 +29,7 @@
 ;    ('a/b/c/h/i/d/e = replace 'a/b/g/h/i/d/e 'g/h/i 'c)
 ;
 ; That's not what Rebol2 does, and not consistent with BLOCK! replacement
-; Ren-C doesn't allow REPLACE on paths in any case--they are immutable, one
+; Revolt doesn't allow REPLACE on paths in any case--they are immutable, one
 ; must convert to a block and back (the conversion may fail as not all blocks
 ; can become paths)
 
@@ -98,7 +98,7 @@
 ;
 (#{20002000} = replace copy #{1000200010002000} #{1000} does [none])
 
-; REPLACE:DEEP ONE - :DEEP not (yet?) implemented in Ren-C
+; REPLACE:DEEP ONE - :DEEP not (yet?) implemented in Revolt
 
 ;([1 2 3 [8 5]] = replace:one:deep [1 2 3 [4 5]] [just 4] 8)
 ;([1 2 3 [4 8 9]] = replace:one:deep [1 2 3 [4 5]] [just 5] [8 9])
@@ -107,14 +107,14 @@
 ;([1 2 a 4 5] = replace:one:deep [1 2 3 4 5] [just 8 | just 4 | just 3] 'a)
 ;([a g h c d] = replace:one:deep [a b c d] ['b | 'd] [g h])
 
-; REPLACE:DEEP ALL - :DEEP not (yet?) implemented in Ren-C
+; REPLACE:DEEP ALL - :DEEP not (yet?) implemented in Revolt
 
 ;([1 8 3 [4 8]] = replace:deep [1 2 3 [4 2]] [just 2] 8)
 ;([1 8 9 3 [4 8 9]] = replace:deep [1 2 3 [4 5]] [just 5 | just 2] [8 9])
 ;([i j c [i j]] = replace:deep [a b c [d e]] ['d 'e | 'a 'b] [i j])
 ;([a [<tag> [<tag>]]] = replace:deep [a [b c [d b]]] ['d 'b | 'b 'c] <tag>)
 
-; REPLACE:CASE:DEEP - :DEEP not (yet?) implemented in Ren-C
+; REPLACE:CASE:DEEP - :DEEP not (yet?) implemented in Revolt
 
 ;([x A x B [x A x B]] = replace:case:deep [a A b B [a A b B]] ['a | 'b] 'x)
 ;((just (x A x B (x A x B))) = replace:case:deep lit (a A b B (a A b B)) ['a | 'b] 'x)

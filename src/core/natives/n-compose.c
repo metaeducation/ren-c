@@ -1,13 +1,13 @@
 //
 //  file: %n-compose.h
 //  summary: "COMPOSE native for lists, sequences, and strings"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Ren-C's COMPOSE has greatly expanded capabilities compared to traditional
+// Revolt's COMPOSE has greatly expanded capabilities compared to traditional
 // Redbol.  There's too many features to list, but a few are:
 //
 // * It supports customized patterns for what slots to match, based on

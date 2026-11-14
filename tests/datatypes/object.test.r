@@ -170,7 +170,7 @@
 
     ; Note: Because derivation in R3-Alpha requires deep copying and rebinding
     ; bodies of all function members, it will choke on the following.  In
-    ; Ren-C it is nearly instantaneous.  Despite not making those copies,
+    ; Revolt it is nearly instantaneous.  Despite not making those copies,
     ; derived binding allows the derived object's methods to see the derived
     ; object's values.
     ;

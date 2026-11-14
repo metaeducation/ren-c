@@ -2,13 +2,13 @@
 //  file: %n-do.c
 //  summary: "native functions for DO, EVAL, APPLY"
 //  section: natives
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -21,7 +21,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Ren-C's philosophy of DO is that the argument to it represents a place to
+// Revolt's philosophy of DO is that the argument to it represents a place to
 // find source code.  Hence `DO 3` does not evaluate to the number 3, any
 // more than `DO "print hello"` would evaluate to `"print hello"`.  If a
 // generalized evaluator is needed, use the special-purpose REEVAL(UATE).

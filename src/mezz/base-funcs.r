@@ -3,7 +3,7 @@ Rebol [
     title: "REBOL 3 Boot Base: Function Constructors"
     rights: --[
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2019 Ren-C Open Source Contributors
+        Copyright 2012-2019 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[
@@ -672,7 +672,7 @@ vacant?: redescribe [
     ]
 
     ; Initially this would call EVAL to force an exception to the nearest
-    ; trap up the stack (if any).  However, Ren-C rethought errors as being
+    ; trap up the stack (if any).  However, Revolt rethought errors as being
     ; "definitional", which means you would say RETURN FAIL and it would be
     ; a special kind of "error antiform" that was a unique return result.  Then
     ; you typically can only trap/catch errors that come from a function you

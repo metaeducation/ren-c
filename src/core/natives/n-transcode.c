@@ -1,13 +1,13 @@
 //
 //  file: %n-transcode.h
 //  summary: "TRANSCODE native for exposing scanner functionality to usermode"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Ren-C's TRANSCODE has some properties distinguishing it from historical
+// Revolt's TRANSCODE has some properties distinguishing it from historical
 // Rebol or Red:
 //
 // * Because TEXT! (strings) use UTF-8 throughout their lifetime as their

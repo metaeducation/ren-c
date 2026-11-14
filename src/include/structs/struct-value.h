@@ -1,12 +1,12 @@
 //
 //  file: %struct-value.h
 //  summary: "Subclasses of Cell to quarantine LIFT_BYTE() states"
-//  project: "Ren-C Interpreter and Run-time"
+//  project: "Revolt Interpreter and Run-time"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2022-2026 Ren-C Open Source Contributors
+// Copyright 2022-2026 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //

@@ -1,6 +1,6 @@
 > This file's intent is to centralize credit to organizations, individuals,
 > and to code + libraries + tools used.  For all new source contributions
-> please give copyright attribution to "Ren-C Open Source Contributors".
+> please give copyright attribution to "Revolt Open Source Contributors".
 > Include any new credits in pull requests as a modification to this file.
 >
 > **NOTE** The project has also benefited from significant supporting work
@@ -45,7 +45,7 @@ one-line summary and a link to a landing webpage of their choice:
 **Brian Dickens**
 - [@hostilefork](https://github.com/hostilefork) on GitHub
 - http://hostilefork.com
-- "Ren-C" branch founder, core evaluator rethinking, and design...
+- "Revolt" branch founder, core evaluator rethinking, and design...
 
 **Brett Handley**
 - [@codebybrett](https://github.com/codebybrett) on GitHub

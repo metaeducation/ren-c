@@ -8,7 +8,7 @@ Rebol [
 
     rights: --[
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2017 Ren-C Open Source Contributors
+        Copyright 2012-2017 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
 

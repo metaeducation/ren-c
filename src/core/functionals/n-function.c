@@ -2,12 +2,12 @@
 //  file: %n-function.c
 //  summary: "Generator for an ACTION! whose body is a block of user code"
 //  section: natives
-//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  project: "Revolt Language Interpreter and Run-time Environment"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -39,7 +39,7 @@
 //     The sum is 30
 //     The sum is 30
 //
-// Ren-C brings new abilities not present in historical Rebol:
+// Revolt brings new abilities not present in historical Rebol:
 //
 // * Return-type checking via `return: [...]` in the spec
 //
@@ -49,7 +49,7 @@
 // * Specific binding of arguments, so that each instance of a recursion
 //   can discern WORD!s from each recursion.  (In R3-Alpha, this was only
 //   possible using CLOSURE which made a costly deep copy of the function's
-//   body on every invocation.  Ren-C's method does not require a copy.)
+//   body on every invocation.  Revolt's method does not require a copy.)
 //
 // * Vanishable functions that return VOID! will disappear in multi-step
 //   evaluations...leaving whatever result was in the evaluation previous to
@@ -720,7 +720,7 @@ Result(bool) Typecheck_Coerce_Return_Use_Toplevel(
 //
 DECLARE_NATIVE(DEFINITIONAL_RETURN)
 //
-// Returns in Ren-C are functions that are aware of the function they return
+// Returns in Revolt are functions that are aware of the function they return
 // to.  So the dispatchers for functions that provide return e.g. FUNC will
 // actually use an instance of this native, and poke a binding into it to
 // identify the action.

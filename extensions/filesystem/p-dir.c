@@ -2,13 +2,13 @@
 //  file: %p-dir.c
 //  summary: "file directory port interface"
 //  section: ports
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2021 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -33,7 +33,7 @@
 // back so you could put data in the file you just created...but to be
 // consistent with directories it created a 0 byte file and closed it.
 //
-// For Ren-C the file is being translated to use libuv, but beyond that the
+// For Revolt the file is being translated to use libuv, but beyond that the
 // the semantics of directory operations are in limbo and still need to be
 // figured out by some sufficiently-motivated-individual.
 //

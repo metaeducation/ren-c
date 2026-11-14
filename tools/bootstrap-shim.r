@@ -4,9 +4,9 @@ Rebol [
     name: Bootstrap-Shim
     rights: --[
         Rebol 3 Language Interpreter and Run-time Environment
-        "Ren-C" branch @ https://github.com/metaeducation/ren-c
+        "Revolt" branch @ https://github.com/metaeducation/ren-c
 
-        Copyright 2012-2024 Ren-C Open Source Contributors
+        Copyright 2012-2024 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[
@@ -14,7 +14,7 @@ Rebol [
         See: http://www.apache.org/licenses/LICENSE-2.0
     ]--
     purpose: --[
-        Ren-C "officially" supports two executables for doing the pre-build
+        Revolt "officially" supports two executables for doing the pre-build
         process, which generates needed header files and other artifacts.
 
         One EXE that can be used is a frozen "stable" version (`8994d23`) which
@@ -29,7 +29,7 @@ Rebol [
 
         This shim is for 8994d23, in order to bring it up to compatibility
         for any new features used in the bootstrap code that were introduced
-        since it was created.  This is facilitated by Ren-C's compositional
+        since it was created.  This is facilitated by Revolt's compositional
         operations, like ADAPT, CHAIN, SPECIALIZE, and ENCLOSE.
     ]--
     notes: --[
@@ -152,7 +152,7 @@ sys.util/recover [
     ]
     export load: ~<Use LOAD3 in Bootstrap (no multi-returns for header)>~
 
-    export method: lambda [spec body] [  ; no METHOD in modern Ren-C, just <.>
+    export method: lambda [spec body] [  ; no METHOD in modern Revolt, just <.>
         func (join spec [<.>]) body
     ]
 
@@ -262,7 +262,7 @@ ghostly: func3 [v [any-value!]] [if trash? :v [return ()] return :v]
 === "ISSUE! => RUNE!" ===
 
 ; Historically #a and #"a" were different things, with the first being an
-; ISSUE! and the second being a CHAR!.  In modern Ren-C, ISSUE! and CHAR! were
+; ISSUE! and the second being a CHAR!.  In modern Revolt, ISSUE! and CHAR! were
 ; unified into RUNE!, so #a is a RUNE! of a single character.  This merger
 ; is not scheduled to be grafted into bootstrap, but we hackily use the
 ; imperfect mapping of ISSUE! => RUNE! in places where #xxx values are meant.
@@ -330,7 +330,7 @@ load: ~<Use LOAD3 in Bootstrap (:HEADER returns BLOCK! with OBJECT!)>~
 ; In the case of the iteration functions, they take RUNE! (a WORD! type in
 ; the bootstrap executable) to mean that the variable has a binding already
 ; to use vs. create a new one.  It's essential to use with ITERATE in modern
-; Ren-C, but we can't say `iterate $block [...]` in bootstrap (no $).  Hence
+; Revolt, but we can't say `iterate $block [...]` in bootstrap (no $).  Hence
 ; instead, TIE (which adds $ in new executables) is defined to add a #"."
 
 tie: lambda3 [word [word!]] [to rune! word]
@@ -448,7 +448,7 @@ typechecker: lambda3 [x [datatype! typeset! block!]] [
 
 ; The bootstrap executable is still based on the /ONLY refinement for asking
 ; to keep blocks as-is, while splicing by default.  This has been replaced
-; in modern Ren-C, where all append-like operations do as-is by default and
+; in modern Revolt, where all append-like operations do as-is by default and
 ; carry splicing intent on the value by means of antiform groups:
 ;
 ; https://forum.rebol.info/t/the-long-awaited-death-of-only/1607

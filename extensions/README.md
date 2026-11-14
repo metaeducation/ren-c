@@ -9,7 +9,7 @@ those stabilize, they should be their own individual projects with their own
 issue trackers and maintainers.
 
 Extensions and the libraries they link to may have their own licenses besides
-Ren-C's LGPL, so see the LICENSE.txt file in the extension subdirectory for
+Revolt's LGPL, so see the LICENSE.txt file in the extension subdirectory for
 that information.
 
 

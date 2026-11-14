@@ -1,12 +1,12 @@
 //
 //  file: %struct-map.h
 //  summary: "Map structure definitions preceding %tmp-internals.h"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -27,14 +27,14 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * MAP! was new to R3-Alpha, and the code was brittle and mostly untested.
-//   Little attention has been paid to it in Ren-C at time of writing,
+//   Little attention has been paid to it in Revolt at time of writing,
 //   though the ability to use any value as a key by locking it from being
 //   mutated was added.
 //
 // * In R3-Alpha, when there are too few values in a map to warrant hashing,
 //   no hash indices were made and the array was searched linearly.  This was
 //   indicated by the hashlist being NULL.  @giuliolunati removed this due
-//   to recurring bugs and the relative rarity of maps historically.  Ren-C
+//   to recurring bugs and the relative rarity of maps historically.  Revolt
 //   has many tools for enforcing things like this rigorously, so this
 //   feature should be restored...though there are other questions about the
 //   implementation of the map (e.g. ordered invariant) that are bigger.

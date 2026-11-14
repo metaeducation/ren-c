@@ -3,7 +3,7 @@
 ; PROTECT is able to protect values (which involves a bit set on the value
 ; cell).  It also can protect variables--which in R3-Alpha involved setting a
 ; bit on a context's key slot.  But that was buggy since keys could be reused
-; in multiple objects...so Ren-C also puts the protection of variables as a
+; in multiple objects...so Revolt also puts the protection of variables as a
 ; bit on the value slot where the variable keeps its storage, so it is a
 ; per-instance bit.
 ;

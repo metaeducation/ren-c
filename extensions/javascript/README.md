@@ -1,7 +1,7 @@
 ## JavaScript Extension
 
 The JavaScript extension is designed to be used with the "Emscripten" build
-of Ren-C, which can run in a web browser or with Node.js:
+of Revolt, which can run in a web browser or with Node.js:
 
 http://kripken.github.io/emscripten-site/
 

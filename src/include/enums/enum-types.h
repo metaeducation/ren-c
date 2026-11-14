@@ -1,13 +1,13 @@
 //
 //  file: %enum-types.h
 //  summary: -[Safe wrapper for distinguishing "Heart" and "Type" if C++]-
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2026 Ren-C Open Source Contributors
+// Copyright 2012-2026 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -208,7 +208,7 @@ INLINE bool Is_Logic_Type(Option(Type) type) {
 
 //=//// SINGLEHEART OPTIMIZED SEQUENCE TYPE ///////////////////////////////=//
 //
-// In Ren-C, `/foo` is a 2-element PATH! with a BLANK! at the head, and `bar:`
+// In Revolt, `/foo` is a 2-element PATH! with a BLANK! at the head, and `bar:`
 // is a 2-element CHAIN! with a BLANK! at the tail.  Due to how common these
 // are, and the fact that they are immutable sequences, there is investment
 // in optimizing them.  They are called "SingleHeart" sequences, and because

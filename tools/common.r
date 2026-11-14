@@ -1,10 +1,10 @@
 Rebol [
-    system: "Ren-C Core Extraction of the Rebol System"
+    system: "Revolt Core Extraction of the Rebol System"
     title: "Common Routines for Tools"
     type: module
     name: Prep-Common
     rights: --[
-        Copyright 2012-2019 Ren-C Open Source Contributors
+        Copyright 2012-2019 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[
@@ -112,7 +112,7 @@ export to-c-name: func [
         "xor" ["xor_1"]
         "xor_eq" ["xor_eq_1"]
 
-        "did" ["did_1"]  ; This is a macro in Ren-C code
+        "did" ["did_1"]  ; This is a macro in Revolt code
     ] else [
         null
     ]

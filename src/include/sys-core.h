@@ -1,12 +1,12 @@
 //
 //  file: %sys-core.h
 //  summary: "Single Complete Include File for Using the Internal Api"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -156,7 +156,7 @@ typedef RebolHandleCleaner HandleCleaner;
 #if RUNTIME_CHECKS || DEBUG_PRINTF_PANIC_LOCATIONS || DEBUG_HAS_PROBE
     //
     // Debug builds may use printf() and such liberally (helps to debug the
-    // Ren-C I/O system itself!)
+    // Revolt I/O system itself!)
     //
     #include <stdio.h>
 
@@ -204,9 +204,9 @@ typedef RebolHandleCleaner HandleCleaner;
 #include "needful.h"
 
 // `return_fail` is NOT aliased here: it is Needful's own shorthand, and it
-// already reads the way Ren-C the language writes it (`return fail ...`).
+// already reads the way Revolt the language writes it (`return fail ...`).
 // Signalling a failure is a statement in C -- the `return` is fused in, and
-// cannot be peeled off the way Ren-C's FAIL expression can be LIFT-ed.
+// cannot be peeled off the way Revolt's FAIL expression can be LIFT-ed.
 //
 #define trap     needful_return_if_failed
 #define require  needful_panic_if_failed
@@ -759,7 +759,7 @@ INLINE Error* Cell_Error(const Cell* c);
 // generics at the top before the switch() or at the bottom after it, and goto
 // could be used to jump between the handlers.
 //
-// Ren-C uses a more granular approach, where each generic's entry point is
+// Revolt uses a more granular approach, where each generic's entry point is
 // very much like a native.  This makes it possible to write common code that
 // runs before or after the moment of dispatch, implementing invariants that
 // are specific to each generic.  Then implementations are more granular,

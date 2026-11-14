@@ -2,13 +2,13 @@
 //  file: %mod-utf.c
 //  summary: "UTF-16 and UTF-32 Extension"
 //  section: extension
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -186,7 +186,7 @@ DECLARE_NATIVE(DECODE_TEXT)
     // is the idea of reusing the BLOB!--a copy is made.
     //
     // A more "intelligent" codec would do some kind of detection here, to
-    // figure out what format the text file was in.  While Ren-C's commitment
+    // figure out what format the text file was in.  While Revolt's commitment
     // is to UTF-8 for source code, a .TXT file is a different beast, so
     // having wider format support might be a good thing.
 

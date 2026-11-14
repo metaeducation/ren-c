@@ -1,7 +1,7 @@
 //
 // File: %load-r3.js
 // Summary: "Single-File script for detecting and loading libRebol JS"
-// Project: "JavaScript REPLpad for Ren-C branch of Rebol 3"
+// Project: "JavaScript REPLpad for Revolt branch of Rebol 3"
 // Homepage: https://github.com/hostilefork/replpad-js/
 //
 //=////////////////////////////////////////////////////////////////////////=//
@@ -19,7 +19,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // This file makes it possible to get everything taken care of for running
-// a Ren-C interpreter using only a single `<script>` tag on a page.
+// a Revolt interpreter using only a single `<script>` tag on a page.
 //
 //=//// EXAMPLE ///////////////////////////////////////////////////////////=//
 //
@@ -509,7 +509,7 @@ function libRebolComponentURL(suffix) {  // suffix includes the dot
 // to variables on the GUI thread).
 //
 // Due to origin policy restrictions, you typically need to have a
-// worker live in the same place your page is coming from.  To make Ren-C
+// worker live in the same place your page is coming from.  To make Revolt
 // fully hostable remotely it uses a hack of fetching the JS file via
 // CORS as a Blob, and running the worker from that.  However, since the
 // callback asking for the URL of a component file is synchronous, it cannot

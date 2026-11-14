@@ -1,12 +1,12 @@
 //
 //  file: %cell-context.h
 //  summary: "Context definitions AFTER including %tmp-internals.h"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// An FAILURE! in Ren-C is an antiform error state.
+// An FAILURE! in Revolt is an antiform error state.
 //
 // It is specifically an "unstable antiform"...which means it not only can't
 // be stored in lists like BLOCK!...it also can't be stored in variables.
@@ -42,7 +42,7 @@
 // a block for a message with spots showing where the args were to be inserted
 // into a message.  These message templates can be found in %specs/errors.r
 //
-// Ren-C is exploring the customization of user errors to be able to provide
+// Revolt is exploring the customization of user errors to be able to provide
 // arbitrary named arguments and message templates to use them.  It is
 // a work in progress, but refer to the FAIL native, the corresponding
 // `panic()` C macro in the source, and the various routines in %c-error.c

@@ -2,13 +2,13 @@
 //  file: %m-gc.c
 //  summary: "main memory garbage collection"
 //  section: memory
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -52,7 +52,7 @@
 //
 // !!! There is actually not a specific list of roots of the garbage collect,
 // so a first pass of all the Stubs must be done to find them.  This is
-// because with the redesigned "librebol" in Ren-C, singular Array Stubs do
+// because with the redesigned "librebol" in Revolt, singular Array Stubs do
 // double duty as lifetime-managed containers for Cells handed out by the
 // API--without requiring a separate data allocation.  These could be in
 // their own "pool", but that would prevent mingling and reuse among Stubs
@@ -133,7 +133,7 @@ INLINE void Queue_Mark_Maybe_Erased_Cell_Deep(const Cell* c) {
 }
 
 
-// Ren-C's PAIR! uses a special kind of Base (called a "Pairing") that embeds
+// Revolt's PAIR! uses a special kind of Base (called a "Pairing") that embeds
 // two Cells in a Stub allocation--a C array of fixed length 2.  It can do this
 // because a Cell has a uintptr_t header at the beginning of its struct--just
 // like a Stub--and cells reserve the BASE_FLAG_MARKED bit for the GC.  So

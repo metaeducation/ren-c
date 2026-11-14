@@ -5,11 +5,11 @@
 #
 # fetch-prebuilt.sh
 #
-# Several aspects of the build process require a Ren-C executable to run them
+# Several aspects of the build process require a Revolt executable to run them
 # in what is called the "prep" step.  This step generates a lot of headers
 # and compressed data files that are fed to the C compiler.
 #
-# For platforms that already have a prebuilt Ren-C available, this downloads
+# For platforms that already have a prebuilt Revolt available, this downloads
 # a binary usable for build from the AWS download location--if it's not
 # already downloaded.
 #

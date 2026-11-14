@@ -3,7 +3,7 @@ Rebol [
     title: "REBOL 3 Boot Sys: Load, Import, Modules"
     rights: --[
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2019 Ren-C Open Source Contributors
+        Copyright 2012-2019 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[

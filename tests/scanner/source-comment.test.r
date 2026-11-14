@@ -1,6 +1,6 @@
 ; %source-comment.test.r
 ;
-; Test for semicolon-based comments.  One key difference in Ren-C with these
+; Test for semicolon-based comments.  One key difference in Revolt with these
 ; comments is that a comment must have space between it and another token,
 ; otherwise the semicolon is considered part of the token:
 ;

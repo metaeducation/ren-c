@@ -2,12 +2,12 @@
 //  file: %c-macro.c
 //  summary: "ACTION! that splices a block of code into the execution stream"
 //  section: datatypes
-//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  project: "Revolt Language Interpreter and Run-time Environment"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2020-2025 Ren-C Open Source Contributors
+// Copyright 2020-2025 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //

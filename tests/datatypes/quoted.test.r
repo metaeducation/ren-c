@@ -1,4 +1,4 @@
-; Ren-C's QUOTED! is a generic and arbitrary-depth variant of the
+; Revolt's QUOTED! is a generic and arbitrary-depth variant of the
 ; LIT-XXX! types from historical Rebol.
 ;
 ; SET and GET should see through escaping and work anyway

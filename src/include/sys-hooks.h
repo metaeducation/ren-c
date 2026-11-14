@@ -1,12 +1,12 @@
 //
 //  file: %sys-hooks.h
 //  summary: "Function Pointer Definitions, defined before %tmp-internals.h"
-//  project: "Ren-C Interpreter and Run-time"
+//  project: "Revolt Interpreter and Run-time"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //

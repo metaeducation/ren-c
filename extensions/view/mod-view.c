@@ -2,12 +2,12 @@
 //  file: %mod-view.c
 //  summary: "Beginnings of GUI Interface as an extension"
 //  section: extension
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2020 Revolt Open Source Contributors
 // Copyright 2012 Atronix Engineering
 // REBOL is a trademark of REBOL Technologies
 //
@@ -143,7 +143,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
     if (rebDid("filter")) {
         //
         // The technique used is to separate the filters by '\0', and end
-        // with a doubled up `\0\0`.  Ren-C strings don't allow embedded `\0`
+        // with a doubled up `\0\0`.  Revolt strings don't allow embedded `\0`
         // bytes, and wide character strings can't be easily built in binaries.
         // Do the delimiting with tab characters, then do a pass to replace
         // replace them in the extracted wide character buffer.

@@ -1,12 +1,12 @@
 //
 //  file: %c-step.c
 //  summary: "Code for Evaluation of one Step in the Main Interpreter"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2026 Ren-C Open Source Contributors
+// Copyright 2012-2026 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -41,7 +41,7 @@
 //
 // * The evaluator only moves forward, and operates on a strict window of
 //   visibility of two elements at a time (current position and "lookback").
-//   See `Feed` for the code that provides this abstraction over Ren-C
+//   See `Feed` for the code that provides this abstraction over Revolt
 //   arrays as well as C va_list.
 //
 // * By design the evaluator isn't recursive at the C level--it's "stackless".
@@ -1586,7 +1586,7 @@ Bounce Stepper_Executor(Level* L)
 
 } case TYPE_PATH: { //// PATH! [ a/  b/c/d  e/ ] ////////////////////////////
 
-  // Ren-C moved to member access with "dots instead of slashes" (TUPLE!)
+  // Revolt moved to member access with "dots instead of slashes" (TUPLE!)
   // and refinements are done with "colons instead of slashes" (CHAIN!).  So
   // PATH!s role has come to be specificially dealing with functions:
   //

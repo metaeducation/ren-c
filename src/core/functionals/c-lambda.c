@@ -2,12 +2,12 @@
 //  file: %c-lambda.c
 //  summary: "Lower-level generator than FUNC which has no RETURN"
 //  section: datatypes
-//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  project: "Revolt Language Interpreter and Run-time Environment"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2021-2022 Ren-C Open Source Contributors
+// Copyright 2021-2022 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //

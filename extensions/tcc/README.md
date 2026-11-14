@@ -1,7 +1,7 @@
 ## TCC User Natives Extension
 
 Copyright (C) 2016 Atronix Engineering
-Copyright (C) 2016-2019 Ren-C Open Source Contributors
+Copyright (C) 2016-2019 Revolt Open Source Contributors
 
 Distributed under the Apache 2.0 License
 TCC (and libtcc) are distributed under the Lesser GPL (LGPL) license

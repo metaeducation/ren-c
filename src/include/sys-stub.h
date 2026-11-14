@@ -1,12 +1,12 @@
 //
 //  file: %sys-stub.h
 //  summary: "Stub Definitions AFTER %tmp-internals.h}
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -317,7 +317,7 @@ INLINE Result(Stub*) Make_Untracked_Stub(Flags flags) {
 // only use when it's not running gets in the way of things like background
 // garbage collection, etc.
 //
-// Ren-C keeps the term "mark" for the GC, since that's standard nomenclature.
+// Revolt keeps the term "mark" for the GC, since that's standard nomenclature.
 // A lot of basic words are taken other places for other things (tags, flags)
 // so this just goes with a Stub "color" of black or white, with white as
 // the default.  Checked builds keep a count of how many black Flexes there

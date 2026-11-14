@@ -1,4 +1,4 @@
-# GitHub Workflows for the Ren-C Project
+# GitHub Workflows for the Revolt Project
 
 This file documents the conventions used for the Continuous Integration service
 offered by GitHub.
@@ -73,7 +73,7 @@ setup work.
   action could vanish at some inopportune time.
 
 Of course, there's no limit to the amount of paranoia one could potentally
-have regarding dependencies.  (This is one of the reasons Ren-C is so strict
+have regarding dependencies.  (This is one of the reasons Revolt is so strict
 about dependency control in the compilation process in the first place!)
 
 Any actions under "random" user accounts should be at minimum referenced by
@@ -170,17 +170,17 @@ unfortunately not for all steps in a composite action.  So any composite
 actions will have to set `shell: bash` on every step.
 
 
-## Ren-C Code As Step
+## Revolt Code As Step
 
 Because GitHub CI lets you customize the shell, we can actually make the `run:`
-portion be Ren-C code.  This lets you cleanly span code across many lines, and
+portion be Revolt code.  This lets you cleanly span code across many lines, and
 avoids the hassles that come from needing to escape quotes and apostrophes when
 you call from bash, e.g. `r3 --do "print \"This Sucks\""`
 
   step:
     shell: r3 --fragment {0}  # fragment will tolerate CR+LF, won't change dir
     run: |
-      print "Hello, Ren-C As Shell World!"
+      print "Hello, Revolt As Shell World!"
       print ['apostrophes-dont-need-escaping "...and neither do double quotes"]
 
 Specifying the shell as `r3 --do {0}` or `r3 --do "{0}"` doesn't work.  It's

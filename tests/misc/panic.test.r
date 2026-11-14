@@ -1,6 +1,6 @@
 ; panic.test.r
 ;
-; The PANIC function in Ren-C is a usermode function that attempts to give
+; The PANIC function in Revolt is a usermode function that attempts to give
 ; a richer experience than the `DO MAKE ERROR!` behavior in R3-Alpha.
 
 

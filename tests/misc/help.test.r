@@ -1,6 +1,6 @@
 ; %help.test.r
 ;
-; !!! HELP and SOURCE have become more complex in Ren-C, due to the appearance
+; !!! HELP and SOURCE have become more complex in Revolt, due to the appearance
 ; of function compositions, and an attempt to have their "meta" information
 ; guide the help system--to try and explain their relationships, while not
 ; duplicating unnecessary information.  e.g. a function with 20 parameters

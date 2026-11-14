@@ -4,7 +4,7 @@ Rebol [
     file: %make-natives.r
     rights: --[
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2024 Ren-C Open Source Contributors
+        Copyright 2012-2024 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[

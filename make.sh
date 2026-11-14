@@ -8,7 +8,7 @@
 #
 
 # The utility scripts in %bash/ all expect $repo_dir to be set
-# Note Ren-C conventions always include slashes in directory names
+# Note Revolt conventions always include slashes in directory names
 #
 repo_dir=$(cd `dirname $0` && pwd)/
 

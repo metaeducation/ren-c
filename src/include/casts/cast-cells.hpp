@@ -1,12 +1,12 @@
 //
 //  file: %cast-cells.hpp
 //  summary: "Instrumented operators for casting Cell subclasses"
-//  project: "Ren-C Interpreter and Run-time"
+//  project: "Revolt Interpreter and Run-time"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //

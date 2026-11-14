@@ -5,7 +5,7 @@ Rebol [
         This is a rough translation of libuv's build file CMakeLists.txt
         into the Rebmake format.
 
-        Because it's not exactly the same--and building libuv with Ren-C's
+        Because it's not exactly the same--and building libuv with Revolt's
         settings by default--it requires additional warning disablements
         and tweaks.
     ]--

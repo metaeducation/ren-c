@@ -1,4 +1,4 @@
-; Ren-C tries to bring more method to the madness of Rebol2/R3-Alpha's
+; Revolt tries to bring more method to the madness of Rebol2/R3-Alpha's
 ; attempt to standardize the internal string format for the language to a
 ; single codepoint (line feed) to represent newlines.
 ;
@@ -51,7 +51,7 @@
     ~illegal-zero-byte~ !! (as-text:strict #{00})
 ]
 
-; Ren-C DELINE allows either all LF or all CR LF
+; Revolt DELINE allows either all LF or all CR LF
 ; (Rationale: enforce sanity, and do not disincentivize people from
 ; "upgrading" CR LF files to just LF for fear of breaking scripts
 ; that had thrown in DELINE for tolerance.)
@@ -70,7 +70,7 @@
     ('mixed-cr-lf-found = pick rescue [deline "a^/b^M^/c"] 'id)
 ]
 
-; Ren-C ENLINE is strict about requiring no CR on the input string
+; Revolt ENLINE is strict about requiring no CR on the input string
 [
     ("^M^/" = enline "^/")
     ("a^M^/b" = enline "a^/b")

@@ -1,8 +1,8 @@
 Rebol [
-    system: "Ren-C Language Interpreter and Run-time Environment"
+    system: "Revolt Language Interpreter and Run-time Environment"
     title: "Canonical Words Where Order or Optimization in Lib Lookup Matters"
     rights: --[
-        Copyright 2012-2021 Ren-C Open Source Contributors
+        Copyright 2012-2021 Revolt Open Source Contributors
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
     ]--
@@ -53,7 +53,7 @@ Rebol [
     further  ; https://forum.rebol.info/t/1593
     let
     not  ; turned to _not_ for SYM__NOT_, see TO-C-NAME for why this is weird
-    ahead  ; Ren-C addition (also in Red)
+    ahead  ; Revolt addition (also in Red)
     remove
     insert
     change
@@ -62,7 +62,7 @@ Rebol [
     reject
     parse-veto  ; workaround VETO living in BASE-CONSTANTS range
     inline
-    seek  ; Ren-C addition
+    seek  ; Revolt addition
     ;
     ; DEPRECATED PARSE PRE-MATCH WORDS (still have case statements for errors,
     ; but put these cases last in case it doesn't do a jump table)

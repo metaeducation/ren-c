@@ -1,12 +1,12 @@
 //
 //  file: %struct-patch.h
 //  summary: "Patch structure definitions preceding %tmp-internals.h"
-//  project: "Ren-C Interpreter and Run-time"
+//  project: "Revolt Interpreter and Run-time"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2021 Ren-C Open Source Contributors
+// Copyright 2021 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //

@@ -215,7 +215,7 @@ loop:   SWAPINIT(a, es);
     pn = (char *)a + n * es;
     r = min(pa - (char *)a, pb - pa);
     vecswap((char*)a, (char *)(pb - r), r);
-    // !!! Ren-C: pn - pd - es => (long)(pn - pd - ps) for -Wsign-compare
+    // !!! Revolt: pn - pd - es => (long)(pn - pd - ps) for -Wsign-compare
     r = min(pd - pc, (long)(pn - pd - es));
     vecswap(pb, pn - r, r);
     if ((r = pb - pa) > es)

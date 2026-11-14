@@ -2,13 +2,13 @@
 //  file: %m-pools.c
 //  summary: "memory allocation pool management"
 //  section: memory
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -53,7 +53,7 @@
 //
 // R3-Alpha included some code to assist in debugging client code using Flex
 // such as by initializing the memory to garbage values.  Given the existence
-// of modern tools like Valgrind and Address Sanitizer, Ren-C instead has a
+// of modern tools like Valgrind and Address Sanitizer, Revolt instead has a
 // mode in which pools are not used for data allocations, but going through
 // malloc() and free().  You enable this by setting the environment variable
 // R3_ALWAYS_MALLOC to 1.
@@ -180,12 +180,12 @@ const PoolSpec Mem_Pool_Spec[MAX_POOLS] =
 {
     // R3-Alpha had a "0-8 small string pool".  e.g. a pool of allocations for
     // payloads 0 to 8 bytes in length.  These are not technically possible in
-    // Ren-C's pool, because it requires 2*sizeof(void*) for each base at the
+    // Revolt's pool, because it requires 2*sizeof(void*) for each base at the
     // minimum...because instead of just the freelist pointer, it has a
     // standardized header (0 when free).
     //
     // This is not a problem, since all such small strings would also need
-    // Stubs...and Ren-C has a better answer to embed the payload directly
+    // Stubs...and Revolt has a better answer to embed the payload directly
     // into the Stub when STUB_FLAG_DYNAMIC is not set.  This wouldn't apply
     // if you were trying to do very small allocations of strings that did not
     // have associated Stubs...but those don't exist in the code.
@@ -1309,7 +1309,7 @@ void Assert_Pointer_Detection_Working(void)
 //
 // Note: This was useful in R3-Alpha for finding corruption from bad memory
 // writes, because a write past the end of a base destroys the pointer for the
-// next free area.  The Always_Malloc option for Ren-C leverages the faster
+// next free area.  The Always_Malloc option for Revolt leverages the faster
 // checking built into Valgrind or Address Sanitizer for the same problem.
 // However, a call to this is kept in the checked build on init and shutdown
 // just to keep it working.

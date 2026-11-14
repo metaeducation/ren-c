@@ -36,8 +36,8 @@ Rebol [
 ]
 
 
-if find (words of import/) 'into [  ; non-bootstrap Ren-C
-    panic "%import-shim.r is only for use with old Ren-C EXEs"
+if find (words of import/) 'into [  ; non-bootstrap Revolt
+    panic "%import-shim.r is only for use with old Revolt EXEs"
 ]
 
 verbose: null  ; happens before verbose in %common.r

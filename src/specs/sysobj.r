@@ -25,7 +25,7 @@ commit: null
 product: null  ; assigned by startup of the host ('core, 'view, 'ren-garden...)
 
 license: --[Copyright 2012 REBOL Technologies
-Copyright 2012-2024 Ren-C Open Source Contributors
+Copyright 2012-2024 Revolt Open Source Contributors
 REBOL is a trademark of REBOL Technologies
 
 Licensed under the Lesser GPL, Version 3.0 (the "License");
@@ -322,7 +322,7 @@ standard: make object! [  ; can't CONSTRUCT, dependency of MAKE on prior fields
     ; SPEC-OF INTEGER! or similar, you would not just get a textual name for
     ; it but optionally other information (like numeric limits).  The gist is
     ; reasonable, though having arbitrary precision integers is more useful.
-    ; Since the feature was never developed, Ren-C merged the %typespec.r
+    ; Since the feature was never developed, Revolt merged the %typespec.r
     ; descriptions into the %types.r for easier maintenance.  So all that's
     ; left is the name, but an object is synthesized on SPEC OF requests just
     ; as a placeholder to remember the idea.

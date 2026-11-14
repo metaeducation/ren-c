@@ -1,12 +1,12 @@
 //
 //  file: %cell-rune.h
 //  summary: "Definitions for an Immutable Sequence of 1 to N Codepoints"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -44,7 +44,7 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * Historical Redbol supported a ^(NULL) codepoint, e.g. '\0', but Ren-C
+// * Historical Redbol supported a ^(NULL) codepoint, e.g. '\0', but Revolt
 //   deemed it to be not worth the trouble.  Only BLOB! can have embedded
 //   zero bytes.  For strings it is termination only...so that only one return
 //   result is needed from APIs like rebSpell().

@@ -5,7 +5,7 @@ Rebol [
     version: 0.7.0
     rights: --[
         Copyright 2012 Richard "Cyphre" Smolak (TLS 1.0)
-        Copyright 2012-2021 Ren-C Open Source Contributors
+        Copyright 2012-2021 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[

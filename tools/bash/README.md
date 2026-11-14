@@ -1,6 +1,6 @@
 # Stylized Bash Helper Scripts
 
-Long term, a goal is to use the Ren-C interpreter itself to perform most
+Long term, a goal is to use the Revolt interpreter itself to perform most
 functions in building and testing.  This would include things like downloading
 files off the Internet (instead of using wget or curl).
 
@@ -28,10 +28,10 @@ the functions, and you can capture their output into variables:
 
 ## REPO_DIR should be defined
 
-It's expected that the Ren-C repository path is set in the $repo_dir variable
+It's expected that the Revolt repository path is set in the $repo_dir variable
 when you source the utility scripts.
 
-**Note that the Ren-C convention for directories is to include the slash.**
+**Note that the Revolt convention for directories is to include the slash.**
 This does look a bit more awkward in bash, but at least it tends to make
 mistakes more obvious...while doubling up slashes is often glossed over in
 a sloppy way.

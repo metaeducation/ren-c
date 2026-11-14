@@ -1,6 +1,6 @@
 ; %onlify.function.test.r
 ;
-; Ren-C eliminated the /ONLY switch from APPEND, INSERT, CHANGE, and FIND.
+; Revolt eliminated the /ONLY switch from APPEND, INSERT, CHANGE, and FIND.
 ;
 ; This demonstrates how it can be put back.  The method is used by Redbol, but
 ; could be used by anyone who thought they needed it.

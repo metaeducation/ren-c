@@ -1,12 +1,12 @@
 //
 //  file: %cell-handle.h
 //  summary: "Definitions for GC-able and non-GC-able Handles"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2021 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -24,7 +24,7 @@
 // data pointer.  The pointer was not shared as the cell was copied around...
 // so it could not be changed and reflected in other instances.
 //
-// Ren-C kept that "cheap" form, but also added a variant "managed" form of
+// Revolt kept that "cheap" form, but also added a variant "managed" form of
 // HANDLE that employs a shared stub.  This means that operations can change
 // the data and have the change reflected in other references to that handle.
 //

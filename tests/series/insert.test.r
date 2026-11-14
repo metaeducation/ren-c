@@ -132,7 +132,7 @@
 ; It seems a theory is that it was supposed to be a kind of /LIMIT of how much
 ; to add to the source, and is not speaking in terms of the source series.
 ; In this case negative indices should likely be the same as 0.  These tests
-; are changed in Ren-C from R3-Alpha to append nothing.
+; are changed in Revolt from R3-Alpha to append nothing.
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5

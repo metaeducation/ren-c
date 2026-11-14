@@ -1,7 +1,7 @@
 //
 //  file: %bsd-qsort_r.h
 //  summary: "Definition for bundled qsort_r() obeying BSD conventions"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
@@ -29,7 +29,7 @@
 //
 // A. The BSD definition calls the parameter tunneled through to the callback
 //    a "thunk".  This is not the conventional meaning of what a thunk is,
-//    so the name is no longer used in Ren-C sources for that argument.
+//    so the name is no longer used in Revolt sources for that argument.
 //
 // B. The sources for qsort_r() were directly edited to force the definition
 //    to use the name bsd_qsort_r()

@@ -1,13 +1,13 @@
 //
 //  file: %c-bind.c
 //  summary: "Word Binding Routines"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -1040,7 +1040,7 @@ DECLARE_NATIVE(DEFINITIONAL)
 // allows the topmost level to contain unmanaged values...and we *assume* the
 // values we are operating on here live in an array.
 //
-// 1. In Ren-C's binding model, function bodies are conceptually unbound, and
+// 1. In Revolt's binding model, function bodies are conceptually unbound, and
 //    need the binding of the frame instance plus whatever binding was
 //    on the body to resolve the words.  That resolution happens every time
 //    the body is run.  Since function frames don't expand in size, we can
@@ -1239,7 +1239,7 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
 //
 //    for-each [x y] [1 2 3] [print ["x is" x "and y is" y]]
 //
-// Ren-C adds features:
+// Revolt adds features:
 //
 // * Quoting a WORD! means that the variable will be unbound when written
 //   by the loop structure (hence, loops use a special write function that

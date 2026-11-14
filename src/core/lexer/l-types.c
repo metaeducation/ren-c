@@ -2,13 +2,13 @@
 //  file: %l-types.c
 //  summary: "special lexical type converters"
 //  section: lexical
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -965,7 +965,7 @@ Result(const Byte*) Scan_Email_To_Stack(const Byte* cp, REBLEN len)
 //  Try_Scan_URL_To_Stack: C
 //
 // While Rebol2, R3-Alpha, and Red attempted to apply some amount of decoding
-// (e.g. how %20 is "space" in http:// URL!s), Ren-C leaves URLs "as-is".
+// (e.g. how %20 is "space" in http:// URL!s), Revolt leaves URLs "as-is".
 // This means a URL may be copied from a web browser bar and pasted back.
 // It also means that the URL may be used with custom schemes (odbc://...)
 // that have different ideas of the meaning of characters like `%`.

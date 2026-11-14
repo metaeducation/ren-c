@@ -114,7 +114,7 @@ int tf_snprintf(char *s, size_t n, const char *fmt, ...)
                       *fmt);
                 plat_panic_handler(); */
 
-                // Replace with a Ren-C panic
+                // Replace with a Revolt panic
                 rebJumps("panic [",
                    "-[unsupported tf_snprintf specifier, see tf_snprintf.c]-",
                 "]");

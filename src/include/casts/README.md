@@ -1,4 +1,4 @@
-# cast() Validation Hooks for Ren-C Types
+# cast() Validation Hooks for Revolt Types
 
 In C, `cast(Type, expression)` macros just turn into ordinary C parentheses
 casts, e.g. `(Type)(expression)`.  But if you build the codebase as C++, then
@@ -32,7 +32,7 @@ of like Valgrind or Address Sanitizer.  Every effort has been made to make
 it as clear as possible, so you can see the C code embedded right into it
 which does the powerful checks.
 
-These checks are how Ren-C manages to stay robust and confident in the face
+These checks are how Revolt manages to stay robust and confident in the face
 of advanced features and nuanced optimizations.
 
 ## If You Wonder How It Works...

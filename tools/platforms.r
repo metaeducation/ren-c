@@ -5,7 +5,7 @@ Rebol [
     name: Target-Platforms
     rights: --[
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2021 Ren-C Open Source Contributors
+        Copyright 2012-2021 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[
@@ -47,7 +47,7 @@ Rebol [
         accentuate the difference.  But canon tuples remove leading zeros, so
         if some parts of the code (e.g. bash shell scripts) use the `0.3.01`
         format and handle it as a string (e.g. to make directories), this gets
-        out of sync with it loaded as a TUPLE!.  Ren-C uses no leading zeros.
+        out of sync with it loaded as a TUPLE!.  Revolt uses no leading zeros.
 
           https://forum.rebol.info/t/1755
 
@@ -360,7 +360,7 @@ export platform-definitions: make object! [
     W32: <msc:WIN32>              ; aes.c requires this
     UNI: "UNICODE"                ; win32 wants it
 
-    ; MSC deprecates all non-*_s version string functions.  Ren-C has been
+    ; MSC deprecates all non-*_s version string functions.  Revolt has been
     ; constantly tested with ASAN, which should mitigate the issue somewhat.
     ;
     NSEC: <msc:_CRT_SECURE_NO_WARNINGS>

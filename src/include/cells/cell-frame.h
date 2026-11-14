@@ -1,13 +1,13 @@
 //
 //  file: %cell-frame.h
 //  summary: "Definitions for FRAME! Cells (Antiform of FRAME! is action)"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -331,7 +331,7 @@ INLINE void Proxy_Frame_Activation(Value* v, const Value* original) {
 //=//// CELL INFIX MODE ///////////////////////////////////////////////////=//
 //
 // Historical Rebol had a separate datatype (OP!) for infix functions.  In
-// Ren-C, each cell holding a FRAME! has in its header a 2-bit quantity
+// Revolt, each cell holding a FRAME! has in its header a 2-bit quantity
 // (a "Crumb") which encodes one of four possible infix modes.  This can be
 // checked quickly by the evaluator.
 //

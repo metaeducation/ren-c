@@ -14,8 +14,8 @@ Rebol [
         Also notable is the support for embedding JavaScript code inline
         into C code, via the EM_ASM and EM_JS instructions.  This is used to
         implement the "JavaScript extension", which adds the JS-NATIVE and
-        JS-EVAL functions to the Ren-C runtime in order to make it possible
-        to smoothly integrate JavaScript and Ren-C.
+        JS-EVAL functions to the Revolt runtime in order to make it possible
+        to smoothly integrate JavaScript and Revolt.
     ]--
 
     notes: --[
@@ -46,7 +46,7 @@ host: #web  ; #web, or #node (not recently tested)
 
 ; When browsers run code, it's required that you yield control and return
 ; from all your stack levels to perform certain operations (like GUI updates
-; or network IO).  Ren-C is now "stackless" and can accomplish this without
+; or network IO).  Revolt is now "stackless" and can accomplish this without
 ; special measures:
 ;
 ; https://forum.rebol.info/t/stackless-is-here-today-now/1844
@@ -66,7 +66,7 @@ use-pthreads: 'no
 ;
 debug-javascript-extension: 'yes
 
-; Ren-C has build options for supporting C++ exceptions or the use of setjmp()
+; Revolt has build options for supporting C++ exceptions or the use of setjmp()
 ; and longjmp() (or just to crash, and not handle them at all).  This affects
 ; how "abrupt" panics that arise in native code is treated--e.g. the calls
 ; to the `panic()` "pseudo-keyword".
@@ -235,7 +235,7 @@ ldflags: compose [
         "-s ASSERTIONS=0"
     ])
 
-    ; Prior to Ren-C becoming stackless, it was necessary to use a fairly
+    ; Prior to Revolt becoming stackless, it was necessary to use a fairly
     ; large value for the asyncify stack.  If Asyncify is to be used again, it
     ; would probably not need a very large stack.
     ;
@@ -317,14 +317,14 @@ ldflags: compose [
     ;
     ; https://emscripten.org/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html
     ;
-    ; !!! Prior to Ren-C being "stackless", there were some issues regarding
+    ; !!! Prior to Revolt being "stackless", there were some issues regarding
     ; calling wrapped functions during emscripten_sleep()--where conservative
     ; Emscripten asserts were blocking forms of reentrancy that should have
     ; been allowed.  But it did not heed ASYNCIFY_BLACKLIST:
     ;
     ; https://github.com/emscripten-core/emscripten/issues/9412
     ;
-    ; Consequently, Ren-C had a manually-copied version of ccall and cwrap.
+    ; Consequently, Revolt had a manually-copied version of ccall and cwrap.
     ; Stackless is here to stay--so the copies aren't necessary--but the code
     ; is kept as it is to show what flexibilities in wrapping there are in
     ; case future questions come up.

@@ -1,4 +1,4 @@
-; LET is Ren-C's initiative to try and make FUNC and FUNCTION synonyms
+; LET is Revolt's initiative to try and make FUNC and FUNCTION synonyms
 ;
 ; https://forum.rebol.info/t/rethinking-auto-gathered-set-word-locals/1150
 

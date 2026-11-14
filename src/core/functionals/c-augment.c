@@ -2,12 +2,12 @@
 //  file: %c-augment.c
 //  summary: "Function generator for expanding the frame of an ACTION!"
 //  section: datatypes
-//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  project: "Revolt Language Interpreter and Run-time Environment"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2019-2025 Ren-C Open Source Contributors
+// Copyright 2019-2025 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -50,7 +50,7 @@
 //   that refinements could span multiple arguments.  So if a function's spec
 //   was `[arg1 /refine refarg1 refarg2]` then augmenting it would look like
 //   `[arg1 /refine refarg1 refarg2 arg2]` and seem like it was adding an
-//   argument to the refinement.  Since Ren-C refinements are the name of
+//   argument to the refinement.  Since Revolt refinements are the name of
 //   the single argument they represent, this is not a problem.
 //
 

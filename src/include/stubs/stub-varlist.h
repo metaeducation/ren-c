@@ -1,12 +1,12 @@
 //
 //  file: %stub-varlist.h
 //  summary: "Extremely Simple Symbol/Value Array AFTER %tmp-internals.h"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2021 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //

@@ -3,7 +3,7 @@
 #
 #=============================================================================#
 #
-# The Android build of Ren-C is designed to be packaged as a webserver, so
+# The Android build of Revolt is designed to be packaged as a webserver, so
 # that it can provide a "backdoor" of native services to a browser on a phone
 # which is running another interpreter as the WebAssembly version for the UI.
 #
@@ -15,7 +15,7 @@
 # without an Internet connection.  It tests the resulting executable and .APK
 # in an Android Emulator to make sure they are working.  It even builds
 # a C compiler into the native program, so it can compile new ARM native
-# functions accessible from Ren-C!
+# functions accessible from Revolt!
 #
 #====# PLEASE READ THE README #===============================================#
 #

@@ -25,7 +25,7 @@ Rebol [
         to not have to use [%a-constants.c]
 
         (This convention of not using FILE! for succinctness originated in
-        R3-Alpha, so it isn't some strange Ren-C-ism.)
+        R3-Alpha, so it isn't some strange Revolt-ism.)
 
      B. Evaluator files use `#prefer-O2-optimization`.  There are good reasons
         to optimize the evaluator itself even if one is doing a "size-biased"

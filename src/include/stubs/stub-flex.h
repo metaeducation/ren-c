@@ -1,12 +1,12 @@
 //
 //  file: %stub-flex.h
 //  summary: "Flex definitions AFTER %tmp-internals.h"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -36,7 +36,7 @@
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
-// * One particularly powerful feature that distinguishes Ren-C's Flex
+// * One particularly powerful feature that distinguishes Revolt's Flex
 //   implementation from the R3-Alpha "REBSER" counterpart is that if you
 //   build the code as C++, the `const` qualifier is used to systemically
 //   enforce explicit requests to gain mutable access to data.
@@ -366,7 +366,7 @@ MUTABLE_IF_C(void*, INLINE) Flex_Data_Last(
 //=//// FLEX TERMINATION //////////////////////////////////////////////////=//
 //
 // R3-Alpha had a concept of termination which was that all Flexes had one
-// full-sized unit at their tail which was set to zero bytes.  Ren-C moves
+// full-sized unit at their tail which was set to zero bytes.  Revolt moves
 // away from this concept...it only has terminating '\0' on UTF-8 Strings,
 // a reserved terminating *position* on Blobs (in case they become
 // aliased as UTF-8 Strings), and the checked build terminates Arrays in order

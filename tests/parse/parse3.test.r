@@ -389,7 +389,7 @@
     ok
 )]
 
-; self-modifying rule, not legal in Ren-C if it's during the parse
+; self-modifying rule, not legal in Revolt if it's during the parse
 
 ~series-held~ !! (
     parse3 "abcd" rule: ["ab" (remove back tail of rule) "cd"]
@@ -540,7 +540,7 @@
 )
 
 ; As alternatives to using SET-WORD! to set the parse position and GET-WORD!
-; to get the parse position, Ren-C has keywords HERE and SEEK.  HERE has
+; to get the parse position, Revolt has keywords HERE and SEEK.  HERE has
 ; precedent in Topaz:
 ;
 ; https://github.com/giesse/red-topaz-parse
@@ -715,7 +715,7 @@
     )
 ]
 
-; Ren-C does not mandate that rules make progress, so matching empty strings
+; Revolt does not mandate that rules make progress, so matching empty strings
 ; works, as it does in Red.
 [
     (
@@ -744,7 +744,7 @@
     )
 ]
 
-; Ren-C made it possible to use quoted WORD!s in place of CHAR! or TEXT! to
+; Revolt made it possible to use quoted WORD!s in place of CHAR! or TEXT! to
 ; match in strings.  This gives a cleaner look, as you drop off 3 vertical
 ; tick marks from everything like ["ab"] to become ['ab]
 ;

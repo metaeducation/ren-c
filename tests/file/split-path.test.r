@@ -40,13 +40,13 @@
         http://www.rebol.com/           [http://www.rebol.com/ _]
         http://                         [http:// _]
 
-        ; By convention, all directories must end in slash in Ren-C, and this
+        ; By convention, all directories must end in slash in Revolt, and this
         ; includes the special . and .. directories.  This is the correct form.
         ;
         %./                             [%./ _]
         %../                            [%../ _]
 
-        ; Ren-C disallows filenames of . or .. so if they are to be used as
+        ; Revolt disallows filenames of . or .. so if they are to be used as
         ; a directory they must have terminal slash.  SPLIT-PATH returns an
         ; error on these cases if you don't use the :RELAX refinement, but
         ; we use it here in case the client wants to handle it.

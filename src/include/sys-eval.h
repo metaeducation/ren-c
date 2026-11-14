@@ -1,13 +1,13 @@
 //
 //  file: %sys-eval.h
 //  summary: "Low-Level Internal Evaluator API"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -32,13 +32,13 @@
 //     >> evaluate [1 + 2 10 + 20]  ; run to end, discard intermediate results
 //     == 30
 //
-// In historical Redbol, this was often done with "DO".  But Ren-C uses DO as
+// In historical Redbol, this was often done with "DO".  But Revolt uses DO as
 // a more generic tool, which can run other languages (do %some-file.js) and
 // dialects.  (It also does not offer a /NEXT facility for stepping.)
 //
 //=//// NOTES ////////////////////////////////////////////////////////////=//
 //
-// * Ren-C can run the evaluator across an Array*-style input based on index.
+// * Revolt can run the evaluator across an Array*-style input based on index.
 //   It can also enumerate through C's `va_list`, providing the ability to
 //   pass pointers as Element* to comma-separated input at the source level.
 //

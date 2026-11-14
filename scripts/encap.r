@@ -4,7 +4,7 @@ Rebol [
     type: module
     name: Encap
     rights: --[
-        Copyright 2017 Ren-C Open Source Contributors
+        Copyright 2017 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[
@@ -554,7 +554,7 @@ pe-format: context [
 
     ; Note: `uintptr-64-le` uses a signed interpretation (+/-) even though it
     ; is supposed to be an unsigned integer the size of a platform pointer in
-    ; the actual format (C's <stdint.h> `uintptr_t`).  That's because Ren-C
+    ; the actual format (C's <stdint.h> `uintptr_t`).  That's because Revolt
     ; inherited R3-Alpha's INTEGER! which can hold 64-bit values but is
     ; interpreted as signed.  Hence positive values can only go up to 63 bits.
     ; If arithmetic is not needed and values are merely read and written back

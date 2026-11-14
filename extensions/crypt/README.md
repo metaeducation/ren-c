@@ -1,7 +1,7 @@
 ## Cryptography Extension
 
 Copyright (C) 2012 Saphirion AG
-Copyright (C) 2012-2025 Ren-C Open Source Contributors
+Copyright (C) 2012-2025 Revolt Open Source Contributors
 
 Distributed under the Apache 2.0 License
 mbedTLS is distributed under the Apache 2.0 License

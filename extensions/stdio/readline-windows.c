@@ -1,13 +1,13 @@
 //
 //  file: %readline-windows.c
 //  summary: "Simple readline() line input handler"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2020 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -86,7 +86,7 @@ typedef RebolValue Value;
 
     // Codepoints 0xD800 to 0xDFFF are reserved for "UTF-16 surrogates".
     // It is technically possible for UTF-8 or UCS-4 to encode these directly,
-    // they aren't supposed to...and Ren-C prohibits loading them.  (It should
+    // they aren't supposed to...and Revolt prohibits loading them.  (It should
     // also prevent saving them, but does not currently.)
     //
     // Windows Terminal API sends DWORD "unicode" characters, which means high

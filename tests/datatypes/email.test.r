@@ -14,7 +14,7 @@
 ;
 ; ref: http://codefool.tumblr.com/post/15288874550/list-of-valid-and-invalid-email-addresses
 ;
-; Weird email addresses are not a priority for the Ren-C project's near-term
+; Weird email addresses are not a priority for the Revolt project's near-term
 ; goals, but dots in emails were considered important so that needed to be
 ; supported (it was broken when dots-for-generic tuples were added into the
 ; scanner, and had to be hacked back in).

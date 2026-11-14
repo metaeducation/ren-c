@@ -1,13 +1,13 @@
 //
 //  file: %sys-base.h
 //  summary: -[Convenience routines for the Base "superclass" structure]-
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -134,7 +134,7 @@ typedef Byte BaseByte;
 
 //=//// POINTER DETECTION (UTF-8, STUB, CELL, END) ////////////////////////=//
 //
-// Ren-C's Cell and Stub derivatives all have a platform-pointer-sized header
+// Revolt's Cell and Stub derivatives all have a platform-pointer-sized header
 // of bits, which is constructed using byte-order-sensitive bit flags (see
 // FLAG_LEFT_BIT and related definitions for how those work).
 //

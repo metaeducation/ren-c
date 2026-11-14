@@ -82,7 +82,7 @@ typedef struct {
     //
     /* Stable* path; */
 
-    // !!! To the extent Ren-C can provide any value in this space at all,
+    // !!! To the extent Revolt can provide any value in this space at all,
     // one thing it can do is make sure it is unambiguous that all directories
     // are represented by a terminal slash.  It's an uphill battle to enforce
     // this, but perhaps a battle worth fighting.  `is_dir` should thus

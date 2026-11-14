@@ -5,7 +5,7 @@ Rebol [
     type: module
 
     rights: --[
-        Copyright 2016-2025 Ren-C Open Source Contributors
+        Copyright 2016-2025 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
 
@@ -91,7 +91,7 @@ export console!: make object! [
         <.>
     ][
         boot-print [
-            "Rebol 3 (Ren-C branch)"
+            "Rebol 3 (Revolt branch)"
             mold compose [version: (system.version) build: (system.build)]
             newline
         ]

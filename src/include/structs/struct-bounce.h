@@ -1,12 +1,12 @@
 //
 //  file: %struct-bounce.h
 //  summary: "Return value from native functions"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2019-2025 Ren-C Open Source Contributors
+// Copyright 2019-2025 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //
@@ -19,7 +19,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // R3-Alpha natives returned an enum value, with indicators like R_RET or
-// R_TRUE or R_ARG1 to say where to look for the return result.  Ren-C opens
+// R_TRUE or R_ARG1 to say where to look for the return result.  Revolt opens
 // up the return result to basically any `const void*`, and then uses the
 // properties of Detect_Rebol_Pointer() and other flags in the cell to decide
 // what to do with the result.

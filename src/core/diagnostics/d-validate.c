@@ -1,12 +1,12 @@
 //
 //  file: %d-validate.c
 //  summary: "Non-inline helpers for cast validation"
-//  project: "Ren-C Interpreter and Run-time"
+//  project: "Revolt Interpreter and Run-time"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //s
-// Copyright 2025 Ren-C Open Source Contributors
+// Copyright 2025 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //

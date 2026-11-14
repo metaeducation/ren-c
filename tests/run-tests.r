@@ -3,7 +3,7 @@ Rebol [
     file: %run-tests.r
     copyright: [
         2014 "Ladislav Mecir and Saphirion AG"
-        2014/2021 "Ren-C Open Source Contributors"
+        2014/2021 "Revolt Open Source Contributors"
     ]
     license: --[
         Licensed under the Apache License, Version 2.0 (the "License");

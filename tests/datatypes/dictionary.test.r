@@ -1,6 +1,6 @@
 ; %dictionary.test.r
 ;
-; MAP is being reclaimed in Ren-C for the CS higher-order-function concept of
+; MAP is being reclaimed in Revolt for the CS higher-order-function concept of
 ; a mapping operation.  Hence it is a verb, not a noun:
 ;
 ;     >> map x each [1 2 3] [x * 10]
@@ -102,7 +102,7 @@
 ]
 
 ; Historically non-strict equality considered 'A and A to be equal, while strict
-; equality consdered them unequal.  Ren-C has shifted to where quoted types
+; equality consdered them unequal.  Revolt has shifted to where quoted types
 ; are neither strict or non-strict equal to those at different quoting levels.
 [
     (

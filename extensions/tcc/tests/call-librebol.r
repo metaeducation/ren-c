@@ -6,12 +6,12 @@ Rebol [
         without something like BusyBox that establishes a sandbox environment
         where you install the whole GCC toolchain.
 
-        You can certainly do that with Ren-C, as demonstrated in this video:
+        You can certainly do that with Revolt, as demonstrated in this video:
 
         https://www.youtube.com/watch?v=r5kccBehMMg
 
         But another alternative is to use the built-in ability for the TCC
-        extension to make calls into the host executable, and ask Ren-C
+        extension to make calls into the host executable, and ask Revolt
         itself to provide the functionality.  So instead of:
 
             int value = 10;

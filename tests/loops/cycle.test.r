@@ -1,7 +1,7 @@
 ; %loops/cycle.test.r
 ;
 ; Historical Rebol had a FOREVER loop which was typically exited via a BREAK.
-; Ren-C reserves FOREVER for an actual unbreakable loop, and calls it CYCLE.
+; Revolt reserves FOREVER for an actual unbreakable loop, and calls it CYCLE.
 ;
 ; CYCLE is unique because it is allowed to violate the "loop result protocol"
 ; and end the loop returning something other than NULL...because it is known

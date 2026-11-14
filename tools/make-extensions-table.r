@@ -4,7 +4,7 @@ Rebol [
     file: %make-extensions-table.r  ; EMIT-HEADER uses this filename
     rights: --[
         Copyright 2017 Atronix Engineering
-        Copyright 2017-2024 Ren-C Open Source Contributors
+        Copyright 2017-2024 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[

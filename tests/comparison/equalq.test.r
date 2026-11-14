@@ -77,7 +77,7 @@
 (lax-equal? a-value: [] a-value)
 
 ; Reflexivity for past-tail blocks
-; Error in R2, but not R3-Alpha.  Error again in Ren-C.  (SAME? allowed)
+; Error in R2, but not R3-Alpha.  Error again in Revolt.  (SAME? allowed)
 ;
 ~index-out-of-range~ !! (
     a-value: tail of [1]
@@ -378,7 +378,7 @@
 (lax-equal? the 'a first ['a])
 ; word! vs. lit-word? symmetry
 (lax-equal? lax-equal? 'a first ['a] lax-equal? first ['a] 'a)
-; word! vs. path (changed in Ren-C)
+; word! vs. path (changed in Revolt)
 (not lax-equal? 'a '/a)
 (lax-equal? 'a second '/a)
 ; word! vs. path symmetry

@@ -1,13 +1,13 @@
 //
 //  file: %cell-parameter.h
 //  summary: "Definitions for PARAMETER! Cells"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2026 Ren-C Open Source Contributors
+// Copyright 2012-2026 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -58,7 +58,7 @@
 //    object only uses a compressed keylist with no PARAMETER! cells.
 //
 //    (R3-Alpha used a full WORD!-sized cell to describe each field of an
-//    object, but Ren-C only uses a single pointer-to-symbol.)
+//    object, but Revolt only uses a single pointer-to-symbol.)
 //
 // 2. We don't want to have a ton of parameter classes exposed to the user;
 //    the fewer the better.  So features like PARAMCLASS_RETURN were pared
@@ -559,7 +559,7 @@ INLINE Param* Unspecialize_Parameter(Cell* p) {
 // consider GROUP!, GET-WORD!, and GET-PATH! to be things that at the callsite
 // will be evaluated.
 //
-// For a time Ren-C tried switching the GROUP! case to use GET-GROUP!, so that
+// For a time Revolt tried switching the GROUP! case to use GET-GROUP!, so that
 // groups would still be passed literally.  This went along with the idea of
 // using a colon on the parameter to indicate the escapability (':param), so it
 // was quoted and colon'd.  It was more consistent...but it turned out that

@@ -2,13 +2,13 @@
 //  file: %n-parse3.c
 //  summary: "parse dialect interpreter"
 //  section: utility
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2021 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -28,7 +28,7 @@
 // rules that seemed like they should be legal wouldn't work.  Many situations
 // that should have been errors would be ignored or have strange behaviors.
 //
-// The code was patched to make its workings clearer over time in Ren-C, and
+// The code was patched to make its workings clearer over time in Revolt, and
 // to try and eliminate mechanical bugs (such as bad interactions with the GC).
 // But the basic method was not attacked from the ground up.  Recursions of
 // the parser were unified with the level model of recursing the evaluator...
@@ -42,11 +42,11 @@
 //
 //=/////////////////////////////////////////////////////////////////////////=//
 //
-// As a major operational difference from R3-Alpha, each recursion in Ren-C's
+// As a major operational difference from R3-Alpha, each recursion in Revolt's
 // PARSE runs using a "Rebol Stack Level"--similar to how the EVAL evaluator
 // works.  So `[print "abc"]` and `[thru "abc"]` are both seen as "code" and
 // iterated using the same mechanic.  (The rules are also locked from
-// modification during the course of the PARSE, as code is in Ren-C.)
+// modification during the course of the PARSE, as code is in Revolt.)
 //
 // This leverages common services like reporting the start of the last
 // "expression" that caused an error.  So merely calling `panic()` will use
@@ -161,7 +161,7 @@ enum parse_flags {
     // distinct from the "flags" (per recursion, zeroed on each loop).  The
     // former had undocumented overlap with the values of AM_FIND_XXX flags.
     //
-    // They are unified in Ren-C, with the overlap asserted.
+    // They are unified in Revolt, with the overlap asserted.
     //
     PF_0 = 1 << 0,
     PF_FIND_CASE = 1 << 1,
@@ -231,7 +231,7 @@ INLINE Option(SymId) Word_Id_If_Parse3_Keyword(const Cell* v) {
 // Subparse_Throws() is a helper that sets up a call frame and invokes the
 // SUBPARSE native--which represents one level of PARSE recursion.
 //
-// !!! It is the intent of Ren-C that calling functions be light and fast
+// !!! It is the intent of Revolt that calling functions be light and fast
 // enough through Do_Va() and other mechanisms that a custom frame constructor
 // like this one would not be needed.  Data should be gathered on how true
 // it's possible to make that.
@@ -450,7 +450,7 @@ static Result(Option(SymId)) Get_Parse_Value(
 //
 //  Process_Group_For_Parse_Throws: C
 //
-// Ren-C adds the ability of a GROUP! evaluation to produce a VETO error
+// Revolt adds the ability of a GROUP! evaluation to produce a VETO error
 // antiform, to signal that the group should count as a failed match.
 //
 // Other antiform errors are elevated to panics, while all other results are

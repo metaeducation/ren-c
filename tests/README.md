@@ -1,14 +1,14 @@
 > These tests originated from the repository [on GitHub][1].  It was originally the work of Carl Sassenrath, Ladislav Mecir, Andreas Bolka, Brian Hawley, and John K.
 >
-> The Ren-C fork was moved from a submodule directly into the %tests/ subdirectory.  This is because development on the original repository ceased, and it makes keeping the tests in sync with the Ren-C version easier.
+> The Revolt fork was moved from a submodule directly into the %tests/ subdirectory.  This is because development on the original repository ceased, and it makes keeping the tests in sync with the Revolt version easier.
 >
-> In the Ren-C version, an extensive source analysis script was added by Brett Handley.  This has parse rules for C and is used to check the source codebase itself for static analysis properties.
+> In the Revolt version, an extensive source analysis script was added by Brett Handley.  This has parse rules for C and is used to check the source codebase itself for static analysis properties.
 >
 > The test suite itself as well as the test framework are Licensed under the [Apache License, Version 2.0][2].
 >
 > * Copyright 2012 REBOL Technologies
 > * Copyright 2013 Saphirion AG
-> * Copyright 2013-2017 Ren-C Open Source Contributors
+> * Copyright 2013-2017 Revolt Open Source Contributors
 >
 > Some PARSE tests were copied or derived from [%parse-test.red][3], which was BSD-3 Licensed and "Copyright (C) 2011-2015 Red Foundation."  See notes in %parse/README.md for more details.
 >
@@ -27,7 +27,7 @@ The test cases are listed in `core-tests.r` and the script for running them is c
 
 If the program crashes (either the test framework or the interpreter), just run the tests again the same way as before.  The crash will be noticed and the log will pick up from the previous point.
 
-*(Note: Although the original core-tests contained cases that were known to crash or fail, the baseline for the Ren-C fork is a zero-tolerance for crashes or failures.  It should therefore not be considered normal for a crash necessitating recovery to occur, and patches should not be submitted if the tests cannot pass.)*
+*(Note: Although the original core-tests contained cases that were known to crash or fail, the baseline for the Revolt fork is a zero-tolerance for crashes or failures.  It should therefore not be considered normal for a crash necessitating recovery to occur, and patches should not be submitted if the tests cannot pass.)*
 
 
 # Log Files
@@ -58,7 +58,7 @@ The test file format was originally designed by Carl Sassenrath to be Rebol comp
     <r3only>
     (closure? first [#[closure! [[] []]]])
 
-The Ren-C project has modified the original block test format by Carl to
+The Revolt project has modified the original block test format by Carl to
 support grouped tests. Test groups are encoded as BLOCK! while individual
 tests are encoded as GROUP!. References to issues (bugs) are encoded as RUNE!
 within the test group's BLOCK!. Here is a sample of parse tests, note that the
@@ -124,7 +124,7 @@ Currently available flags are:
     <64bit>
     ; the test is meant to be used only when integers are 64bit
 
-*(Note: Originally flags existed for selecting if tests ran in R3-Alpha vs. Rebol2, but these were removed in the Ren-C fork.)*
+*(Note: Originally flags existed for selecting if tests ran in R3-Alpha vs. Rebol2, but these were removed in the Revolt fork.)*
 
 ### Files/URLs
 

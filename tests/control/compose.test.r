@@ -1,6 +1,6 @@
 ; %compose.test.r
 ;
-; Ren-C's COMPOSE has many more features than historical Rebol.  These features
+; Revolt's COMPOSE has many more features than historical Rebol.  These features
 ; range from having two types of slots: (single) and ((spliced)), to being
 ; able to put sigils or quotes on the spliced material.
 

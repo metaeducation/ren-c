@@ -21,13 +21,13 @@
 
 ; RUNE! does not space
 (
-    project: 'Ren-C
+    project: 'Revolt
     bad-thing: "Software Complexity"
     new?: does [project <> 'Rebol]
 
     str: spaced [#<< project #>> _ "The" (if new? 'NEW) "War On" bad-thing]
 
-    str = "<<Ren-C>> The NEW War On Software Complexity"
+    str = "<<Revolt>> The NEW War On Software Complexity"
 )
 
 ; Empty groups vaporize and do not add delimiters.  Empty blocks vaporize

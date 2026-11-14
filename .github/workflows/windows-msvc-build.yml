@@ -272,7 +272,7 @@ jobs:
         echo "R3BUILT=$(pwd)/r3" >> $GITHUB_ENV
 
 
-    # See README: Ren-C Code As Step
+    # See README: Revolt Code As Step
     #
     - name: Copy Built R3 To Where It Can Be Used As A Shell
       run: |
@@ -308,7 +308,7 @@ jobs:
     # there should not be any impact on the release build.  (Though there may
     # be additional DLL dependencies regardless.)
     #
-    # !!! All Ren-C stakeholders should be using checked builds at this time.
+    # !!! All Revolt stakeholders should be using checked builds at this time.
     #
     - name: Deploy Executable
       if: github.ref == 'refs/heads/master'  # see notes on DEPLOY STEPS
@@ -343,7 +343,7 @@ jobs:
 
     - name: Test That LATEST-OF Script Gives Back The Just-Greenlit Build
       if: github.ref == 'refs/heads/master'
-      shell: r3built --fragment {0}  # See README: Ren-C Code As Step
+      shell: r3built --fragment {0}  # See README: Revolt Code As Step
       run: |
         /latest-of: do %scripts/latest-of.r
 

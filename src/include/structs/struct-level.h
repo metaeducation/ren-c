@@ -1,12 +1,12 @@
 //
 //  file: %struct-level.h
 //  summary: "Level structure definitions preceding %tmp-internals.h"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2019-2023 Ren-C Open Source Contributors
+// Copyright 2019-2023 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //

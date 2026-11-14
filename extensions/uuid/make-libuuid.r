@@ -14,7 +14,7 @@ Rebol [
         warnings uunder the more rigorous settings used in compilation, which
         includes compiling as C++.
 
-        The extracted files are committed into the Ren-C repository, to reduce
+        The extracted files are committed into the Revolt repository, to reduce
         the number of external dependencies in the build.
     ]--
 ]

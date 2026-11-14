@@ -2,12 +2,12 @@
 //  file: %c-oneshot.c
 //  summary: "Generates function that will run code N times, then return null"
 //  section: datatypes
-//  project: "Ren-C Language Interpreter and Run-time Environment"
+//  project: "Revolt Language Interpreter and Run-time Environment"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2018-2020 Ren-C Open Source Contributors
+// Copyright 2018-2020 Revolt Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //

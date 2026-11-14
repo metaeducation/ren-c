@@ -2,12 +2,12 @@
 //  file: %b-init.c
 //  summary: "initialization functions"
 //  section: bootstrap
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -26,14 +26,14 @@
 // %tmp-boot-block.r (which is the aggregated code from the %mezz/*.r files,
 // packed into one file as part of the build preparation).
 //
-// As part of an effort to lock down the memory usage, Ren-C added a parallel
+// As part of an effort to lock down the memory usage, Revolt added a parallel
 // Shutdown_Core() routine which would gracefully exit Rebol, with assurances
 // that all accounting was done correctly.  This includes being sure that the
 // number used to track memory usage for triggering garbage collections would
 // balance back out to exactly zero.
 //
 // (Release builds can instead close only vital resources like files, and
-// trust the OS exit() to reclaim memory more quickly.  However Ren-C's goal
+// trust the OS exit() to reclaim memory more quickly.  However Revolt's goal
 // is to be usable as a library that may be initialized and shutdown within
 // a process that's not exiting, so the ability to clean up is important.)
 //

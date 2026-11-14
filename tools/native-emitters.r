@@ -6,7 +6,7 @@ Rebol [
     name: Native-Emitters
     rights: --[
         Copyright 2017 Atronix Engineering
-        Copyright 2017-2026 Ren-C Open Source Contributors
+        Copyright 2017-2026 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[
@@ -112,7 +112,7 @@ export extract-native-protos: func [
 ; EMIT-INCLUDE-PARAMS-MACRO
 ;
 ; This routine has to deal with differences between specs the bootstrap EXE
-; can load and what the modern Ren-C can load.  The easiest way to do this is
+; can load and what the modern Revolt can load.  The easiest way to do this is
 ; to take in the textual spec, "massage" it in a way that doesn't destroy the
 ; information being captured, and then TRANSCODE it.
 ;
@@ -476,7 +476,7 @@ generic-info!: make object! [
 
 ; R3-Alpha implemented generics with a large switch() statement inside a
 ; C function where there was one function per datatype (functions could be
-; reused, e.g. GROUP! and BLOCK! both used the same function).  Ren-C takes
+; reused, e.g. GROUP! and BLOCK! both used the same function).  Revolt takes
 ; a step toward finer granularity by building tables of many functions.
 ;
 export extract-generic-implementations: func [

@@ -5,7 +5,7 @@ Rebol [
 
     rights: --[
         Copyright 2017 Atronix Engineering
-        Copyright 2017-2021 Ren-C Open Source Contributors
+        Copyright 2017-2021 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
 

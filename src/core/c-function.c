@@ -2,13 +2,13 @@
 //  file: %c-function.c
 //  summary: "support for functions, actions, and routines"
 //  section: core
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2020 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -720,7 +720,7 @@ Result(ParamList*) Pop_Paramlist(
 //     [foo "doc string :-/" [type!]]
 //     [foo "doc string1 :-/" "doc string2 :-(" [type!]]
 //
-// Ren-C centralizes the processing, and clients can use FRAME! access to
+// Revolt centralizes the processing, and clients can use FRAME! access to
 // pick out the parameters and descriptions.  So although the spec could use
 // some formalization, at least only one place has to worry about it.
 //

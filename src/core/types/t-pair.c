@@ -2,13 +2,13 @@
 //  file: %t-pair.c
 //  summary: "pair datatype"
 //  section: datatypes
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2017 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -185,7 +185,7 @@ REBINT Index_From_Picker_For_Pair(
 // !!! R3-Alpha turned all the PAIR! operations from integer to decimal, but
 // they had floating point precision (otherwise you couldn't fit a full cell
 // for two values into a single cell).  This meant they were neither INTEGER!
-// nor DECIMAL!.  Ren-C stepped away from this idea of introducing a new
+// nor DECIMAL!.  Revolt stepped away from this idea of introducing a new
 // numeric type and instead created a more compact "Pairing" that could fit
 // in a single STUB_POOL Unit and hold two arbitrary values.
 //
@@ -342,7 +342,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Pair)
     Stable* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
     Copy_Cell(which, poke);
 
-    return OKAY_OUT_NO_WRITEBACK;  // PAIR! is two independent cells in Ren-C
+    return OKAY_OUT_NO_WRITEBACK;  // PAIR! is two independent cells in Revolt
 }}
 
 

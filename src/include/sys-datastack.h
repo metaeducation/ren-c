@@ -1,13 +1,13 @@
 //
 //  file: %sys-datastack.h
 //  summary: -[Definitions for the "Data Stack"]-
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2026 Ren-C Open Source Contributors
+// Copyright 2012-2026 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -61,7 +61,7 @@
 // * Although R3-Alpha used the data stack for pushing function arguments,
 //   the arguments were frequently passed around by pointer (vs. using a
 //   StackIndex position).  This was bad since the data stack could relocate
-//   its contents due to growth.  This has completely changed in Ren-C, with
+//   its contents due to growth.  This has completely changed in Revolt, with
 //   memory-pooled levels and stacklessness (see %c-trampoline.c)
 //
 

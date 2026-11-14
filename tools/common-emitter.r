@@ -4,7 +4,7 @@ Rebol [
     type: module
     name: Common-Emitter
     rights: --[
-        Copyright 2016-2024 Ren-C Open Source Contributors
+        Copyright 2016-2024 Revolt Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     ]--
     license: --[
@@ -427,7 +427,7 @@ export make-emitter: func [
             **
             **  Rebol [R3] Language Interpreter and Run-time Environment
             **  Copyright 2012 REBOL Technologies
-            **  Copyright 2012-2024 Ren-C Open Source Contributors
+            **  Copyright 2012-2024 Revolt Open Source Contributors
             **  REBOL is a trademark of REBOL Technologies
             **  Licensed under the Apache License, Version 2.0
             **
@@ -453,7 +453,7 @@ export make-emitter: func [
                 file: $<mold stem>
                 rights: --[
                     Copyright 2012 REBOL Technologies
-                    Copyright 2012-2025 Ren-C Open Source Contributors
+                    Copyright 2012-2025 Revolt Open Source Contributors
                     REBOL is a trademark of REBOL Technologies
                 ]--
                 license: --[

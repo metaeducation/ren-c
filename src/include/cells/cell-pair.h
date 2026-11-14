@@ -1,13 +1,13 @@
 //
 //  file: %cell-pair.h
 //  summary: "Definitions for Stub-sized Pairings and the Pair Datatype"
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2024 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -26,7 +26,7 @@
 //
 // * R3-Alpha's PAIR! type compressed two integers into a single cell, which
 //   meant using smaller integer representations than the INTEGER! cell.
-//   Ren-C didn't want to manage the limits and math on different types of
+//   Revolt didn't want to manage the limits and math on different types of
 //   integer, so created a new compact generalized allocation for exactly
 //   two cells.
 //

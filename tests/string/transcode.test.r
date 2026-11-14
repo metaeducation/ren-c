@@ -4,7 +4,7 @@
 ; The interface is historically controversial for its complexity:
 ; https://github.com/rebol/rebol-issues/issues/1916
 ;
-; Ren-C attempts to make it easier.  Plain TRANSCODE with no options will simply
+; Revolt attempts to make it easier.  Plain TRANSCODE with no options will simply
 ; load a string or binary of UTF-8 in its entirety as the sole return result.
 ; The multiple-return-awareness kicks it into a more progressive mode, so that
 ; it returns partial results and can actually give a position of an error.

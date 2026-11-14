@@ -1,9 +1,9 @@
 Rebol [
-    system: "Ren-C Language Interpreter and Run-time Environment"
+    system: "Revolt Language Interpreter and Run-time Environment"
     title: "Symbols That want SYM_XXX IDs But Are Not In Lib"
     file: %symbols.r
     rights: --[
-        Copyright 2012-2021 Ren-C Open Source Contributors
+        Copyright 2012-2021 Revolt Open Source Contributors
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
     ]--

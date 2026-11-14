@@ -6,7 +6,7 @@
 ; branch to run, and skips to the next alternate if it would not.
 ;
 ; Calling such a thing "IF" when it is arity-1 is believed to be a poor choice,
-; hence it's called COND in Ren-C...and it has an analogue in plain eval that
+; hence it's called COND in Revolt...and it has an analogue in plain eval that
 ; returns a VETO state.
 
 (

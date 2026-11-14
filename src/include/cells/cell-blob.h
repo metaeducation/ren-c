@@ -1,12 +1,12 @@
 //
 //  file: %cell-blob.h
 //  summary: "Series type holding Binary data"
-//  project: "Ren-C Interpreter and Run-time"
+//  project: "Revolt Interpreter and Run-time"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2026 Ren-C Open Source Contributors
+// Copyright 2012-2026 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -19,7 +19,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Datatype for holding byte data.  In Ren-C, BLOB! holding UTF-8 data can
+// Datatype for holding byte data.  In Revolt, BLOB! holding UTF-8 data can
 // be aliased as TEXT! (which enforces further edits of the binary data to
 // be constrained to UTF-8).
 //
@@ -149,7 +149,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
 
 //=//// CELL REPRESENTATION OF NUL CODEPOINT (USES #{00} BLOB!) ///////////=//
 //
-// Ren-C's unification of chars and "RUNE!" to a single immutable stringlike
+// Revolt's unification of chars and "RUNE!" to a single immutable stringlike
 // type meant they could not physically contain a zero codepoint.
 //
 // It would be possible to declare the empty rune of #"" representing the

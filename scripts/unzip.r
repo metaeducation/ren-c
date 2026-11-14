@@ -4,7 +4,7 @@ Rebol [
     type: module
     name: Zip
     rights: --[
-        Copyright 2009-2021 Ren-C Open Source Contributors
+        Copyright 2009-2021 Revolt Open Source Contributors
         Copyright 2009 Vincent Ecuyer
         REBOL is a trademark of REBOL Technologies
 

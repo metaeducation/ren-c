@@ -16,7 +16,7 @@ colon in `dns://`) connected the native port code to manage these requests.
 Due to the "WinSock" API, the approaches for doing these calls can be nearly
 equivalent on Windows and POSIX.
 
-Ren-C moves this code into an extension so that no part of it will be built
+Revolt moves this code into an extension so that no part of it will be built
 into a core that does not need it.
 
 ## Synchronous vs. Asynchronous
@@ -33,6 +33,6 @@ want asynchronous lookup are expected to use threads and call the standard
 getnameinfo() API.
 
 Considering the relatively low priority of the feature and its use of a
-deprecated API, Ren-C removed the code--focusing instead on trying to clarify
+deprecated API, Revolt removed the code--focusing instead on trying to clarify
 the port model and its synchronous/asynchronous modes in a more forward
 looking way.
